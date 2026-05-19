@@ -701,3 +701,679 @@ Evidence:
   - `python scripts/eval_tools.py --fixture tests/fixtures/tool_eval.json`
 Verifier-Focus: |
   Confirm that both active profile eval artifacts include current baseline metrics, eval source, date, and regression thresholds before Phase 5 closes.
+
+---
+
+## Phase 6 - Personal Source Foundation
+
+Business goal: turn the fixture-backed MVP into a personal workflow by ingesting operator-owned sources and documenting the weekly decision loop.
+
+## T19: Operator Workflow Contract
+
+Owner:      codex
+Phase:      6
+Type:       docs
+Depends-On: T18
+Status:     [ ]
+
+Objective: |
+  Create the operator workflow contract that defines the personal pain, decision taxonomy, weekly review constraints, and adoption failure conditions.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/OPERATOR_WORKFLOW.md` defines weekly inputs, weekly outputs, review time target, and decision taxonomy."
+    test: "tests/test_docs_contracts.py::test_operator_workflow_contains_required_sections"
+  - id: AC-2
+    description: "The workflow contract lists failure conditions that make a weekly report not worth reading."
+    test: "tests/test_docs_contracts.py::test_operator_workflow_lists_failure_conditions"
+  - id: AC-3
+    description: "The workflow contract defines privacy boundaries for Telegram exports, operator notes, and credentials."
+    test: "tests/test_docs_contracts.py::test_operator_workflow_defines_privacy_boundaries"
+
+Files:
+  - docs/OPERATOR_WORKFLOW.md
+  - tests/test_docs_contracts.py
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-0---personal-operating-contract
+  - docs/IMPLEMENTATION_CONTRACT.md#credentials-and-secrets
+
+Notes: |
+  This is a docs-and-tests task. Do not implement new source adapters here.
+
+## T20: Source Catalog Config Model
+
+Owner:      codex
+Phase:      6
+Type:       none
+Depends-On: T19
+Status:     [ ]
+
+Objective: |
+  Add a typed source catalog configuration model that can represent source priority, trust level, freshness window, access method, and approval requirements.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "A source catalog entry validates source_type, priority, trust_level, freshness_window_days, access_method, enabled, and approval_required."
+    test: "tests/test_source_catalog.py::test_source_catalog_entry_validates_required_fields"
+  - id: AC-2
+    description: "Invalid trust levels, negative freshness windows, or enabled credentialed sources without approval raise validation errors."
+    test: "tests/test_source_catalog.py::test_invalid_source_catalog_entries_are_rejected"
+  - id: AC-3
+    description: "Default configuration includes disabled placeholders for GitHub, HN, Stack Exchange, Product Hunt, SERP, YouTube, app stores, G2, and Reddit."
+    test: "tests/test_source_catalog.py::test_default_catalog_contains_planned_source_placeholders"
+
+Files:
+  - demand_mvp_radar/config.py
+  - demand_mvp_radar/models.py
+  - tests/test_source_catalog.py
+
+Context-Refs:
+  - docs/SOURCE_CATALOG.md#recommended-initial-sources-beyond-telegram
+  - docs/ARCHITECTURE.md#human-approval-boundaries
+
+Notes: |
+  Do not call live source APIs. This task only adds typed config and validation.
+
+## T21: Telegram Research Agent Bridge
+
+Owner:      codex
+Phase:      6
+Type:       none
+Depends-On: T20
+Status:     [ ]
+
+Objective: |
+  Import sanitized outputs from `telegram-research-agent` as first-class Demand-to-MVP evidence without coupling to that repository's internal runtime.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Given a sanitized telegram-research-agent export fixture, the bridge stores evidence records with source type, upstream ID, captured_at, normalized text, content hash, and source fingerprint."
+    test: "tests/test_telegram_research_bridge.py::test_bridge_imports_sanitized_export_as_evidence"
+  - id: AC-2
+    description: "Repeated bridge imports are idempotent by upstream source fingerprint."
+    test: "tests/test_telegram_research_bridge.py::test_bridge_import_is_idempotent"
+  - id: AC-3
+    description: "Malformed or private rows are quarantined with a reason and do not block valid rows."
+    test: "tests/test_telegram_research_bridge.py::test_bridge_quarantines_invalid_rows"
+
+Files:
+  - demand_mvp_radar/sources/telegram_research_agent.py
+  - tests/test_telegram_research_bridge.py
+  - tests/fixtures/telegram_research_agent_export.json
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-2---telegram-research-agent-bridge
+  - docs/SOURCE_CATALOG.md#wave-1---owned-and-low-risk
+
+Notes: |
+  Use a sanitized fixture. Do not read the external repository or private runtime data during tests.
+
+## T22: Operator Notes Source
+
+Owner:      codex
+Phase:      6
+Type:       none
+Depends-On: T20
+Status:     [ ]
+
+Objective: |
+  Add a local operator notes importer for Markdown or JSON notes that can seed hypotheses without alone justifying a build recommendation.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Markdown notes with frontmatter import as evidence with source_type `operator_note`, captured_at, title, normalized text, and content hash."
+    test: "tests/test_operator_notes.py::test_markdown_operator_notes_import_as_evidence"
+  - id: AC-2
+    description: "Operator-note-only candidates cannot receive a `build` recommendation without at least one corroborating non-note source."
+    test: "tests/test_operator_notes.py::test_operator_notes_alone_do_not_justify_build"
+  - id: AC-3
+    description: "Private note paths are not written to reports or logs; reports use a redacted source reference."
+    test: "tests/test_operator_notes.py::test_private_note_paths_are_redacted"
+
+Files:
+  - demand_mvp_radar/sources/operator_notes.py
+  - demand_mvp_radar/scoring.py
+  - tests/test_operator_notes.py
+  - tests/fixtures/operator_notes/
+
+Context-Refs:
+  - docs/SOURCE_CATALOG.md#evidence-weighting-guidance
+  - docs/IMPLEMENTATION_CONTRACT.md#pii-policy
+
+Notes: |
+  Notes are high founder-fit signal but weak market proof. Preserve that distinction.
+
+## T23: Own GitHub Repository Source
+
+Owner:      codex
+Phase:      6
+Type:       tool:call
+Depends-On: T20
+Status:     [ ]
+
+Objective: |
+  Import selected evidence from operator-owned GitHub repositories, starting with local repository scans and optional GitHub REST snapshots.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "A local repository fixture imports selected README, issue snapshot, TODO, and recent-change records as evidence with repository provenance."
+    test: "tests/test_github_source.py::test_local_repo_snapshot_imports_project_evidence"
+  - id: AC-2
+    description: "The importer excludes secrets, ignored files, local databases, virtual environments, and generated reports."
+    test: "tests/test_github_source.py::test_local_repo_import_excludes_private_and_generated_paths"
+  - id: AC-3
+    description: "GitHub source tool audit events record repository identifier hash, source count, error count, and run ID without leaking private local paths."
+    test: "tests/test_github_source.py::test_github_source_audit_redacts_private_paths"
+
+Files:
+  - demand_mvp_radar/sources/github_repo.py
+  - demand_mvp_radar/tools/schemas.py
+  - tests/test_github_source.py
+  - docs/tool_eval.md
+
+Context-Refs:
+  - docs/SOURCE_CATALOG.md#recommended-initial-sources-beyond-telegram
+  - docs/IMPLEMENTATION_CONTRACT.md#pii-policy
+
+Notes: |
+  Prefer local snapshots first. Live GitHub API access should remain optional and fixture-backed in CI.
+
+---
+
+## Phase 7 - Live Evidence Trust
+
+Business goal: make real-source evidence measurable, retrievable, and auditable before relying on generated briefs.
+
+## T24: Live Evidence Import Command
+
+Owner:      codex
+Phase:      7
+Type:       none
+Depends-On: T21, T22, T23
+Status:     [ ]
+
+Objective: |
+  Add an import command that ingests configured owned sources, writes a run manifest, and updates retrieval without generating a weekly opportunity report.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`demand-mvp-radar import-sources --fixture tests/fixtures/source_mix` stores evidence from Telegram bridge, operator notes, and GitHub source fixtures."
+    test: "tests/test_import_sources_command.py::test_import_sources_fixture_writes_evidence_and_manifest"
+  - id: AC-2
+    description: "The command updates retrieval chunks and records corpus version without synthesizing reports."
+    test: "tests/test_import_sources_command.py::test_import_sources_updates_retrieval_without_report_generation"
+  - id: AC-3
+    description: "Disabled sources are skipped and recorded in the manifest."
+    test: "tests/test_import_sources_command.py::test_import_sources_records_disabled_sources"
+
+Files:
+  - demand_mvp_radar/cli.py
+  - demand_mvp_radar/pipeline.py
+  - tests/test_import_sources_command.py
+  - tests/fixtures/source_mix/
+
+Context-Refs:
+  - docs/spec.md#feature-area-1-source-ingestion
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-3---evidence-vault-and-rag-trust-layer
+
+Notes: |
+  Keep import separate from weekly report generation so evidence quality can be inspected before synthesis.
+
+## T25: Source Trust and Freshness Scoring
+
+Owner:      codex
+Phase:      7
+Type:       rag:query
+Depends-On: T20, T24
+Status:     [ ]
+
+Objective: |
+  Apply source trust, freshness windows, and source-type caps in retrieval and scoring so high-volume weak sources cannot dominate recommendations.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Retrieval filters or downranks stale evidence based on source-specific freshness windows."
+    test: "tests/test_source_trust.py::test_retrieval_applies_source_specific_freshness"
+  - id: AC-2
+    description: "Scoring applies source trust and caps repeated evidence from the same source type."
+    test: "tests/test_source_trust.py::test_scoring_applies_source_trust_and_type_caps"
+  - id: AC-3
+    description: "Candidates supported only by low-trust or stale sources return `insufficient_evidence` or a non-build recommendation."
+    test: "tests/test_source_trust.py::test_low_trust_stale_support_cannot_trigger_build"
+
+Files:
+  - demand_mvp_radar/retrieval/query.py
+  - demand_mvp_radar/scoring.py
+  - tests/test_source_trust.py
+  - docs/retrieval_eval.md
+
+Context-Refs:
+  - docs/SOURCE_CATALOG.md#evidence-weighting-guidance
+  - docs/IMPLEMENTATION_CONTRACT.md#retrieval-evaluation-gate
+
+Notes: |
+  Update retrieval evaluation because this changes query-time evidence selection.
+
+## T26: Live-Like Retrieval Evaluation Fixtures
+
+Owner:      codex
+Phase:      7
+Type:       rag:query
+Depends-On: T25
+Status:     [ ]
+
+Objective: |
+  Extend retrieval evaluation with sanitized live-like fixtures representing Telegram bridge, notes, GitHub, competitor URLs, and public developer demand.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Retrieval eval fixtures include at least five source types and at least ten query cases."
+    test: "tests/eval/test_retrieval_eval.py::test_live_like_eval_fixture_has_required_source_coverage"
+  - id: AC-2
+    description: "Evaluation reports hit@3, citation_precision, no_answer_accuracy, answer_faithfulness, freshness_compliance, and source_diversity."
+    test: "tests/eval/test_retrieval_eval.py::test_live_like_eval_reports_extended_metrics"
+  - id: AC-3
+    description: "Regression notes distinguish code-induced regressions from corpus/source-fixture changes."
+    test: "tests/eval/test_retrieval_eval.py::test_retrieval_eval_records_regression_cause"
+
+Files:
+  - scripts/eval_retrieval.py
+  - tests/fixtures/retrieval_live_like_corpus.json
+  - tests/fixtures/retrieval_live_like_queries.json
+  - tests/eval/test_retrieval_eval.py
+  - docs/retrieval_eval.md
+
+Context-Refs:
+  - docs/IMPLEMENTATION_CONTRACT.md#retrieval-evaluation-gate
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-3---evidence-vault-and-rag-trust-layer
+
+Execution-Mode: heavy
+
+## T27: Evidence Delta Report
+
+Owner:      codex
+Phase:      7
+Type:       none
+Depends-On: T24, T26
+Status:     [ ]
+
+Objective: |
+  Generate an evidence delta report that shows new, changed, duplicated, stale, quarantined, and source-skipped evidence since the previous import.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The delta report summarizes new, duplicate, stale, quarantined, and skipped counts by source type."
+    test: "tests/test_evidence_delta.py::test_delta_report_summarizes_source_counts"
+  - id: AC-2
+    description: "The delta report lists evidence clusters with meaningful changes since the prior run."
+    test: "tests/test_evidence_delta.py::test_delta_report_lists_changed_clusters"
+  - id: AC-3
+    description: "The delta report redacts private note paths and credentialed source identifiers."
+    test: "tests/test_evidence_delta.py::test_delta_report_redacts_private_source_details"
+
+Files:
+  - demand_mvp_radar/reports/evidence_delta.py
+  - demand_mvp_radar/pipeline.py
+  - tests/test_evidence_delta.py
+
+Context-Refs:
+  - docs/IMPLEMENTATION_CONTRACT.md#pii-policy
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-3---evidence-vault-and-rag-trust-layer
+
+---
+
+## Phase 8 - Decision-Grade Artifacts
+
+Business goal: turn real evidence into opportunity dossiers that are strong enough for the operator to make decisions without reopening every source.
+
+## T28: Opportunity Dossier Schema
+
+Owner:      codex
+Phase:      8
+Type:       none
+Depends-On: T25, T27
+Status:     [ ]
+
+Objective: |
+  Define a structured dossier model for decision-grade opportunity review.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The dossier model validates pain, audience, workaround, evidence, competitor_shape, one_function_mvp, acquisition_angle, risks, missing_evidence, score_components, recommendation, and prior_decisions."
+    test: "tests/test_dossiers.py::test_dossier_schema_requires_decision_grade_fields"
+  - id: AC-2
+    description: "Dossier creation fails when claims lack citations or explicit inference markers."
+    test: "tests/test_dossiers.py::test_dossier_rejects_uncited_claims"
+  - id: AC-3
+    description: "Dossiers include confidence and why-this-may-be-wrong fields."
+    test: "tests/test_dossiers.py::test_dossier_includes_confidence_and_countercase"
+
+Files:
+  - demand_mvp_radar/models.py
+  - demand_mvp_radar/dossiers.py
+  - tests/test_dossiers.py
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-4---opportunity-dossier
+  - docs/AI_DEVELOPMENT_PACK.md#artifact-quality-bar
+
+## T29: Dossier Renderer
+
+Owner:      codex
+Phase:      8
+Type:       none
+Depends-On: T28
+Status:     [ ]
+
+Objective: |
+  Render opportunity dossiers as Markdown and optional HTML with evidence, score, risk, missing-evidence, and decision sections.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Markdown dossier output contains all required decision sections in a stable order."
+    test: "tests/test_dossier_renderer.py::test_markdown_dossier_contains_required_sections"
+  - id: AC-2
+    description: "Every cited evidence item includes source type, source title or ID, captured date, and redacted link/reference."
+    test: "tests/test_dossier_renderer.py::test_dossier_citations_include_required_provenance"
+  - id: AC-3
+    description: "The renderer supports `insufficient_evidence` dossiers without synthesizing unsupported build recommendations."
+    test: "tests/test_dossier_renderer.py::test_renderer_handles_insufficient_evidence_dossier"
+
+Files:
+  - demand_mvp_radar/reports/dossier_markdown.py
+  - demand_mvp_radar/reports/dossier_html.py
+  - tests/test_dossier_renderer.py
+
+Context-Refs:
+  - docs/AI_DEVELOPMENT_PACK.md#artifact-quality-bar
+  - docs/spec.md#feature-area-5-llm-extraction-and-brief-synthesis
+
+## T30: Missing Evidence Section
+
+Owner:      codex
+Phase:      8
+Type:       rag:query
+Depends-On: T28, T29
+Status:     [ ]
+
+Objective: |
+  Add explicit missing-evidence analysis to dossiers so weak opportunities explain what proof is absent.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Missing-evidence output can identify absent independent sources, stale evidence, weak competitor proof, missing acquisition proof, and missing willingness-to-pay signal."
+    test: "tests/test_missing_evidence.py::test_missing_evidence_identifies_required_gap_types"
+  - id: AC-2
+    description: "The missing-evidence section proposes source queries or source types to collect next without inventing facts."
+    test: "tests/test_missing_evidence.py::test_missing_evidence_suggests_next_collection_targets"
+  - id: AC-3
+    description: "Retrieval eval records no-answer accuracy for missing-evidence cases."
+    test: "tests/eval/test_retrieval_eval.py::test_missing_evidence_cases_are_in_eval_history"
+
+Files:
+  - demand_mvp_radar/retrieval/query.py
+  - demand_mvp_radar/dossiers.py
+  - tests/test_missing_evidence.py
+  - docs/retrieval_eval.md
+
+Context-Refs:
+  - docs/IMPLEMENTATION_CONTRACT.md#insufficient-evidence-path
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-4---opportunity-dossier
+
+## T31: Review Command
+
+Owner:      codex
+Phase:      8
+Type:       none
+Depends-On: T15, T29
+Status:     [ ]
+
+Objective: |
+  Add a local review command for recording operator decisions from generated dossiers.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`demand-mvp-radar review --opportunity-id ... --decision ... --reason ...` records an append-only decision with source dossier path."
+    test: "tests/test_review_command.py::test_review_command_records_decision_with_dossier_path"
+  - id: AC-2
+    description: "The command rejects `build` decisions without an explicit operator reason."
+    test: "tests/test_review_command.py::test_review_command_requires_reason_for_build"
+  - id: AC-3
+    description: "The command accepts `needs_more_evidence` and stores requested evidence gaps."
+    test: "tests/test_review_command.py::test_review_command_records_needs_more_evidence"
+
+Files:
+  - demand_mvp_radar/cli.py
+  - demand_mvp_radar/decisions.py
+  - tests/test_review_command.py
+
+Context-Refs:
+  - docs/ARCHITECTURE.md#human-approval-boundaries
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-5---decision-loop-and-memory
+
+---
+
+## Phase 9 - MVP Experiment Conversion
+
+Business goal: convert selected opportunities into 7-14 day validation experiments and feed outcomes back into memory.
+
+## T32: MVP Experiment Pack Model
+
+Owner:      codex
+Phase:      9
+Type:       none
+Depends-On: T31
+Status:     [ ]
+
+Objective: |
+  Define a structured experiment pack for one selected opportunity.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The experiment pack validates opportunity_id, one_function_scope, target_user, validation_method, first_10_targets, success_threshold, kill_threshold, revisit_threshold, and timebox_days."
+    test: "tests/test_experiments.py::test_experiment_pack_requires_validation_fields"
+  - id: AC-2
+    description: "Experiment packs cannot be generated for opportunities without a human `build` or `revisit` decision."
+    test: "tests/test_experiments.py::test_experiment_pack_requires_human_decision"
+  - id: AC-3
+    description: "Experiment packs inherit citations and risk flags from the source dossier."
+    test: "tests/test_experiments.py::test_experiment_pack_inherits_dossier_context"
+
+Files:
+  - demand_mvp_radar/experiments.py
+  - demand_mvp_radar/models.py
+  - tests/test_experiments.py
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-6---mvp-experiment-pack
+  - docs/AI_DEVELOPMENT_PACK.md#artifact-quality-bar
+
+## T33: Experiment Renderer
+
+Owner:      codex
+Phase:      9
+Type:       none
+Depends-On: T32
+Status:     [ ]
+
+Objective: |
+  Render MVP experiment packs as actionable Markdown artifacts.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The rendered experiment includes scope, target user, validation method, first 10 targets, success threshold, kill threshold, revisit threshold, and timebox."
+    test: "tests/test_experiment_renderer.py::test_experiment_markdown_contains_required_sections"
+  - id: AC-2
+    description: "The experiment renderer includes source evidence citations and risk flags."
+    test: "tests/test_experiment_renderer.py::test_experiment_markdown_includes_context"
+  - id: AC-3
+    description: "The renderer writes atomically and does not overwrite prior experiment artifacts unless the run ID matches."
+    test: "tests/test_experiment_renderer.py::test_experiment_write_is_atomic_and_idempotent"
+
+Files:
+  - demand_mvp_radar/reports/experiment_markdown.py
+  - tests/test_experiment_renderer.py
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-6---mvp-experiment-pack
+
+## T34: Experiment Outcome Recording
+
+Owner:      codex
+Phase:      9
+Type:       none
+Depends-On: T32, T33
+Status:     [ ]
+
+Objective: |
+  Record experiment outcomes and feed them back into decision history and future scoring.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Recording an outcome stores experiment_id, opportunity_id, outcome, evidence_summary, actor, and created_at."
+    test: "tests/test_experiment_outcomes.py::test_experiment_outcome_records_required_fields"
+  - id: AC-2
+    description: "A killed experiment suppresses matching opportunities until new evidence appears."
+    test: "tests/test_experiment_outcomes.py::test_killed_experiment_suppresses_matching_opportunities"
+  - id: AC-3
+    description: "A validated experiment increases revisit/build confidence only through deterministic scoring rules."
+    test: "tests/test_experiment_outcomes.py::test_validated_experiment_affects_score_deterministically"
+
+Files:
+  - demand_mvp_radar/experiments.py
+  - demand_mvp_radar/decisions.py
+  - demand_mvp_radar/scoring.py
+  - tests/test_experiment_outcomes.py
+
+Context-Refs:
+  - docs/IMPLEMENTATION_CONTRACT.md#deterministic-ownership-of-scores
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-6---mvp-experiment-pack
+
+---
+
+## Phase 10 - Operator Production Readiness
+
+Business goal: make the local system reliable enough for weekly personal use before any private beta or SaaS work.
+
+## T35: Operator Runbook
+
+Owner:      codex
+Phase:      10
+Type:       docs
+Depends-On: T34
+Status:     [ ]
+
+Objective: |
+  Write an operator runbook for weekly operation, failure recovery, source maintenance, budget review, and privacy checks.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/OPERATOR_RUNBOOK.md` documents weekly run steps, review steps, source failure handling, and recovery steps."
+    test: "tests/test_docs_contracts.py::test_operator_runbook_contains_required_sections"
+  - id: AC-2
+    description: "The runbook documents how to inspect health, stale index warnings, source errors, cost, and generated artifacts."
+    test: "tests/test_docs_contracts.py::test_operator_runbook_documents_health_checks"
+  - id: AC-3
+    description: "The runbook includes privacy and backup guidance for local SQLite, raw snapshots, reports, and notes."
+    test: "tests/test_docs_contracts.py::test_operator_runbook_documents_privacy_and_backup"
+
+Files:
+  - docs/OPERATOR_RUNBOOK.md
+  - tests/test_docs_contracts.py
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-8---operator-grade-production
+  - docs/IMPLEMENTATION_CONTRACT.md#local-first-data-hygiene
+
+## T36: Scheduled Run Support
+
+Owner:      codex
+Phase:      10
+Type:       none
+Depends-On: T35
+Status:     [ ]
+
+Objective: |
+  Add documented and testable support for scheduled local weekly runs without requiring a hosted service.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The project includes a systemd timer or cron template that runs the weekly command with environment-based configuration."
+    test: "tests/test_scheduled_run.py::test_scheduled_run_template_contains_required_command_and_env"
+  - id: AC-2
+    description: "The scheduled run writes logs and manifests under configured local directories without exposing secrets."
+    test: "tests/test_scheduled_run.py::test_scheduled_run_paths_are_local_and_secret_safe"
+  - id: AC-3
+    description: "The health command reports the timestamp and status of the last scheduled run when available."
+    test: "tests/test_scheduled_run.py::test_health_reports_last_scheduled_run"
+
+Files:
+  - deploy/demand-mvp-radar.service
+  - deploy/demand-mvp-radar.timer
+  - demand_mvp_radar/cli.py
+  - tests/test_scheduled_run.py
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/ARCHITECTURE.md#runtime-and-isolation-model
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-8---operator-grade-production
+
+## T37: Backup and Recovery Guide
+
+Owner:      codex
+Phase:      10
+Type:       docs
+Depends-On: T35
+Status:     [ ]
+
+Objective: |
+  Add backup and recovery guidance for SQLite databases, retrieval indexes, reports, raw snapshots, and private source exports.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/BACKUP_RECOVERY.md` documents backup targets, restore steps, and verification commands."
+    test: "tests/test_docs_contracts.py::test_backup_recovery_doc_contains_required_sections"
+  - id: AC-2
+    description: "The guide documents which files must remain ignored by git."
+    test: "tests/test_docs_contracts.py::test_backup_recovery_doc_lists_git_ignored_private_artifacts"
+  - id: AC-3
+    description: "The guide includes a failed-run recovery checklist."
+    test: "tests/test_docs_contracts.py::test_backup_recovery_doc_contains_failed_run_checklist"
+
+Files:
+  - docs/BACKUP_RECOVERY.md
+  - tests/test_docs_contracts.py
+
+Context-Refs:
+  - docs/IMPLEMENTATION_CONTRACT.md#local-first-data-hygiene
+
+## T38: Four-Run Readiness Review
+
+Owner:      codex
+Phase:      10
+Type:       docs
+Depends-On: T36, T37
+Status:     [ ]
+
+Objective: |
+  Define and run the readiness review for four weekly local runs before private beta.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/audit/PRODUCTION_READINESS_REVIEW.md` defines the four-run evidence checklist and readiness verdict."
+    test: "tests/test_docs_contracts.py::test_production_readiness_review_contains_four_run_checklist"
+  - id: AC-2
+    description: "The readiness checklist includes run success, source failures, retrieval metrics, decision count, cost, backup status, and privacy checks."
+    test: "tests/test_docs_contracts.py::test_production_readiness_review_covers_operational_metrics"
+  - id: AC-3
+    description: "The review explicitly gates private beta and SaaS work until personal weekly value is proven."
+    test: "tests/test_docs_contracts.py::test_production_readiness_review_gates_beta_and_saas"
+
+Files:
+  - docs/audit/PRODUCTION_READINESS_REVIEW.md
+  - tests/test_docs_contracts.py
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-9---private-beta-readiness
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-10---external-product-decision

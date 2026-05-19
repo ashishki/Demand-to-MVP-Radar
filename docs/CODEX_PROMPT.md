@@ -1,8 +1,8 @@
 # CODEX_PROMPT.md
 
-Version: 2.4
+Version: 2.5
 Date: 2026-05-19
-Phase: 5
+Phase: 6
 
 This file is the session handoff and state authority for Codex implementation roles.
 
@@ -20,7 +20,7 @@ This file is the session handoff and state authority for Codex implementation ro
 
 ## Current State
 
-- Phase: 5
+- Phase: 6
 - Baseline: 59 passing tests
 - Ruff: configured; `ruff check demand_mvp_radar/ tests/` and `ruff format --check demand_mvp_radar/ tests/` pass locally
 - Last CI: workflow configured; remote run not yet observed
@@ -39,12 +39,15 @@ This file is the session handoff and state authority for Codex implementation ro
 - Retrieval evaluation: `docs/retrieval_eval.md`
 - Tool-use evaluation: `docs/tool_eval.md`
 - Task-scoped context: read `Context-Refs` in `docs/tasks.md` before broad searching.
+- Personal-to-production roadmap: `docs/PERSONAL_TO_PRODUCTION_PLAN.md`
+- Source strategy: `docs/SOURCE_CATALOG.md`
+- AI development pack: `docs/AI_DEVELOPMENT_PACK.md`
 
 ---
 
 ## Next Task
 
-none — T01 through T18 complete
+T19: Operator Workflow Contract
 
 Before implementation, the orchestrator should hand Codex a narrow task digest inline:
 
