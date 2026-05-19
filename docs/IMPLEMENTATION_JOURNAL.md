@@ -42,3 +42,14 @@ Status: append-only retrieval surface. This file records durable handoff context
 - Baseline after: 0 passing tests (pre-implementation)
 - Decisions/evidence updated: D-009 and E-006
 - Notes for next agent: For T07, T09, T10, and T18, inspect only the mapped Dream Motif Interpreter files needed for the current task. Port patterns, not domain code or PostgreSQL/pgvector requirements.
+
+## 2026-05-19 - Codex-Only Workflow
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/prompts/ORCHESTRATOR.md`, `prompts/ORCHESTRATOR.md`, `prompts/STRATEGIST.md`, `docs/CODEX_PROMPT.md`, `docs/DECISION_LOG.md`, `.claude/commands/orchestrate.md`, hook compatibility scripts
+- Tests: documentation and workflow-script validation only; no application code exists yet.
+- Baseline before: 0 passing tests (pre-implementation)
+- Baseline after: 0 passing tests (pre-implementation)
+- Decisions/evidence updated: D-010
+- Notes for next agent: Execute orchestrator roles directly in the current Codex session. Do not use Claude Code as an outer runner and do not call `codex exec` from inside Codex.

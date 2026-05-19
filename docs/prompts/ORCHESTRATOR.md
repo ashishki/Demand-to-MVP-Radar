@@ -23,38 +23,24 @@ Skipping any of these is a violation of the Implementation Contract and must be 
 
 ## How to use
 
-Paste this entire file as a prompt to Claude Code. No variables to fill at runtime.
+Run this file in the current Codex session. No Claude Code layer and no nested `codex exec` subprocess are used.
 The orchestrator reads all state from `docs/CODEX_PROMPT.md` and `docs/tasks.md` at runtime.
 
 ---
 
-## Tool split — hard rule
+## Codex-Only Execution Model
 
-| Role | Tool | Why |
+This project is run entirely by Codex in the current session. There is no Claude Code orchestrator layer, and Codex must not call `codex exec` to spawn another Codex process.
+
+| Role | Execution | Why |
 |---|---|---|
-| Implementer / fixer | `Bash` → `codex exec -s workspace-write` | writes files, runs tests |
-| Light reviewer | `Agent tool` (general-purpose) | fast checklist, no docs produced |
-| Deep review agents (META/ARCH/CODE/CONSOLIDATED) | `Agent tool` (general-purpose) | reasoning + file analysis |
-| Strategy reviewer | `Agent tool` (general-purpose) | architectural reasoning |
+| Orchestrator | Current Codex session | reads state, chooses next action, updates docs |
+| Implementer / fixer | Current Codex session | edits files directly and runs tests/lint with shell tools |
+| Light reviewer | Current Codex session | runs the checklist before marking a task complete |
+| Deep review roles | Current Codex session, sequentially | META -> ARCH -> CODE -> CONSOLIDATED reasoning without external agents |
+| Strategy reviewer | Current Codex session | phase-boundary alignment check |
 
-<!-- codex exec -s workspace-write is the implementation agent invocation.
-     Default and recommended value:
-     - Codex CLI: codex exec -s workspace-write
-
-     This playbook assumes application code is written by Codex via Bash -> codex exec,
-     not by Claude subagents. Replace this placeholder only if your environment requires
-     a wrapper around the same Codex CLI path.
-
-     The command must accept a prompt string as its final argument, be able to read/write
-     files under /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar, and execute shell commands (test runner, linter). -->
-<!-- See reference/CODEX_CLI.md for Codex CLI invocation patterns, known sandbox
-     limitations (async test hangs, heavy deps), and prompt engineering guidelines. -->
-
-**Implementer invocation — always via variable, never stdin:**
-```bash
-PROMPT=$(cat /tmp/orchestrator_codex_prompt.txt)
-cd /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar && codex exec -s workspace-write "$PROMPT"
-```
+**Execution rule:** when a step says to implement, fix, review, or consolidate, perform that role directly in this Codex session using the local tools. Do not write a prompt to `/tmp/orchestrator_codex_prompt.txt` for a subprocess, and do not run `codex exec`.
 
 ---
 
@@ -62,8 +48,8 @@ cd /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar && codex e
 
 | Tier | When | Cost | Output |
 |---|---|---|---|
-| **Light** | After every 1-2 tasks within a phase | ~1 agent call | Pass / issues list → implementer fixes |
-| **Deep** | Phase boundary only (all phase tasks done) | 4 agent calls + archive | REVIEW_REPORT + tasks.md + CODEX_PROMPT patches |
+| **Light** | After every 1-2 tasks within a phase | ~1 role pass | Pass / issues list → implementer fixes |
+| **Deep** | Phase boundary only (all phase tasks done) | 4 sequential role passes + archive | REVIEW_REPORT + tasks.md + CODEX_PROMPT patches |
 
 **Deep review also triggers if:**
 - Last task touched security-critical code: auth, middleware, RLS, tenant isolation, secrets
@@ -90,10 +76,10 @@ cd /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar && codex e
 
 You are the **Orchestrator** for the Demand-to-MVP Radar project.
 
-Your job: drive the full development cycle autonomously.
-Read current state → decide action → spawn agents → update state → loop.
+Your job: drive the full development cycle in one Codex session.
+Read current state → decide action → switch into the required role → update state → loop.
 
-You do NOT write application code or review code yourself.
+You may write application code during implementation/fix steps and review code during review steps, but keep the role boundary explicit in the session notes.
 Project root: `/home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar`
 
 ---
@@ -170,7 +156,7 @@ Check: does `docs/audit/PHASE1_AUDIT.md` exist?
 
 If Phase 1 validation is needed:
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 ```
 You are the Phase 1 Validator for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
@@ -294,7 +280,7 @@ For each active profile, check whether the next task carries a profile deep-revi
 
 **Skip if not at a true phase boundary (Step 0-C).**
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 
 ```
 You are the Strategy Reviewer for Demand-to-MVP Radar.
@@ -318,9 +304,9 @@ Read `docs/audit/STRATEGY_NOTE.md`.
 
 For each FIX-N item in order:
 
-Write to `/tmp/orchestrator_codex_prompt.txt`:
+Use this role prompt directly in the current Codex session:
 ```
-You are the implementation agent for Demand-to-MVP Radar.
+You are the implementation role for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
 
 Use the prompt as the primary working context. Do not broad-read project docs unless this fix is ambiguous or crosses a risky boundary.
@@ -343,11 +329,7 @@ Test added: [file:function]
 Baseline: [N passed, N skipped, N failed]
 ```
 
-Execute:
-```bash
-PROMPT=$(cat /tmp/orchestrator_codex_prompt.txt)
-cd /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar && codex exec -s workspace-write "$PROMPT"
-```
+Execute directly in the current Codex session. Do not call `codex exec`; edit files with local tools, run the stated checks, and return the required result block.
 
 - `DONE` + 0 failures → next FIX item
 - Any failure → mark `[!]` in tasks.md, stop, report to user
@@ -360,9 +342,9 @@ After all fixes done → Step 3.
 
 Read the full task entry from `docs/tasks.md` (AC list + file scope).
 
-Write to `/tmp/orchestrator_codex_prompt.txt`:
+Use this role prompt directly in the current Codex session:
 ```
-You are the implementation agent for Demand-to-MVP Radar.
+You are the implementation role for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
 
 Use this prompt as the primary working context. Do not start by reading full project documents unless the task is architecture-shaping, security-sensitive, ambiguous, or explicitly marked as needing broader retrieval.
@@ -413,12 +395,7 @@ Baseline after:  [N passed, N skipped, N failed]
 AC status: [AC-1: PASS | FAIL, ...]
 ```
 
-Execute:
-```bash
-export CURRENT_TASK="[T##]"   # replace [T##] with the actual task ID (e.g. T07)
-PROMPT=$(cat /tmp/orchestrator_codex_prompt.txt)
-cd /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar && codex exec -s workspace-write "$PROMPT"
-```
+Execute directly in the current Codex session. Set the active task in your session notes as `[T##]`; do not call `codex exec`. Edit files with local tools, run the stated checks, and return the required result block.
 
 - `DONE` + all AC PASS + 0 failures:
   → **Post-implementation tag check:** compare "Files modified" against capability signal patterns (same table as Step 0-E). If the modified files match a profile that differs from the task's `Type:` tag:
@@ -470,14 +447,14 @@ Evaluation trigger tags (check the `Type:` field of the current task in `docs/ta
 
 **Matching tag found** → verify evaluation before Step 4.
 
-The Orchestrator does NOT run evaluation. The implementation agent (Codex) is responsible for updating the evaluation artifact as part of its post-task protocol. Step 3.5 is a verification-only step.
+The Orchestrator does NOT run evaluation. The implementation role in the current Codex session is responsible for updating the evaluation artifact as part of its post-task protocol. Step 3.5 is a verification-only step.
 
 1. Read `docs/CODEX_PROMPT.md §Evaluation State` — was the Last Evaluation entry updated for this task?
 2. If yes: read the evaluation artifact (e.g. `docs/retrieval_eval.md`) to confirm results are recorded.
 
 If evaluation was **NOT** performed (Codex skipped it):
 - Do NOT proceed to Step 4.
-- Send a focused remediation prompt back to the same implementation agent (not a new full agent):
+- Re-enter the implementation role with a focused remediation prompt:
   ```
   Task [T-NN] is incomplete. The task tag requires evaluation.
   Read docs/IMPLEMENTATION_CONTRACT.md §Retrieval Evaluation Gate (or relevant profile gate).
@@ -491,7 +468,7 @@ If evaluation was **NOT** performed (Codex skipped it):
 
   Return IMPLEMENTATION_RESULT: DONE when complete.
   ```
-- Re-enter Step 3.5 after the agent responds.
+- Re-enter Step 3.5 after the remediation is complete.
 
 If evaluation was **performed**:
 - Verify `Eval Source` field is present and non-blank in both the evaluation artifact entry and in `docs/CODEX_PROMPT.md §Evaluation State §Last Evaluation`. If absent or blank → treat as "evaluation NOT performed" (see remediation prompt below).
@@ -514,9 +491,9 @@ Choose tier based on Step 0 assessment.
 
 #### TIER 1: Light Review (within-phase, non-security tasks)
 
-Single agent. Fast. No files produced.
+Single role pass. Fast. No files produced.
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 
 ```
 You are the Light Reviewer for Demand-to-MVP Radar.
@@ -593,7 +570,7 @@ Parse result:
 
 **Step 4.0 — META**
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 ```
 You are the META Analyst for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
@@ -607,7 +584,7 @@ Verify `docs/audit/META_ANALYSIS.md` written.
 
 **Step 4.1 — ARCH**
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 ```
 You are the Architecture Reviewer for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
@@ -621,7 +598,7 @@ Verify `docs/audit/ARCH_REPORT.md` written.
 
 **Step 4.2 — CODE**
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 ```
 You are the Code Reviewer for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
@@ -637,9 +614,9 @@ Capture full findings output — pass to Step 4.3.
 
 **Step 4.3 — CONSOLIDATED**
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 ```
-You are the Consolidation Agent for Demand-to-MVP Radar.
+You are the Consolidation role for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
 Read and execute docs/audit/PROMPT_3_CONSOLIDATED.md exactly.
 
@@ -670,7 +647,7 @@ Done:
 
 **Light review issues:**
 
-Write to `/tmp/orchestrator_codex_prompt.txt`:
+Use this role prompt directly in the current Codex session:
 ```
 You are the Fixer for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
@@ -690,11 +667,7 @@ FIXES_RESULT: DONE | PARTIAL
 Baseline: [N passed, N skipped, N failed]
 ```
 
-Execute:
-```bash
-PROMPT=$(cat /tmp/orchestrator_codex_prompt.txt)
-cd /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar && codex exec -s workspace-write "$PROMPT"
-```
+Execute directly in the current Codex session. Do not call `codex exec`; edit files with local tools, run the stated checks, and return the required result block.
 
 Re-run light reviewer on fixed files only.
 - PASS → Step 7
@@ -704,9 +677,9 @@ Re-run light reviewer on fixed files only.
 
 **Deep review P0:**
 
-Write to `/tmp/orchestrator_codex_prompt.txt`:
+Use this role prompt directly in the current Codex session:
 ```
-You are the Fix agent for Demand-to-MVP Radar.
+You are the Fixer for Demand-to-MVP Radar.
 Project root: /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar
 Read: docs/audit/REVIEW_REPORT.md (P0 section), docs/CODEX_PROMPT.md (Fix Queue), docs/IMPLEMENTATION_CONTRACT.md
 
@@ -719,11 +692,7 @@ FIXES_RESULT: DONE | PARTIAL
 Baseline: [N passed, N skipped, N failed]
 ```
 
-Execute:
-```bash
-PROMPT=$(cat /tmp/orchestrator_codex_prompt.txt)
-cd /home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar && codex exec -s workspace-write "$PROMPT"
-```
+Execute directly in the current Codex session. Do not call `codex exec`; edit files with local tools, run the stated checks, and return the required result block.
 
 Re-run Steps 4.2 + 4.3 (targeted at fixed files).
 - P0 resolved → Step 6
@@ -755,7 +724,7 @@ Fix Queue: [N items in CODEX_PROMPT.md]
 
 Only runs after a completed deep review cycle.
 
-Use **Agent tool** (`general-purpose`):
+Run this role in the current Codex session:
 
 ```
 You are the Doc Updater for Demand-to-MVP Radar.
@@ -767,7 +736,7 @@ Read:
 - docs/audit/REVIEW_REPORT.md — what changed, what is current baseline
 - README.md — check: Current Status, Features table, Tests table, Repository layout
 - docs/ARCHITECTURE.md — check: any new files, components, or changed data flows
-- docs/CODEX_PROMPT.md — already patched by Consolidation Agent; verify version bump
+- docs/CODEX_PROMPT.md — already patched by the Consolidation role; verify version bump
 
 Update each file where facts are stale:
 1. README.md — phase number, test baseline, feature list, file tree
@@ -777,7 +746,7 @@ Update each file where facts are stale:
 Rules:
 - Change only what is factually wrong or missing. No rewrites.
 - Every change must be traceable to something in REVIEW_REPORT.md or the implementer completion report.
-- Do not update docs/tasks.md — that was already patched by Consolidation Agent.
+- Do not update docs/tasks.md — that was already patched by the Consolidation role.
 - For each active profile with work completed this phase, update its state block in docs/CODEX_PROMPT.md:
   - `## RAG State` (RAG = ON): refresh retrieval baseline, open retrieval findings, index schema version, pending reindex actions. If retrieval behavior changed, note whether docs/retrieval_eval.md was updated.
     Also refresh retrieval mode (`text-only` or `multimodal`), active modalities, and any preview-model fallback note if applicable.
@@ -868,28 +837,28 @@ Stop when:
   ```
   Rate limit hit. Resume at: [HH:MM UTC]
   Next: [T## — Title]
-  Run: paste ORCHESTRATOR.md into Claude Code
+  Run: ask Codex to execute `docs/prompts/ORCHESTRATOR.md`
   ```
 
 ---
 
 ### Orchestrator Rules
 
-1. Never write application code — only the implementation agent does that
-2. Never touch source, test, migration, or eval directories directly
-3. Read any file freely to make decisions
-4. Write `docs/tasks.md`, `docs/audit/AUDIT_INDEX.md`, archive files freely
-5. Deep review steps are strictly sequential — never parallelize
-6. Implementation agent non-zero exit or empty output → mark `[!]`, stop, report
-7. Stateless across sessions — re-reads everything from files on every run
-8. Budget-aware — if a subagent returns BLOCKED citing iteration or context budget, treat it as a normal partial completion: commit what is done, add remaining work to Fix Queue with a `FQ-NN: [T##] Budget-interrupted — [what remains]` entry, continue to next step
-9. Provider fallback — on transient LLM or tool failure (timeout, HTTP 5xx, "overloaded"), retry once after 30 s before marking blocked; on second consecutive failure, save checkpoint, print `PROVIDER_FAILURE: [error text]`, stop cleanly so the user can resume
+1. Do not call `codex exec` or spawn a nested Codex process.
+2. Keep role boundaries explicit: orchestrate, implement, review, consolidate, or document-update one role at a time.
+3. Read any file freely to make decisions, but keep implementation reads scoped to the active task.
+4. During implementation/fix steps, edit only the files in task scope unless a blocker requires a documented scope expansion.
+5. During review/consolidation steps, do not silently change application code; write findings and state updates first, then enter a fix step if needed.
+6. Deep review steps are strictly sequential — never parallelize.
+7. Stateless across sessions — re-read current state from files on every run.
+8. Budget-aware — if context or iteration budget becomes tight, finish the current file, update state, add remaining work to Fix Queue with a `FQ-NN: [T##] Budget-interrupted — [what remains]` entry, and stop cleanly.
+9. Provider fallback — on transient LLM or tool failure (timeout, HTTP 5xx, "overloaded"), retry once after 30 s before marking blocked; on second consecutive failure, save checkpoint, print `PROVIDER_FAILURE: [error text]`, stop cleanly so the user can resume.
 
 ---
 
 ### Resuming
 
-Re-paste this file. Orchestrator picks up from current state in files.
+Ask Codex to execute this file again. The orchestrator picks up from current state in files.
 
 - Force re-review: reset tasks to `[ ]` in tasks.md
 - Skip review this run: start with "Run orchestrator, skip review this iteration."
@@ -912,45 +881,15 @@ _Ref: `docs/DEVELOPMENT_METHOD.md` · `docs/audit/review_pipeline.md` · `docs/I
 
 ---
 
-## Adapting for your project
+## Project-Specific Execution Notes
 
-Replace every `{{PLACEHOLDER}}` before using this template. The table below lists each one, what it means, and an example value.
+This file has already been adapted for Demand-to-MVP Radar. The active execution model is Codex-only:
 
-| Placeholder | What it is | Example |
-|---|---|---|
-| `Demand-to-MVP Radar` | Human-readable project name used in agent system prompts | `my-api-service` |
-| `/home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar` | Absolute path to the repository root on disk | `/home/alice/my-api-service` |
-| `codex exec -s workspace-write` | The implementation agent invocation — see note below | `codex exec -s workspace-write` |
-| `no external notification configured` | Optional out-of-band notification mechanism — see note below | Telegram bot, Slack webhook, or omit |
-
-**`codex exec -s workspace-write` — implementation agent options:**
-
-The orchestrator expects a command that:
-1. Accepts a prompt string as its final argument (via shell variable, not stdin)
-2. Can read and write files under `/home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar`
-3. Can execute shell commands (to run your test suite and linter)
-4. Returns a non-zero exit code on failure
-
-Common choices:
-
-| Option | Invocation |
-|---|---|
-| Codex CLI | `codex exec -s workspace-write` |
-| Claude Code subagent | Use the `Agent tool` with `general-purpose` instead of the Bash block; adapt Steps 2, 3, and 5 accordingly |
-| Any sandboxed executor | Replace the Bash block with whatever invocation your tool requires |
-
-Also replace `pytest tests/ -q` and `ruff check demand_mvp_radar/ tests/` in Steps 2, 3, and 5 with the actual commands for your project (e.g. `pytest tests/ -q` and `ruff check app/ tests/`).
-
-**`no external notification configured` — notification options:**
-
-Notifications fire at two points: phase completion (Step 6.6) and rate limit hits (Step 7). They are entirely optional — if you have no notification channel, remove the delivery block in Step 6.6 and the rate limit notification in Step 7. The full phase report is always written to `docs/audit/PHASE_REPORT_LATEST.md` regardless.
-
-| Channel | What to do |
-|---|---|
-| Telegram | Set `NOTIFICATION_TOKEN` (bot token) and `NOTIFICATION_TARGET` (chat ID) env vars; use the curl block in Step 6.6 as shown |
-| Slack | Replace the curl block with a Slack Incoming Webhook POST to your webhook URL |
-| Desktop | Replace with `notify-send "title" "body"` (Linux) or `osascript -e 'display notification ...'` (macOS) |
-| None | Remove the delivery blocks entirely |
+- run this prompt in the current Codex session
+- do not call `codex exec` from inside Codex
+- do not use Claude Code or `Agent tool` assumptions
+- run implementation, review, and doc-update roles sequentially in the same session
+- use `pytest tests/ -q` and `ruff check demand_mvp_radar/ tests/` once the package skeleton exists
 
 **Docs and audit files this orchestrator expects to exist:**
 
@@ -958,15 +897,6 @@ Notifications fire at two points: phase completion (Step 6.6) and rate limit hit
 |---|---|
 | `docs/CODEX_PROMPT.md` | Baseline, Fix Queue, open findings, current phase, version |
 | `docs/tasks.md` | Full task graph with phases and AC lists |
-| `docs/IMPLEMENTATION_CONTRACT.md` | Rules A–I that every implementer must follow |
-| `docs/ARCHITECTURE.md` | System architecture reference |
-| `docs/dev-standards.md` | Coding and style standards |
-| `docs/audit/AUDIT_INDEX.md` | Running index of all review cycles and archive entries |
-| `docs/audit/PROMPT_0_META.md` | META analyst prompt |
-| `docs/audit/PROMPT_1_ARCH.md` | Architecture reviewer prompt |
-| `docs/audit/PROMPT_2_CODE.md` | Code reviewer prompt |
-| `docs/audit/PROMPT_3_CONSOLIDATED.md` | Consolidation agent prompt |
-| `docs/prompts/PROMPT_S_STRATEGY.md` | Strategy reviewer prompt |
-| `docs/archive/` | Directory where phase review archives are written |
-
-Create these files for your project before running the orchestrator for the first time. The companion review prompts (`PROMPT_0_META.md` through `PROMPT_3_CONSOLIDATED.md` and `PROMPT_S_STRATEGY.md`) are available as separate templates in this playbook.
+| `docs/IMPLEMENTATION_CONTRACT.md` | Immutable implementation rules |
+| `docs/ARCHITECTURE.md` | System design and active profile declarations |
+| `docs/audit/` | Review prompts and audit artifacts |

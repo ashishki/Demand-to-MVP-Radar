@@ -1,3 +1,5 @@
-Read `docs/prompts/ORCHESTRATOR.md` in full, then execute it exactly as written, starting from Step 0.
+Legacy compatibility note: this project is operated by Codex, not Claude Code.
 
-Before starting Step 0, replace the literal string `{{PROJECT_ROOT}}` in your working context with the absolute path of the current working directory (run `pwd` to get it).
+For the active workflow, ask Codex to read `docs/prompts/ORCHESTRATOR.md` in full and execute it directly in the current Codex session, starting from Step 0.
+
+Do not wrap the orchestrator in Claude Code and do not call `codex exec` from inside Codex.

@@ -1,5 +1,5 @@
 {
-  "_comment": "Copy this file to .claude/settings.json in your project root. Hook scripts must be executable: chmod +x hooks/*.sh",
+  "_comment": "Legacy Claude Code compatibility only. Active project workflow is Codex-only; do not call codex exec from inside Codex. Hook scripts must be executable: chmod +x hooks/*.sh",
   "hooks": {
     "PreToolUse": [
       {

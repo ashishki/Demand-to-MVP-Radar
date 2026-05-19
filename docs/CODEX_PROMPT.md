@@ -4,7 +4,16 @@ Version: 1.0
 Date: 2026-05-19
 Phase: 1
 
-This file is the session handoff and state authority for implementation agents.
+This file is the session handoff and state authority for Codex implementation roles.
+
+---
+
+## Execution Model
+
+- Active executor: current Codex session only.
+- Claude Code layer: not used.
+- Nested Codex subprocesses: forbidden. Do not call `codex exec` from inside Codex.
+- Orchestration, implementation, review, consolidation, and doc updates are performed sequentially in the same Codex session using local tools.
 
 ---
 
@@ -74,7 +83,7 @@ none
 
 ## Summary State
 
-Bootstrap package generated on 2026-05-19. Implementation has not started. The first implementation task is T01. Dream Motif Interpreter is available as a RAG implementation pattern reference through `docs/IMPLEMENTATION_REFERENCE_MAP.md`.
+Bootstrap package generated on 2026-05-19. Implementation has not started. The first implementation task is T01. Dream Motif Interpreter is available as a RAG implementation pattern reference through `docs/IMPLEMENTATION_REFERENCE_MAP.md`. The active workflow is Codex-only: no Claude Code layer and no nested `codex exec` calls.
 
 ---
 
@@ -180,13 +189,14 @@ none
 2. Read the full task definition in `docs/tasks.md` before writing code.
 3. Read all Depends-On tasks to understand interface contracts.
 4. Read task `Context-Refs` and relevant continuity artifacts when the task depends on prior decisions, proof, retrieval semantics, tool semantics, or findings.
-5. Run `pytest -q` to capture the current baseline before making changes.
-6. Run `ruff check` before implementation once ruff is configured. If ruff is not configured yet, implement T01/T02 first and record that state.
-7. Write tests before or alongside implementation. Every acceptance criterion has a passing test.
-8. Update this file at every phase boundary and after capability evaluation tasks.
-9. Commit with format `type(scope): description`; one logical change per commit.
-10. When done, return `IMPLEMENTATION_RESULT: DONE` with baseline before and after, files changed, tests added, and AC status.
-11. When blocked, return `IMPLEMENTATION_RESULT: BLOCKED` with the exact blocker and the smallest next action needed.
+5. Execute work directly in the current Codex session; do not call `codex exec` or spawn a nested Codex process.
+6. Run `pytest -q` to capture the current baseline before making changes.
+7. Run `ruff check` before implementation once ruff is configured. If ruff is not configured yet, implement T01/T02 first and record that state.
+8. Write tests before or alongside implementation. Every acceptance criterion has a passing test.
+9. Update this file at every phase boundary and after capability evaluation tasks.
+10. Commit with format `type(scope): description`; one logical change per commit.
+11. When done, return `IMPLEMENTATION_RESULT: DONE` with baseline before and after, files changed, tests added, and AC status.
+12. When blocked, return `IMPLEMENTATION_RESULT: BLOCKED` with the exact blocker and the smallest next action needed.
 
 ---
 
