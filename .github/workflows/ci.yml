@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: Tests + Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt -e .
+
+      - name: Lint
+        run: ruff check demand_mvp_radar/ tests/
+
+      - name: Format check
+        run: ruff format --check demand_mvp_radar/ tests/
+
+      - name: Tests
+        run: python -m pytest tests/ -q --tb=short
