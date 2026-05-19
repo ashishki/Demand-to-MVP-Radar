@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "demand-mvp-radar"
+version = "0.1.0"
+description = "Local-first demand intelligence pipeline for evidence-backed MVP briefs."
+requires-python = ">=3.12"
+readme = "README.md"
+dependencies = []
+
+[project.scripts]
+demand-mvp-radar = "demand_mvp_radar.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["demand_mvp_radar*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["demand_mvp_radar", "tests"]
+include = ["demand_mvp_radar/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

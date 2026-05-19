@@ -1,0 +1,19 @@
+{
+  "query": "telegram lead follow up reminders",
+  "provider": "saved-serp",
+  "captured_at": "2026-05-18T10:00:00+00:00",
+  "results": [
+    {
+      "rank": 1,
+      "title": "Telegram CRM follow up workflow",
+      "url": "https://example.com/telegram-crm",
+      "snippet": "Operators ask for lightweight lead reminders from chat."
+    },
+    {
+      "rank": 2,
+      "title": "Lead reminder automation",
+      "url": "https://example.com/reminders",
+      "snippet": "Small teams need follow-up reminders without a full CRM."
+    }
+  ]
+}

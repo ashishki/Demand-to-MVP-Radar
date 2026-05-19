@@ -1,0 +1,18 @@
+[
+  {
+    "id": "msg-001",
+    "captured_at": "2026-05-18T10:00:00+00:00",
+    "url": "https://t.me/example/1",
+    "text": "Founders keep asking for a tiny CRM that turns Telegram leads into follow-up reminders."
+  },
+  {
+    "id": "msg-002",
+    "captured_at": "2026-05-18T11:00:00+00:00",
+    "url": "https://t.me/example/2",
+    "text": "Another operator wants a simple tool to summarize store reviews into product gaps."
+  },
+  {
+    "id": "bad-003",
+    "captured_at": "2026-05-18T12:00:00+00:00"
+  }
+]

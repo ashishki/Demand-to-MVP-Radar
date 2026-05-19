@@ -1,0 +1,9 @@
+{
+  "listing_id": "app-001",
+  "store": "gpt-store",
+  "title": "Review Miner",
+  "description": "Summarizes app reviews into product gaps.",
+  "rating": 4.6,
+  "review_count": 128,
+  "captured_at": "2026-05-18T12:00:00+00:00"
+}
