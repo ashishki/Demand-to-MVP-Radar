@@ -76,6 +76,9 @@ Initial slices to add during implementation:
 | Date | Task | Corpus Version | Eval Source | hit@3 | citation_precision | no_answer_accuracy | answer_faithfulness | retrieval_ms | Notes |
 |------|------|----------------|-------------|-------|--------------------|--------------------|---------------------|--------------|-------|
 | 2026-05-19 | bootstrap | n/a | not yet run - dataset initialized before implementation | n/a | n/a | n/a | n/a | n/a | Baseline will be established by T09/T10. |
+| 2026-05-19 | T09 | corpus-t09-v1 | `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_corpus.json, run 2026-05-19` | n/a | n/a | n/a | n/a | n/a | chunk_count=3; index_schema_version=retrieval-index-v1; embedding_model=local-hash-embedding-v1 |
+| 2026-05-19 | T10 | corpus-t10-v1 | `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_queries.json, run 2026-05-19` | 1.00 | 1.00 | 1.00 | 1.00 | 2ms | query_count=4; index_schema_version=retrieval-index-v1; embedding_model=local-hash-embedding-v1 |
+| 2026-05-19 | T18 | corpus-t10-v1 | `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_queries.json, run 2026-05-19` | 1.00 | 1.00 | 1.00 | 1.00 | 2ms | final_baseline=true; query_count=4; index_schema_version=retrieval-index-v1; embedding_model=local-hash-embedding-v1 |
 
 ---
 

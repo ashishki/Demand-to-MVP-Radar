@@ -1,0 +1,113 @@
+{
+  "run_id": "run-retrieval-query-001",
+  "corpus_version": "corpus-t10-v1",
+  "as_of": "2026-05-19T00:00:00+00:00",
+  "evidence": [
+    {
+      "source_type": "telegram",
+      "source_id": "msg-101",
+      "source_url": "https://t.me/operators/101",
+      "captured_at": "2026-05-18T10:00:00+00:00",
+      "title": "Spreadsheet formula pain",
+      "snippet": "Operators ask for spreadsheet formula helpers.",
+      "normalized_text": "Operators repeatedly ask for spreadsheet formula helpers that explain Excel formulas and fix broken spreadsheet sheets.",
+      "content_hash": "hash-rag-query-101",
+      "source_fingerprint": "telegram:msg-101:hash-rag-query-101"
+    },
+    {
+      "source_type": "serp",
+      "source_id": "serp-102",
+      "source_url": "https://example.com/excel-formula-helper",
+      "captured_at": "2026-05-18T11:00:00+00:00",
+      "title": "Excel formula search intent",
+      "snippet": "Searches show demand for Excel formula helper tools.",
+      "normalized_text": "Search snippets show Excel formula helper demand from users who need spreadsheet formulas explained and repaired.",
+      "content_hash": "hash-rag-query-102",
+      "source_fingerprint": "serp:serp-102:hash-rag-query-102"
+    },
+    {
+      "source_type": "serp",
+      "source_id": "serp-201",
+      "source_url": "https://example.com/prerender-seo",
+      "captured_at": "2026-05-18T12:00:00+00:00",
+      "title": "Prerender SEO pain",
+      "snippet": "Teams search for prerendering fixes.",
+      "normalized_text": "Indie teams search for prerender SEO rendering fixes because bots cannot index JavaScript-heavy pages.",
+      "content_hash": "hash-rag-query-201",
+      "source_fingerprint": "serp:serp-201:hash-rag-query-201"
+    },
+    {
+      "source_type": "store",
+      "source_id": "store-301",
+      "source_url": "https://example.com/review-miner",
+      "captured_at": "2026-05-18T13:00:00+00:00",
+      "title": "Review mining",
+      "snippet": "Store reviews mention product gaps.",
+      "normalized_text": "Store reviews mention product gap summaries, review clustering, and workflows for finding missing features.",
+      "content_hash": "hash-rag-query-301",
+      "source_fingerprint": "store:store-301:hash-rag-query-301"
+    },
+    {
+      "source_type": "manual_note",
+      "source_id": "note-401",
+      "source_url": null,
+      "captured_at": "2026-05-18T14:00:00+00:00",
+      "title": "Video podcast note without link",
+      "snippet": "A private note mentions video to podcast conversion.",
+      "normalized_text": "A private note says users want YouTube video to podcast conversion but no source link is available.",
+      "content_hash": "hash-rag-query-401",
+      "source_fingerprint": "manual_note:note-401:hash-rag-query-401"
+    },
+    {
+      "source_type": "forum",
+      "source_id": "forum-501",
+      "source_url": "https://example.com/old-pdf-converter",
+      "captured_at": "2024-01-01T09:00:00+00:00",
+      "title": "Old PDF converter mention",
+      "snippet": "Old forum post mentions PDF converter demand.",
+      "normalized_text": "Old forum post mentions PDF converter demand and document workflow automation.",
+      "content_hash": "hash-rag-query-501",
+      "source_fingerprint": "forum:forum-501:hash-rag-query-501"
+    }
+  ],
+  "queries": [
+    {
+      "id": "Q01",
+      "query": "Excel formula helper demand",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://t.me/operators/101",
+        "https://example.com/excel-formula-helper"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 3
+    },
+    {
+      "id": "Q02",
+      "query": "prerender SEO rendering pain",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://example.com/prerender-seo"
+      ],
+      "min_independent_sources": 1,
+      "top_k": 3
+    },
+    {
+      "id": "Q06",
+      "query": "unsupported medical diagnosis automation",
+      "expected_status": "insufficient_evidence",
+      "expected_source_urls": [],
+      "min_independent_sources": 2,
+      "top_k": 3
+    },
+    {
+      "id": "Q09",
+      "query": "PDF converter demand",
+      "expected_status": "insufficient_evidence",
+      "expected_source_urls": [],
+      "min_independent_sources": 1,
+      "top_k": 3,
+      "max_age_days": 365
+    }
+  ]
+}

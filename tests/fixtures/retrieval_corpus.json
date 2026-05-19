@@ -1,0 +1,38 @@
+{
+  "run_id": "run-retrieval-001",
+  "evidence": [
+    {
+      "source_type": "telegram",
+      "source_id": "msg-001",
+      "source_url": "https://t.me/example/1",
+      "captured_at": "2026-05-18T10:00:00+00:00",
+      "title": "Spreadsheet formula pain",
+      "snippet": "Operators ask for spreadsheet formula helpers.",
+      "normalized_text": "Operators repeatedly ask for spreadsheet formula helpers that explain Excel formulas and fix broken sheets.",
+      "content_hash": "hash-rag-001",
+      "source_fingerprint": "telegram:msg-001:hash-rag-001"
+    },
+    {
+      "source_type": "serp",
+      "source_id": "serp-001",
+      "source_url": "https://example.com/prerender",
+      "captured_at": "2026-05-18T11:00:00+00:00",
+      "title": "Prerender SEO pain",
+      "snippet": "Teams search for prerendering fixes.",
+      "normalized_text": "Indie teams search for prerender and SEO rendering fixes because bots cannot index JavaScript-heavy pages.",
+      "content_hash": "hash-rag-002",
+      "source_fingerprint": "serp:serp-001:hash-rag-002"
+    },
+    {
+      "source_type": "store",
+      "source_id": "store-001",
+      "source_url": "https://example.com/review-miner",
+      "captured_at": "2026-05-18T12:00:00+00:00",
+      "title": "Review mining",
+      "snippet": "Store reviews mention product gaps.",
+      "normalized_text": "Store metadata and reviews mention product gap summaries, review clustering, and workflows for finding missing features.",
+      "content_hash": "hash-rag-003",
+      "source_fingerprint": "store:store-001:hash-rag-003"
+    }
+  ]
+}
