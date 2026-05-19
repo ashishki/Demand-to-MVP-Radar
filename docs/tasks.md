@@ -15,6 +15,7 @@ Business goal: create a runnable Python project with CI, smoke tests, configurat
 
 Owner:      codex
 Phase:      1
+Status:     [x]
 Type:       none
 Depends-On: none
 
@@ -59,6 +60,7 @@ Notes: |
 
 Owner:      codex
 Phase:      1
+Status:     [x]
 Type:       none
 Depends-On: T01
 
@@ -93,6 +95,7 @@ Notes: |
 
 Owner:      codex
 Phase:      1
+Status:     [x]
 Type:       none
 Depends-On: T01, T02
 
@@ -127,6 +130,7 @@ Notes: |
 
 Owner:      codex
 Phase:      1
+Status:     [x]
 Type:       none
 Depends-On: T03
 
@@ -166,6 +170,7 @@ Business goal: ingest source evidence into durable, idempotent local storage wit
 
 Owner:      codex
 Phase:      2
+Status:     [x]
 Type:       none
 Depends-On: T04
 
@@ -201,6 +206,7 @@ Notes: |
 
 Owner:      codex
 Phase:      2
+Status:     [x]
 Type:       tool:schema
 Depends-On: T05
 
@@ -236,6 +242,7 @@ Notes: |
 
 Owner:      codex
 Phase:      2
+Status:     [x]
 Type:       none
 Depends-On: T05, T06
 
@@ -271,6 +278,7 @@ Notes: |
 
 Owner:      codex
 Phase:      2
+Status:     [x]
 Type:       tool:call
 Depends-On: T06, T07
 
@@ -315,6 +323,7 @@ Business goal: build a text-only evidence corpus, evaluate retrieval, and produc
 
 Owner:      codex
 Phase:      3
+Status:     [x]
 Type:       rag:ingestion
 Depends-On: T05, T07, T08
 
@@ -361,6 +370,7 @@ Owner:      codex
 Phase:      3
 Type:       rag:query
 Depends-On: T09
+Status:     [x]
 
 Objective: |
   Implement query-time retrieval, metadata filtering, evidence packet assembly, and the required `insufficient_evidence` response.
@@ -402,6 +412,7 @@ Owner:      codex
 Phase:      3
 Type:       none
 Depends-On: T05, T10
+Status:     [x]
 
 Objective: |
   Group related evidence into stable opportunity candidates by normalized pain, workflow, audience, and acquisition channel.
@@ -440,6 +451,7 @@ Owner:      codex
 Phase:      4
 Type:       none
 Depends-On: T11
+Status:     [x]
 
 Objective: |
   Implement deterministic opportunity scoring, confidence bands, threshold-based recommendations, and score explanations.
@@ -472,6 +484,7 @@ Owner:      codex
 Phase:      4
 Type:       tool:call
 Depends-On: T06, T10, T12
+Status:     [x]
 
 Objective: |
   Implement a provider-abstracted LLM extraction path that accepts evidence packets, validates structured output, and stores extracted opportunity fields.
@@ -507,6 +520,7 @@ Owner:      codex
 Phase:      4
 Type:       none
 Depends-On: T12, T13
+Status:     [x]
 
 Objective: |
   Generate ranked Markdown reports with the configured top opportunities, cited evidence, score components, risks, and build / reject / revisit recommendations.
@@ -546,6 +560,7 @@ Owner:      codex
 Phase:      5
 Type:       none
 Depends-On: T05, T14
+Status:     [x]
 
 Objective: |
   Implement append-only operator decision recording and decision-history lookup for build, reject, and revisit outcomes.
@@ -578,6 +593,7 @@ Owner:      codex
 Phase:      5
 Type:       none
 Depends-On: T12, T15
+Status:     [x]
 
 Objective: |
   Apply decision history to suppress recently rejected opportunities, revisit deferred opportunities after the configured window, and preserve rationale in score explanations.
@@ -610,6 +626,7 @@ Owner:      codex
 Phase:      5
 Type:       none
 Depends-On: T08, T10, T11, T12, T13, T14, T16
+Status:     [x]
 
 Objective: |
   Implement the end-to-end weekly run command that ingests sources, updates retrieval, clusters candidates, scores opportunities, generates the report, and writes run metadata.
@@ -645,6 +662,7 @@ Owner:      codex
 Phase:      5
 Type:       rag:query tool:call
 Depends-On: T10, T17
+Status:     [x]
 
 Objective: |
   Finalize retrieval and tool-use evaluation baselines and expose local health output with database, report directory, corpus version, index age, and configured-source status.

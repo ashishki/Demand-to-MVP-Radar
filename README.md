@@ -74,9 +74,45 @@ LLM используется только ограниченно:
 
 ## Текущий статус
 
-Проект находится в Phase 1: foundation. Код приложения еще не реализован. Подготовлены governance docs, task graph, RAG/reference guidance и Codex-only workflow.
+Все задачи, описанные в `docs/tasks.md` на текущий момент, завершены. Phase 1-5 прошли review без stop-ship findings.
 
-Первый implementation task: `T01: Project Skeleton`.
+Текущий baseline: 59 passing tests. Локально проходят:
+
+- `ruff check demand_mvp_radar/ tests/ scripts/`
+- `ruff format --check demand_mvp_radar/ tests/ scripts/`
+- `pytest tests/ -q`
+
+Реализовано:
+
+- Python package skeleton, editable install metadata и CLI entrypoint `demand-mvp-radar`
+- `health --json` с database/report/corpus/index-age статусом
+- Pydantic configuration defaults and `DMR_` env overrides
+- SQLite schema and repositories for evidence, decisions, tool audit events, retrieval chunks, and reports metadata paths
+- Tool-Use v1 schema catalog, executor validation, permission boundary, and audit persistence
+- Telegram export adapter with quarantine handling
+- bounded URL snapshot, SERP snapshot, and store metadata fixture readers
+- text-only retrieval ingestion/query, `insufficient_evidence`, and RAG eval baselines
+- deterministic clustering, scoring, recommendation thresholds, and decision-memory suppression
+- fake-provider LLM extraction validation
+- Markdown report rendering and atomic report writes
+- fixture-backed weekly pipeline command with LLM budget guard
+- final RAG and Tool-Use evaluation rows
+- GitHub Actions workflow for install, ruff check, format check, and pytest
+
+Пример локального запуска:
+
+```bash
+demand-mvp-radar run --fixture tests/fixtures/weekly_run
+demand-mvp-radar health --json
+```
+
+## Режим разработки
+
+Разработка идет nonstop по оркестраторному loop: задача, review, фиксы при необходимости, state update, следующая задача.
+
+Граница фазы не является паузой. После завершения задач фазы нужно пройти Strategy review, Deep review, Archive, Doc update и Phase report, затем сразу вернуться в Step 0 и продолжить следующую фазу.
+
+Остановка допустима только при явном blocker, нерешенном P0, rate/provider limit, полном завершении проекта или human approval boundary.
 
 ## Основные документы
 

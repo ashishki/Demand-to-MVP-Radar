@@ -21,6 +21,16 @@ Skipping any of these is a violation of the Implementation Contract and must be 
 
 ---
 
+## Nonstop Loop Discipline
+
+Development proceeds continuously through the orchestrator loop. A phase boundary is a review and documentation gate, not a stopping point.
+
+When all tasks in a phase are complete, run Strategy review, Deep review, Archive, Doc update, and Phase report as required, then continue through Step 7 back to Step 0 and start the next available task automatically.
+
+Do not stop between phases to ask whether to continue. Stop only for the explicit stop conditions in Step 7: all tasks complete, task blocked, unresolved P0 after retries, provider/rate-limit failure, or a required human approval boundary.
+
+---
+
 ## How to use
 
 Run this file in the current Codex session. No Claude Code layer and no nested `codex exec` subprocess are used.
@@ -78,6 +88,8 @@ You are the **Orchestrator** for the Demand-to-MVP Radar project.
 
 Your job: drive the full development cycle in one Codex session.
 Read current state → decide action → switch into the required role → update state → loop.
+
+The loop is nonstop across phase boundaries. Complete the phase-boundary review/reporting steps, then immediately continue to the next phase task unless an explicit stop condition applies.
 
 You may write application code during implementation/fix steps and review code during review steps, but keep the role boundary explicit in the session notes.
 Project root: `/home/ashishki/Documents/dev/ai-stack/projects/Demand-to-MVP-Radar`
@@ -826,13 +838,14 @@ Then update memory (MEMORY.md project section) with the same state.
 
 Print one-line progress: `[T##] done. Baseline: N pass. Next: [T## — Title].`
 
-Return to Step 0.
+Return to Step 0 immediately. If the just-completed work was a phase boundary cycle, this still continues; phase boundaries do not pause the loop.
 
 Stop when:
 - All tasks `✅` → generate final completion report (same format as Phase Report, titled "PROJECT COMPLETE") → send notification → stop.
 - Task `[!]` → save checkpoint → print blocker → stop.
 - P0 unresolved after 2 attempts → save checkpoint → print findings → stop.
 - API rate limit (429 / "overloaded") → save checkpoint → send notification with suggested restart time (current time + 60 min) → print "RATE_LIMIT_HIT" → stop cleanly.
+- Required human approval boundary is reached → save checkpoint, print the exact approval needed, and stop until the user approves.
   Notification format (adapt to no external notification configured):
   ```
   Rate limit hit. Resume at: [HH:MM UTC]
@@ -851,8 +864,9 @@ Stop when:
 5. During review/consolidation steps, do not silently change application code; write findings and state updates first, then enter a fix step if needed.
 6. Deep review steps are strictly sequential — never parallelize.
 7. Stateless across sessions — re-read current state from files on every run.
-8. Budget-aware — if context or iteration budget becomes tight, finish the current file, update state, add remaining work to Fix Queue with a `FQ-NN: [T##] Budget-interrupted — [what remains]` entry, and stop cleanly.
-9. Provider fallback — on transient LLM or tool failure (timeout, HTTP 5xx, "overloaded"), retry once after 30 s before marking blocked; on second consecutive failure, save checkpoint, print `PROVIDER_FAILURE: [error text]`, stop cleanly so the user can resume.
+8. Nonstop across phases — never pause just because a phase ended; phase-boundary review, archive, docs, and report are part of the loop, then work continues at Step 0.
+9. Budget-aware — if context or iteration budget becomes tight, finish the current file, update state, add remaining work to Fix Queue with a `FQ-NN: [T##] Budget-interrupted — [what remains]` entry, and stop cleanly.
+10. Provider fallback — on transient LLM or tool failure (timeout, HTTP 5xx, "overloaded"), retry once after 30 s before marking blocked; on second consecutive failure, save checkpoint, print `PROVIDER_FAILURE: [error text]`, stop cleanly so the user can resume.
 
 ---
 
