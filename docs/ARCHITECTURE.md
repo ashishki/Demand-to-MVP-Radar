@@ -166,6 +166,22 @@ query analyze -> retrieve -> filter -> assemble evidence -> answer | insufficien
 
 The `insufficient_evidence` path is mandatory. A retrieval-backed synthesis path must not draft a recommendation when evidence coverage fails.
 
+### RAG Reference Implementation Guidance
+
+The RAG implementation may use `ashishki/Dream_Motif_Interpreter` as a pattern reference for source connectors, normalized document contracts, staged ingestion, ingestion/query separation, `insufficient_evidence`, and retrieval evaluation. The reference is not a source of truth for this project and does not change v1 choices: Demand-to-MVP Radar remains local-first, SQLite-backed, text-only, and opportunity-research focused.
+
+Portable rules from the reference:
+
+- Source adapters return source documents with provenance; they do not parse opportunities and do not start embeddings.
+- Normalization is a side-effect-free boundary with required source metadata before chunking or indexing.
+- Embeddings run only after validation, duplicate handling, and corpus/schema metadata assignment.
+- Ingestion and query code stay in separate modules and tests must enforce that separation.
+- Query-time retrieval can combine lexical/exact recall and vector retrieval, but synthesis receives only assembled evidence packets.
+- Retrieval evaluation keeps retrieval quality, answer quality, and operator-reported regression slices separate.
+- External research/search evidence is lower trust than first-party saved evidence and must carry source URL, retrieval timestamp, and cautious framing.
+
+See `docs/IMPLEMENTATION_REFERENCE_MAP.md` for file-level mapping from the reference repository to current tasks.
+
 ### Corpus Description
 
 | Property | Value |
@@ -253,6 +269,7 @@ No destructive external tools are in v1. The following actions are treated as un
 | Domain models | `demand_mvp_radar/models.py` | Define evidence, opportunity, score, brief, decision, and run manifest schemas. |
 | Storage | `demand_mvp_radar/storage/` | Manage SQLite schema, migrations, repositories, and idempotent writes. |
 | Source adapters | `demand_mvp_radar/sources/` | Import Telegram exports, manual URLs, SERP snapshots, store listings, competitor pages, and notes. |
+| Source document contracts | `demand_mvp_radar/sources/base.py` | Define source refs, fetched source documents, normalized documents, and connector protocols before parsing or embedding. |
 | Tool layer | `demand_mvp_radar/tools/` | Define LLM-callable tool schemas, validation, permission checks, audit logging, and bounded execution. |
 | Retrieval ingestion | `demand_mvp_radar/retrieval/ingestion.py` | Normalize, chunk, embed, and index text evidence. |
 | Retrieval query | `demand_mvp_radar/retrieval/query.py` | Retrieve evidence, enforce filters, assemble evidence packets, and return `insufficient_evidence` when needed. |

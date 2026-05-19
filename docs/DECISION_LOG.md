@@ -12,6 +12,7 @@ Status: retrieval index, not authority. Canonical decisions live in `docs/ARCHIT
 | D-006 | 2026-05-19 | Agentic and Planning profiles are OFF for v1. | `docs/ARCHITECTURE.md#capability-profiles` | The product runs a fixed workflow and produces briefs, not autonomous loops or execution plans. | n/a |
 | D-007 | 2026-05-19 | SQLite WAL is the v1 persistence layer. | `docs/ARCHITECTURE.md#tech-stack` | Local-first single-operator usage does not justify PostgreSQL yet. | n/a |
 | D-008 | 2026-05-19 | Scoring and recommendations thresholds are deterministic. | `docs/IMPLEMENTATION_CONTRACT.md#deterministic-ownership-of-scores` | Weekly rankings must be comparable and auditable. | n/a |
+| D-009 | 2026-05-19 | Use `ashishki/Dream_Motif_Interpreter` as a RAG implementation pattern reference. | `docs/IMPLEMENTATION_REFERENCE_MAP.md` | Its source connector, normalized document, ingestion/query separation, insufficient-evidence, and retrieval-eval patterns are relevant; its dream-domain schema and pgvector stack are not binding for v1. | n/a |
 
 ## Decision Log Rules
 

@@ -12,6 +12,8 @@ Status: initialized before implementation
 
 Retrieval quality determines whether opportunity briefs are evidence-backed or speculative. This artifact tracks corpus versions, retrieval metrics, answer quality, insufficient-evidence behavior, and regressions separately from unit tests.
 
+Reference note: `ashishki/Dream_Motif_Interpreter` is the implementation pattern reference for markdown-driven retrieval evaluation, eval-history parsing, and regression slices. Port the evaluation shape, not the dream-domain dataset or pgvector dependency.
+
 ---
 
 ## Evaluation Dataset
@@ -38,10 +40,34 @@ Initial dataset to be created during T09/T10:
 | Metric | Definition | Initial Target |
 |--------|------------|----------------|
 | hit@3 | Expected evidence appears in top 3 retrieved packets. | 0.80 after baseline |
+| MRR | Mean reciprocal rank for expected evidence across answerable queries. | record baseline, then no regression above threshold |
 | citation_precision | Share of cited packets that support the candidate claim. | 0.80 after baseline |
 | no_answer_accuracy | Share of unsupported queries that return `insufficient_evidence`. | 0.90 after baseline |
 | answer_faithfulness | Share of synthesized claims supported by retrieved evidence. | 0.85 after baseline |
 | retrieval_ms | Query-time retrieval latency over fixture set. | record baseline, no target before T10 |
+
+---
+
+## Regression Dataset Policy
+
+When the operator reports a bad search, weak recommendation, stale source, or false-positive evidence issue, add a named regression slice to this file before changing retrieval behavior. Each slice must include:
+
+- query or candidate ID
+- query text or candidate description
+- expected relevant evidence or expected `insufficient_evidence`
+- false-positive or false-negative rule
+- evidence source fixture or corpus version
+- eval command or test that verifies the regression
+
+Initial slices to add during implementation:
+
+| Slice | Trigger | Expected Coverage |
+|-------|---------|-------------------|
+| Exact recall | Operator says a known source phrase or product category was missed | lexical/exact path surfaces source-backed evidence even if vector score is weak |
+| Stale source | Only old evidence supports a candidate | query returns `insufficient_evidence` or freshness warning |
+| No source links | Candidate has plausible text but no inspectable source links | query returns `insufficient_evidence` |
+| Rejected idea recurrence | Candidate resembles a recently rejected opportunity | retrieval surfaces decision history for suppression/scoring |
+| Weak competitor evidence | Candidate has competitors but no demand signal | report marks risk instead of build recommendation |
 
 ---
 

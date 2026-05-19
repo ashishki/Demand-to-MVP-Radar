@@ -9,6 +9,7 @@ Status: retrieval index, not authority. Evidence rows point to canonical artifac
 | E-003 | 2026-05-19 | Task graph | `docs/tasks.md` | Full implementation sequence and acceptance criteria | Implementation authority. |
 | E-004 | 2026-05-19 | Retrieval evaluation plan | `docs/retrieval_eval.md` | RAG baseline, query set, regression criteria | Must be updated by RAG-tagged tasks. |
 | E-005 | 2026-05-19 | Tool-use evaluation plan | `docs/tool_eval.md` | Tool schema, permission, audit, retry checks | Must be updated by Tool-Use-tagged tasks. |
+| E-006 | 2026-05-19 | RAG reference repo | `docs/IMPLEMENTATION_REFERENCE_MAP.md` | Maps `ashishki/Dream_Motif_Interpreter` RAG patterns to current implementation tasks | Use as implementation guidance, not canonical authority. |
 
 ## Evidence Index Rules
 

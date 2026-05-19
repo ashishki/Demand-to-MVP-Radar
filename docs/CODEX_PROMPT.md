@@ -25,6 +25,7 @@ This file is the session handoff and state authority for implementation agents.
 - Decision log: `docs/DECISION_LOG.md`
 - Implementation journal: `docs/IMPLEMENTATION_JOURNAL.md`
 - Evidence index: `docs/EVIDENCE_INDEX.md`
+- Implementation reference map: `docs/IMPLEMENTATION_REFERENCE_MAP.md`
 - Retrieval evaluation: `docs/retrieval_eval.md`
 - Tool-use evaluation: `docs/tool_eval.md`
 - Task-scoped context: read `Context-Refs` in `docs/tasks.md` before broad searching.
@@ -73,7 +74,7 @@ none
 
 ## Summary State
 
-Bootstrap package generated on 2026-05-19. Implementation has not started. The first implementation task is T01.
+Bootstrap package generated on 2026-05-19. Implementation has not started. The first implementation task is T01. Dream Motif Interpreter is available as a RAG implementation pattern reference through `docs/IMPLEMENTATION_REFERENCE_MAP.md`.
 
 ---
 

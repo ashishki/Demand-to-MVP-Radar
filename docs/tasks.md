@@ -262,6 +262,7 @@ Files:
 
 Context-Refs:
   - docs/spec.md#feature-area-1-source-ingestion
+  - docs/IMPLEMENTATION_REFERENCE_MAP.md#file-to-target-map
 
 Notes: |
   Use local fixture files only. Do not require Telegram network credentials.
@@ -345,13 +346,14 @@ Context-Refs:
   - docs/ARCHITECTURE.md#profile-rag
   - docs/IMPLEMENTATION_CONTRACT.md#rag-rules-profile-rules-rag
   - docs/retrieval_eval.md#evaluation-dataset
+  - docs/IMPLEMENTATION_REFERENCE_MAP.md#reference-decisions-to-port
 
 Execution-Mode: heavy
 Evidence:
   - `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_corpus.json`
   - `pytest tests/eval/test_retrieval_eval.py::test_ingestion_baseline_row_has_required_fields`
 Verifier-Focus: |
-  Verify that schema version, corpus version, source metadata, and eval source are all recorded. A passing unit test alone is not enough for this task.
+  Verify that schema version, corpus version, source metadata, and eval source are all recorded. Verify that ingestion code does not import query code. A passing unit test alone is not enough for this task.
 
 ## T10: Query-Time Retrieval and Insufficient Evidence
 
@@ -385,13 +387,14 @@ Files:
 Context-Refs:
   - docs/ARCHITECTURE.md#rag-architecture
   - docs/spec.md#insufficient-evidence-behavior
+  - docs/IMPLEMENTATION_REFERENCE_MAP.md#reference-decisions-to-port
 
 Execution-Mode: heavy
 Evidence:
   - `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_queries.json`
   - `pytest tests/test_retrieval_query.py::test_query_returns_insufficient_evidence_when_support_is_low`
 Verifier-Focus: |
-  Verify that the system skips synthesis when support is low and that eval rows include both metrics and provenance.
+  Verify that the system skips synthesis when support is low, query code does not import ingestion code, and eval rows include both metrics and provenance.
 
 ## T11: Deduplication and Opportunity Clustering
 
@@ -670,6 +673,7 @@ Files:
 
 Context-Refs:
   - docs/ARCHITECTURE.md#observability
+  - docs/IMPLEMENTATION_REFERENCE_MAP.md#file-to-target-map
   - docs/retrieval_eval.md#evaluation-history
   - docs/tool_eval.md#evaluation-history
 
