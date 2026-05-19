@@ -1,0 +1,40 @@
+{
+  "run_id": "weekly-run-001",
+  "corpus_version": "corpus-weekly-001",
+  "estimated_llm_cost_usd": "1.25",
+  "top_n": 5,
+  "extraction": {
+    "user_pain": "Operators waste time fixing broken spreadsheet formulas.",
+    "target_audience": "operators",
+    "current_workaround": "Manual search and trial-and-error formula edits.",
+    "competitor_shape": "Formula explainers and spreadsheet add-ons.",
+    "mvp_function": "Repair one broken spreadsheet formula.",
+    "acquisition_angle": "Search pages for spreadsheet formula errors.",
+    "risk_flags": ["spreadsheet edge cases"],
+    "confidence_note": "Supported by cited demand evidence."
+  },
+  "evidence": [
+    {
+      "source_type": "telegram",
+      "source_id": "msg-001",
+      "source_url": "https://example.com/msg-001",
+      "captured_at": "2026-05-18T10:00:00+00:00",
+      "title": "Spreadsheet formula pain",
+      "snippet": "Operators ask for spreadsheet formula helpers.",
+      "normalized_text": "Operators repeatedly ask for spreadsheet formula helpers that explain broken Excel formulas.",
+      "content_hash": "hash-weekly-001",
+      "source_fingerprint": "telegram:msg-001:hash-weekly-001"
+    },
+    {
+      "source_type": "telegram",
+      "source_id": "msg-002",
+      "source_url": "https://example.com/msg-002",
+      "captured_at": "2026-05-18T11:00:00+00:00",
+      "title": "Spreadsheet formula troubleshooting",
+      "snippet": "Operators want Excel formula troubleshooting for broken sheets.",
+      "normalized_text": "Operators want Excel formula troubleshooting for broken spreadsheet sheets.",
+      "content_hash": "hash-weekly-002",
+      "source_fingerprint": "telegram:msg-002:hash-weekly-002"
+    }
+  ]
+}

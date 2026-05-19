@@ -1,0 +1,9 @@
+{
+  "fixture_version": "tool-eval-v1",
+  "scenarios": [
+    "schema_validation",
+    "permission_check",
+    "audit_field_completeness",
+    "retry_policy"
+  ]
+}
