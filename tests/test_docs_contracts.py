@@ -5,6 +5,7 @@ OPERATOR_WORKFLOW = ROOT / "docs" / "OPERATOR_WORKFLOW.md"
 OPERATOR_RUNBOOK = ROOT / "docs" / "OPERATOR_RUNBOOK.md"
 BACKUP_RECOVERY = ROOT / "docs" / "BACKUP_RECOVERY.md"
 PRODUCTION_READINESS_REVIEW = ROOT / "docs" / "audit" / "PRODUCTION_READINESS_REVIEW.md"
+LIVE_SOURCE_PRODUCTION_ROADMAP = ROOT / "docs" / "LIVE_SOURCE_PRODUCTION_ROADMAP.md"
 
 
 def _operator_workflow_text() -> str:
@@ -21,6 +22,10 @@ def _backup_recovery_text() -> str:
 
 def _production_readiness_text() -> str:
     return PRODUCTION_READINESS_REVIEW.read_text(encoding="utf-8")
+
+
+def _live_source_roadmap_text() -> str:
+    return LIVE_SOURCE_PRODUCTION_ROADMAP.read_text(encoding="utf-8")
 
 
 def test_operator_workflow_contains_required_sections() -> None:
@@ -228,5 +233,59 @@ def test_production_readiness_review_gates_beta_and_saas() -> None:
         "SaaS or hosted product work is blocked",
         "repeated personal value",
         "local-first personal decision system",
+    ):
+        assert phrase in content
+
+
+def test_live_source_roadmap_defines_self_collecting_target() -> None:
+    content = _live_source_roadmap_text()
+
+    for phrase in (
+        "self-collecting production version",
+        "Exports and manual snapshots remain fallback modes",
+        "Production Architecture",
+        "Credential Strategy",
+        "Connector Contract",
+        "Source Waves",
+    ):
+        assert phrase in content
+
+
+def test_live_source_roadmap_lists_required_connectors_and_credentials() -> None:
+    content = _live_source_roadmap_text()
+
+    for phrase in (
+        "GitHub",
+        "Hacker News",
+        "Stack Exchange",
+        "RSS",
+        "SERP",
+        "Reddit",
+        "YouTube",
+        "Product Hunt",
+        "Discord",
+        "Telegram",
+        "X/Twitter",
+        "GITHUB_TOKEN",
+        "YOUTUBE_API_KEY",
+        "SERPAPI_API_KEY",
+    ):
+        assert phrase in content
+
+
+def test_live_source_roadmap_covers_ai_development_to_production() -> None:
+    content = _live_source_roadmap_text()
+
+    for phrase in (
+        "AI Development Phases",
+        "P1 - Connector SDK",
+        "P2 - Public Connector Wave",
+        "P4 - Credentialed Connector Wave",
+        "P8 - Private Beta Package",
+        "P9 - Hosted/SaaS Decision Gate",
+        "Production Requirements",
+        "Definition of Done for a Connector",
+        "Backlog Seeds",
+        "Hard Gates",
     ):
         assert phrase in content

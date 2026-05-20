@@ -44,6 +44,7 @@ If a task does not improve one of these decisions, defer it.
 |------|------|
 | `docs/PERSONAL_TO_PRODUCTION_PLAN.md` | Product development phases and exit criteria |
 | `docs/SOURCE_CATALOG.md` | Source strategy, access risks, source priority |
+| `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` | Roadmap from snapshot/import MVP to self-collecting production system |
 | `docs/tasks.md` | Authoritative implementation task graph |
 | `docs/CODEX_PROMPT.md` | Current implementation state and next task |
 | `docs/ARCHITECTURE.md` | System boundaries, capability profiles, runtime model |
@@ -127,6 +128,22 @@ Implement:
 - `T38: Four-Run Readiness Review`
 
 Expected result: the system is ready for weekly personal use before beta.
+
+### Sequence F - Live Source Production
+
+Use `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` as the planning authority for the next task wave after T38.
+
+Implement first:
+
+- `T39: Live Source Connector Protocol`
+- `T40: Credential Resolver and Secret Redaction`
+- `T41: collect-sources Command`
+- `T42: Hacker News Live Connector`
+- `T43: Stack Exchange Live Connector`
+- `T44: RSS Feed Connector`
+- `T45: GitHub Public Search Connector`
+
+Expected result: the system can collect fresh public demand signals automatically without manual exports as the primary workflow.
 
 ---
 

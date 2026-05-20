@@ -134,5 +134,6 @@ demand-mvp-radar health --json
 - `docs/ARCHITECTURE.md` - архитектура и границы v1
 - `docs/tasks.md` - implementation task graph
 - `docs/CODEX_PROMPT.md` - текущее состояние и правила выполнения
+- `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` - roadmap до версии, которая сама собирает данные из live-источников
 - `docs/retrieval_eval.md` - принципы оценки RAG
 - `docs/tool_eval.md` - принципы оценки tool-use
