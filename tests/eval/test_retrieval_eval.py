@@ -102,3 +102,11 @@ def test_retrieval_eval_records_regression_cause() -> None:
 
     assert "code-change-induced" in content
     assert "corpus-change-induced" in content
+
+
+def test_missing_evidence_cases_are_in_eval_history() -> None:
+    content = (ROOT / "docs" / "retrieval_eval.md").read_text()
+
+    assert "T30" in content
+    assert "missing_evidence_cases=3" in content
+    assert "no_answer_accuracy=1.00" in content

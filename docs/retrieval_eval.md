@@ -81,6 +81,7 @@ Initial slices to add during implementation:
 | 2026-05-19 | T18 | corpus-t10-v1 | `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_queries.json, run 2026-05-19` | 1.00 | 1.00 | 1.00 | 1.00 | 2ms | final_baseline=true; query_count=4; index_schema_version=retrieval-index-v1; embedding_model=local-hash-embedding-v1 |
 | 2026-05-20 | T25 | corpus-t25-source-trust-v1 | `.venv/bin/pytest tests/test_source_trust.py -q, run 2026-05-20` | 1.00 | 1.00 | 1.00 | 1.00 | n/a | source_freshness=true; source_trust=true; type_caps=true; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
 | 2026-05-20 | T26 | corpus-t26-live-like-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20` | 1.00 | 1.00 | 1.00 | 1.00 | 13ms | query_count=10; source_types=7; freshness_compliance=1.00; source_diversity=1.00; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
+| 2026-05-20 | T30 | corpus-t26-live-like-v1 | `.venv/bin/pytest tests/test_missing_evidence.py tests/eval/test_retrieval_eval.py -q, run 2026-05-20` | n/a | n/a | 1.00 | n/a | n/a | missing_evidence_cases=3; no_answer_accuracy=1.00; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
 
 ---
 
@@ -105,6 +106,8 @@ Initial slices to add during implementation:
 2026-05-20 T25: No regression versus T18 query baseline. Expected behavior changed only for source trust/freshness filtering and source-type cap cases; regression cause classification: code-change-induced expected improvement.
 
 2026-05-20 T26: No regression versus T18 query baseline. Live-like fixture expansion is classified as corpus-change-induced coverage growth; evaluation runner metric additions are classified as code-change-induced instrumentation with no metric regression.
+
+2026-05-20 T30: No regression versus T18 query baseline. Missing-evidence analysis is classified as code-change-induced dossier instrumentation; retrieval no-answer behavior remains covered at 1.00 accuracy for missing-evidence cases.
 
 ---
 

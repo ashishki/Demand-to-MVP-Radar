@@ -26,6 +26,11 @@ DEFAULT_SOURCE_TRUST_WEIGHTS = {
     "github_repo": 0.8,
     "reviews": 0.9,
 }
+MISSING_REASON_GAP_TYPES = {
+    "minimum independent source count": "absent_independent_sources",
+    "fresh relevant evidence": "stale_evidence",
+    "fresh source link": "absent_source_link",
+}
 
 
 class EvidencePacket(BaseModel):
@@ -118,6 +123,17 @@ def query_evidence(
         evidence_packets=packets,
         missing_evidence_reasons=(),
     )
+
+
+def classify_missing_evidence_reasons(
+    missing_evidence_reasons: tuple[str, ...],
+) -> tuple[str, ...]:
+    gap_types: list[str] = []
+    for reason in missing_evidence_reasons:
+        for marker, gap_type in MISSING_REASON_GAP_TYPES.items():
+            if marker in reason and gap_type not in gap_types:
+                gap_types.append(gap_type)
+    return tuple(gap_types)
 
 
 def _score_chunks(
