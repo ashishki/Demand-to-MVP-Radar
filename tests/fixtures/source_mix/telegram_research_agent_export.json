@@ -1,0 +1,16 @@
+[
+  {
+    "upstream_id": "mix-tra-001",
+    "captured_at": "2026-05-18T10:00:00+00:00",
+    "title": "Developers want smaller eval tooling",
+    "text": "Several builders asked for a lightweight way to compare prompt changes before shipping automations.",
+    "source_url": "https://t.me/example/201"
+  },
+  {
+    "upstream_id": "mix-tra-002",
+    "captured_at": "2026-05-18T11:00:00+00:00",
+    "title": "Solo operators need follow-up memory",
+    "text": "A recurring pain is forgetting why an idea was rejected after a weekly research pass.",
+    "source_url": "https://t.me/example/202"
+  }
+]

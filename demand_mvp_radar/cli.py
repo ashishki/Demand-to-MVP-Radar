@@ -9,7 +9,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from demand_mvp_radar.config import Settings, load_settings
-from demand_mvp_radar.pipeline import run_weekly_pipeline
+from demand_mvp_radar.pipeline import import_sources, run_weekly_pipeline
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -35,6 +35,14 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--data-dir", help="Override the data directory.")
     run.add_argument("--report-dir", help="Override the report directory.")
     run.add_argument("--max-weekly-llm-cost-usd", help="Override the LLM budget ceiling.")
+    import_sources_parser = subparsers.add_parser(
+        "import-sources",
+        help="Import configured owned sources without generating a weekly report.",
+    )
+    import_sources_parser.add_argument("--fixture", required=True, help="Path to source fixture.")
+    import_sources_parser.add_argument("--run-id", help="Override the fixture run ID.")
+    import_sources_parser.add_argument("--data-dir", help="Override the data directory.")
+    import_sources_parser.add_argument("--report-dir", help="Override the report directory.")
     return parser
 
 
@@ -77,6 +85,15 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(result.model_dump_json())
         return 0 if result.status == "completed" else 1
+    if args.command == "import-sources":
+        settings = _settings_from_run_args(args)
+        result = import_sources(
+            fixture=Path(args.fixture),
+            settings=settings,
+            run_id=args.run_id,
+        )
+        print(result.model_dump_json())
+        return 0 if result.status == "imported" else 1
     return 0
 
 
@@ -87,7 +104,7 @@ def _settings_from_run_args(args: argparse.Namespace) -> Settings:
         updates["data_dir"] = Path(args.data_dir)
     if args.report_dir:
         updates["report_dir"] = Path(args.report_dir)
-    if args.max_weekly_llm_cost_usd:
+    if getattr(args, "max_weekly_llm_cost_usd", None):
         updates["max_weekly_llm_cost_usd"] = Decimal(str(args.max_weekly_llm_cost_usd))
     return settings.model_copy(update=updates)
 

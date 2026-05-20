@@ -13,10 +13,18 @@ from demand_mvp_radar.briefs import OpportunityBrief, build_opportunity_brief
 from demand_mvp_radar.clustering import cluster_evidence
 from demand_mvp_radar.config import Settings
 from demand_mvp_radar.models import EvidenceRecord, OpportunityExtraction
+from demand_mvp_radar.reports.evidence_delta import (
+    EvidenceDeltaReport,
+    generate_evidence_delta_report,
+)
 from demand_mvp_radar.reports.markdown import render_markdown_report, write_markdown_report
 from demand_mvp_radar.retrieval.ingestion import build_corpus
 from demand_mvp_radar.retrieval.query import EvidencePacket
 from demand_mvp_radar.scoring import score_opportunity
+from demand_mvp_radar.sources.base import SourceImportResult
+from demand_mvp_radar.sources.github_repo import GitHubRepoSnapshotImporter
+from demand_mvp_radar.sources.operator_notes import OperatorNotesAdapter
+from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
 from demand_mvp_radar.storage.repositories import EvidenceRepository
@@ -34,6 +42,22 @@ class WeeklyRunResult(BaseModel):
     opportunity_count: int = 0
     estimated_llm_cost_usd: Decimal
     error_reason: str | None = None
+
+
+class ImportSourcesResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    run_id: str
+    status: str
+    database_path: Path
+    report_path: Path | None = None
+    corpus_version: str
+    evidence_count: int
+    retrieval_chunk_count: int
+    source_counts: dict[str, object]
+    error_counts: dict[str, int]
+    skipped_sources: tuple[str, ...]
+    evidence_delta_report: EvidenceDeltaReport | None = None
 
 
 def run_weekly_pipeline(
@@ -99,6 +123,111 @@ def run_weekly_pipeline(
         opportunity_count=len(candidates),
         estimated_llm_cost_usd=estimated_cost,
     )
+
+
+def import_sources(
+    *,
+    fixture: Path,
+    settings: Settings,
+    run_id: str | None = None,
+) -> ImportSourcesResult:
+    payload = json.loads((fixture / "sources.json").read_text())
+    effective_run_id = run_id or str(payload["run_id"])
+    corpus_version = str(payload.get("corpus_version", f"{effective_run_id}-corpus"))
+    database_path = settings.data_dir / "radar.sqlite3"
+
+    connection = connect_database(database_path)
+    create_schema(connection)
+    repository = EvidenceRepository(connection)
+
+    evidence_rows: list[tuple[int, EvidenceRecord]] = []
+    source_counts: dict[str, object] = {}
+    error_counts: dict[str, int] = {}
+    skipped_sources: list[str] = []
+
+    for source_name, source_config in payload["sources"].items():
+        if not bool(source_config.get("enabled", False)):
+            skipped_sources.append(source_name)
+            continue
+
+        result_records = _import_configured_source(
+            source_name,
+            source_config,
+            fixture=fixture,
+            run_id=effective_run_id,
+            repository=repository,
+            quarantine_dir=settings.data_dir / "quarantine",
+        )
+        for evidence in result_records.evidence:
+            evidence_id = repository.write(evidence)
+            evidence_rows.append((evidence_id, evidence))
+        source_counts[source_name] = len(result_records.evidence)
+        error_counts[source_name] = len(result_records.quarantined)
+
+    source_counts["skipped_sources"] = tuple(skipped_sources)
+    corpus_metadata = build_corpus(connection, evidence_rows, corpus_version=corpus_version)
+    _record_import_run(
+        connection,
+        run_id=effective_run_id,
+        corpus_version=corpus_version,
+        source_counts=source_counts,
+        error_counts=error_counts,
+    )
+    evidence_delta_report = generate_evidence_delta_report(
+        connection,
+        run_id=effective_run_id,
+    )
+
+    return ImportSourcesResult(
+        run_id=effective_run_id,
+        status="imported",
+        database_path=database_path,
+        corpus_version=str(corpus_metadata["corpus_version"]),
+        evidence_count=len(evidence_rows),
+        retrieval_chunk_count=int(corpus_metadata["chunk_count"]),
+        source_counts=source_counts,
+        error_counts=error_counts,
+        skipped_sources=tuple(skipped_sources),
+        evidence_delta_report=evidence_delta_report,
+    )
+
+
+def _import_configured_source(
+    source_name: str,
+    source_config: dict[str, object],
+    *,
+    fixture: Path,
+    run_id: str,
+    repository: EvidenceRepository,
+    quarantine_dir: Path,
+) -> SourceImportResult:
+    if source_name == "telegram_research_agent":
+        return TelegramResearchAgentBridge().import_file(
+            fixture / str(source_config["path"]),
+            run_id=run_id,
+            repository=repository,
+            quarantine_path=quarantine_dir / f"{source_name}.jsonl",
+        )
+    if source_name == "operator_notes":
+        adapter = OperatorNotesAdapter()
+        evidence = []
+        quarantined = []
+        for relative_path in source_config["paths"]:
+            result = adapter.import_file(
+                fixture / str(relative_path),
+                run_id=run_id,
+                quarantine_path=quarantine_dir / f"{source_name}.jsonl",
+            )
+            evidence.extend(result.evidence)
+            quarantined.extend(result.quarantined)
+        return SourceImportResult(evidence=tuple(evidence), quarantined=tuple(quarantined))
+    if source_name == "github_repo":
+        return GitHubRepoSnapshotImporter().import_repository(
+            fixture / str(source_config["path"]),
+            run_id=run_id,
+            repository_identifier=str(source_config["repository_identifier"]),
+        )
+    raise ValueError(f"unsupported source: {source_name}")
 
 
 def _evidence_from_fixture(item: dict[str, object], *, run_id: str) -> EvidenceRecord:
@@ -172,6 +301,39 @@ def _record_completed_run(
             "ended_at": now,
             "corpus_version": corpus_version,
             "estimated_cost": str(estimated_cost),
+        },
+    )
+    connection.commit()
+
+
+def _record_import_run(
+    connection,
+    *,
+    run_id: str,
+    corpus_version: str,
+    source_counts: dict[str, object],
+    error_counts: dict[str, int],
+) -> None:
+    now = datetime.now(UTC).isoformat()
+    connection.execute(
+        """
+        UPDATE runs
+        SET status = :status,
+            ended_at = :ended_at,
+            corpus_version = :corpus_version,
+            source_counts = :source_counts,
+            error_counts = :error_counts,
+            max_weekly_llm_cost_usd = :max_weekly_llm_cost_usd
+        WHERE run_id = :run_id
+        """,
+        {
+            "run_id": run_id,
+            "status": "imported",
+            "ended_at": now,
+            "corpus_version": corpus_version,
+            "source_counts": json.dumps(source_counts, sort_keys=True),
+            "error_counts": json.dumps(error_counts, sort_keys=True),
+            "max_weekly_llm_cost_usd": "0",
         },
     )
     connection.commit()

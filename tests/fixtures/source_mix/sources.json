@@ -1,0 +1,23 @@
+{
+  "run_id": "import-run-001",
+  "corpus_version": "import-run-001-corpus",
+  "sources": {
+    "telegram_research_agent": {
+      "enabled": true,
+      "path": "telegram_research_agent_export.json"
+    },
+    "operator_notes": {
+      "enabled": true,
+      "paths": ["operator_notes/private_signal.md"]
+    },
+    "github_repo": {
+      "enabled": true,
+      "path": "github_repo",
+      "repository_identifier": "owner/demand-signal-helper"
+    },
+    "serp": {
+      "enabled": false,
+      "path": "disabled_serp.json"
+    }
+  }
+}
