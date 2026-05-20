@@ -4,8 +4,47 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+SourcePriority = Literal["P0", "P1", "P2", "P3"]
+SourceTrustLevel = Literal["high", "medium", "low"]
+SourceAccessMethod = Literal[
+    "local_file",
+    "local_repo",
+    "public_api",
+    "manual_snapshot",
+    "saved_snapshot",
+    "approved_export",
+    "credentialed_api",
+    "paid_api",
+]
+
+
+class SourceCatalogEntry(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    source_type: str = Field(min_length=1)
+    priority: SourcePriority
+    trust_level: SourceTrustLevel
+    freshness_window_days: int = Field(ge=1)
+    access_method: SourceAccessMethod
+    enabled: bool = False
+    approval_required: bool = False
+
+    @model_validator(mode="after")
+    def enabled_credentialed_sources_require_approval(
+        self,
+    ) -> SourceCatalogEntry:
+        credentialed_methods = {"credentialed_api", "paid_api"}
+        if (
+            self.enabled
+            and self.access_method in credentialed_methods
+            and not self.approval_required
+        ):
+            raise ValueError("enabled credentialed sources require approval")
+        return self
 
 
 class RunManifest(BaseModel):
@@ -81,6 +120,83 @@ class OpportunityExtraction(BaseModel):
     acquisition_angle: str = Field(min_length=1)
     risk_flags: tuple[str, ...] = ()
     confidence_note: str = Field(min_length=1)
+
+
+class DossierEvidenceItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    citation_number: int = Field(ge=1)
+    source_type: str = Field(min_length=1)
+    source_title_or_id: str = Field(min_length=1)
+    captured_at: datetime
+    snippet: str = Field(min_length=1)
+    source_ref: str = Field(min_length=1)
+
+
+class DossierClaim(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    text: str = Field(min_length=1)
+    citation_numbers: tuple[int, ...] = ()
+    inference: bool = False
+
+    @model_validator(mode="after")
+    def claim_requires_citation_or_inference_marker(self) -> DossierClaim:
+        if not self.citation_numbers and not self.inference:
+            raise ValueError("dossier claim requires citation or explicit inference marker")
+        return self
+
+
+class DossierPriorDecision(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    decision: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
+    decided_at: datetime | None = None
+
+
+class OpportunityDossier(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    opportunity_id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    pain: DossierClaim
+    audience: DossierClaim
+    workaround: DossierClaim
+    evidence: tuple[DossierEvidenceItem, ...]
+    competitor_shape: DossierClaim
+    one_function_mvp: DossierClaim
+    acquisition_angle: DossierClaim
+    risks: tuple[DossierClaim, ...]
+    missing_evidence: tuple[str, ...]
+    score_components: dict[str, ScoreComponent]
+    recommendation: Literal["build", "reject", "revisit", "insufficient_evidence"]
+    prior_decisions: tuple[DossierPriorDecision, ...] = ()
+    confidence: str = Field(min_length=1)
+    why_this_may_be_wrong: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def cited_claims_reference_known_evidence(self) -> OpportunityDossier:
+        available_citations = {item.citation_number for item in self.evidence}
+        for claim in self._claims():
+            unknown_citations = set(claim.citation_numbers) - available_citations
+            if unknown_citations:
+                raise ValueError(
+                    "dossier claim references unknown citation number: "
+                    f"{min(unknown_citations)}"
+                )
+        return self
+
+    def _claims(self) -> tuple[DossierClaim, ...]:
+        return (
+            self.pain,
+            self.audience,
+            self.workaround,
+            self.competitor_shape,
+            self.one_function_mvp,
+            self.acquisition_angle,
+            *self.risks,
+        )
 
 
 class DecisionRecord(BaseModel):

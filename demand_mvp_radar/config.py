@@ -9,6 +9,82 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from demand_mvp_radar.models import SourceCatalogEntry
+
+
+def default_source_catalog() -> tuple[SourceCatalogEntry, ...]:
+    return (
+        SourceCatalogEntry(
+            source_type="github",
+            priority="P1",
+            trust_level="medium",
+            freshness_window_days=14,
+            access_method="public_api",
+        ),
+        SourceCatalogEntry(
+            source_type="hacker_news",
+            priority="P1",
+            trust_level="medium",
+            freshness_window_days=14,
+            access_method="public_api",
+        ),
+        SourceCatalogEntry(
+            source_type="stack_exchange",
+            priority="P1",
+            trust_level="medium",
+            freshness_window_days=30,
+            access_method="public_api",
+        ),
+        SourceCatalogEntry(
+            source_type="product_hunt",
+            priority="P1",
+            trust_level="medium",
+            freshness_window_days=30,
+            access_method="credentialed_api",
+            approval_required=True,
+        ),
+        SourceCatalogEntry(
+            source_type="serp",
+            priority="P2",
+            trust_level="medium",
+            freshness_window_days=14,
+            access_method="paid_api",
+            approval_required=True,
+        ),
+        SourceCatalogEntry(
+            source_type="youtube",
+            priority="P2",
+            trust_level="medium",
+            freshness_window_days=30,
+            access_method="credentialed_api",
+            approval_required=True,
+        ),
+        SourceCatalogEntry(
+            source_type="app_stores",
+            priority="P2",
+            trust_level="medium",
+            freshness_window_days=30,
+            access_method="manual_snapshot",
+            approval_required=True,
+        ),
+        SourceCatalogEntry(
+            source_type="g2",
+            priority="P2",
+            trust_level="medium",
+            freshness_window_days=30,
+            access_method="paid_api",
+            approval_required=True,
+        ),
+        SourceCatalogEntry(
+            source_type="reddit",
+            priority="P3",
+            trust_level="low",
+            freshness_window_days=14,
+            access_method="credentialed_api",
+            approval_required=True,
+        ),
+    )
+
 
 class Settings(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -18,6 +94,7 @@ class Settings(BaseModel):
     max_weekly_llm_cost_usd: Decimal = Field(default=Decimal("5.00"), ge=0)
     fetch_timeout_seconds: int = Field(default=20, ge=1)
     max_index_age_days: int = Field(default=7, ge=1)
+    source_catalog: tuple[SourceCatalogEntry, ...] = Field(default_factory=default_source_catalog)
 
     @field_validator("data_dir", "report_dir", mode="before")
     @classmethod

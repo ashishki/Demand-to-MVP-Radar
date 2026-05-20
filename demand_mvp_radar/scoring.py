@@ -24,6 +24,31 @@ COMPONENT_NAMES = (
     "risk",
     "confidence",
 )
+DEFAULT_SOURCE_TRUST_WEIGHTS = {
+    "operator_note": 0.35,
+    "manual_note": 0.35,
+    "news": 0.5,
+    "rss": 0.5,
+    "reddit": 0.5,
+    "product_hunt": 0.6,
+    "serp": 0.7,
+    "telegram_research_agent": 0.75,
+    "github": 0.8,
+    "github_repo": 0.8,
+    "reviews": 0.9,
+}
+DEFAULT_SOURCE_TYPE_CAPS = {
+    "operator_note": 1,
+    "manual_note": 1,
+    "news": 2,
+    "rss": 2,
+    "reddit": 2,
+    "product_hunt": 2,
+    "serp": 2,
+    "telegram_research_agent": 2,
+    "github": 2,
+    "github_repo": 2,
+}
 
 
 @dataclass(frozen=True)
@@ -36,6 +61,14 @@ class ScoringConfig:
     revisit_after_days: int = 14
     rejection_penalty: float = 40.0
     component_weights: Mapping[str, float] | None = None
+    source_trust_weights: Mapping[str, float] | None = None
+    source_type_caps: Mapping[str, int] | None = None
+    low_trust_source_types: tuple[str, ...] = (
+        "operator_note",
+        "news",
+        "rss",
+        "product_hunt",
+    )
 
     def weights(self) -> Mapping[str, float]:
         return self.component_weights or {
@@ -61,23 +94,29 @@ def score_opportunity(
     evidence = tuple(
         record for record in evidence_records if record.source_id in candidate.source_evidence_ids
     )
+    capped_evidence = _apply_source_type_caps(evidence, scoring_config)
 
     with span("scoring.score_opportunity"):
         components = {
-            "demand": _demand_component(evidence),
-            "evidence_diversity": _evidence_diversity_component(evidence),
+            "demand": _demand_component(capped_evidence, scoring_config),
+            "evidence_diversity": _evidence_diversity_component(capped_evidence),
             "freshness": _freshness_component(
-                evidence,
+                capped_evidence,
                 as_of=scoring_as_of,
                 max_fresh_days=scoring_config.max_fresh_days,
             ),
-            "competition": _competition_component(evidence),
+            "competition": _competition_component(capped_evidence),
             "acquisition_fit": _acquisition_fit_component(candidate),
-            "risk": _risk_component(evidence),
+            "risk": _risk_component(capped_evidence),
         }
-        components["confidence"] = _confidence_component(components, evidence)
+        components["confidence"] = _confidence_component(components, capped_evidence)
         total_score = _weighted_total(components, scoring_config.weights())
-        threshold_reasons = _threshold_reasons(candidate, evidence, scoring_config)
+        threshold_reasons = _threshold_reasons(
+            candidate,
+            capped_evidence,
+            scoring_config,
+            as_of=scoring_as_of,
+        )
         recommendation = _recommendation(
             total_score=total_score,
             threshold_reasons=threshold_reasons,
@@ -134,12 +173,21 @@ def apply_decision_memory(
     return score
 
 
-def _demand_component(evidence: tuple[EvidenceRecord, ...]) -> ScoreComponent:
-    value = min(len(evidence) * 35, 100)
+def _demand_component(
+    evidence: tuple[EvidenceRecord, ...],
+    config: ScoringConfig,
+) -> ScoreComponent:
+    trust_adjusted_count = sum(
+        _source_trust_weight(record.source_type, config=config) for record in evidence
+    )
+    value = min(trust_adjusted_count * 35, 100)
     return ScoreComponent(
         name="demand",
-        value=float(value),
-        rationale=f"{len(evidence)} supporting evidence records",
+        value=round(float(value), 2),
+        rationale=(
+            f"{trust_adjusted_count:.2f} trust-adjusted supporting evidence records "
+            f"from {len(evidence)} selected records"
+        ),
     )
 
 
@@ -247,6 +295,8 @@ def _threshold_reasons(
     candidate: OpportunityCandidate,
     evidence: tuple[EvidenceRecord, ...],
     config: ScoringConfig,
+    *,
+    as_of: datetime,
 ) -> tuple[str, ...]:
     reasons: list[str] = []
     if len(evidence) < config.minimum_evidence_count:
@@ -256,6 +306,12 @@ def _threshold_reasons(
         )
     if len(set(candidate.source_evidence_ids)) != len(candidate.source_evidence_ids):
         reasons.append("duplicate source evidence ids")
+    if evidence and {record.source_type for record in evidence} == {"operator_note"}:
+        reasons.append("operator notes require corroborating non-note source")
+    if evidence and _all_low_trust(evidence, config):
+        reasons.append("low-trust sources require corroborating higher-trust source")
+    if evidence and _all_stale(evidence, config=config, as_of=as_of):
+        reasons.append("fresh evidence required for build recommendation")
     return tuple(reasons)
 
 
@@ -286,6 +342,52 @@ def _combined_text(evidence: tuple[EvidenceRecord, ...]) -> str:
     return " ".join(
         f"{record.title} {record.snippet} {record.normalized_text}".lower() for record in evidence
     )
+
+
+def _apply_source_type_caps(
+    evidence: tuple[EvidenceRecord, ...],
+    config: ScoringConfig,
+) -> tuple[EvidenceRecord, ...]:
+    if not config.source_type_caps:
+        source_type_caps = DEFAULT_SOURCE_TYPE_CAPS
+    else:
+        source_type_caps = config.source_type_caps
+
+    kept: list[EvidenceRecord] = []
+    counts: dict[str, int] = {}
+    for record in evidence:
+        cap = source_type_caps.get(record.source_type)
+        if cap is None:
+            kept.append(record)
+            continue
+        cap = max(int(cap), 0)
+        count = counts.get(record.source_type, 0)
+        if count < cap:
+            kept.append(record)
+            counts[record.source_type] = count + 1
+
+    return tuple(kept)
+
+
+def _source_trust_weight(source_type: str, *, config: ScoringConfig) -> float:
+    weights = config.source_trust_weights or DEFAULT_SOURCE_TRUST_WEIGHTS
+    weight = float(weights.get(source_type, 1.0))
+    return min(max(weight, 0.0), 1.0)
+
+
+def _all_low_trust(evidence: tuple[EvidenceRecord, ...], config: ScoringConfig) -> bool:
+    low_trust_types = set(config.low_trust_source_types)
+    return all(record.source_type in low_trust_types for record in evidence)
+
+
+def _all_stale(
+    evidence: tuple[EvidenceRecord, ...],
+    *,
+    config: ScoringConfig,
+    as_of: datetime,
+) -> bool:
+    newest = max(_to_utc(record.captured_at) for record in evidence)
+    return max((_to_utc(as_of) - newest).days, 0) > config.max_fresh_days
 
 
 def _to_utc(value: datetime) -> datetime:

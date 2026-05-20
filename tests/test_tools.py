@@ -19,6 +19,7 @@ ARCHITECTURE_TOOL_NAMES = {
     "fetch_url_snapshot",
     "read_serp_snapshot",
     "read_store_metadata",
+    "read_github_repo_snapshot",
     "retrieve_evidence",
     "write_report",
     "record_operator_decision",

@@ -66,6 +66,18 @@ class ReadStoreMetadataOutput(BaseModel):
     status: str
 
 
+class ReadGithubRepoSnapshotInput(BaseModel):
+    run_id: str
+    repository_path: str
+    repository_identifier: str
+
+
+class ReadGithubRepoSnapshotOutput(BaseModel):
+    repository_id_hash: str
+    source_count: int = Field(ge=0)
+    error_count: int = Field(ge=0)
+
+
 class RetrieveEvidenceInput(BaseModel):
     run_id: str
     corpus_version: str
@@ -143,6 +155,17 @@ TOOL_CATALOG = {
         permission_level="local_operator",
         retry_policy="bounded_retries_rate_limit_aware",
         audit_fields=("run_id", "store", "listing_id", "status"),
+    ),
+    "read_github_repo_snapshot": ToolDefinition(
+        name="read_github_repo_snapshot",
+        version="1.0",
+        input_model=ReadGithubRepoSnapshotInput,
+        output_model=ReadGithubRepoSnapshotOutput,
+        side_effect_class="read",
+        idempotency_key_fields=("repository_identifier",),
+        permission_level="local_operator",
+        retry_policy="no_retry_for_local_snapshots",
+        audit_fields=("run_id", "repository_id_hash", "source_count", "error_count"),
     ),
     "retrieve_evidence": ToolDefinition(
         name="retrieve_evidence",
