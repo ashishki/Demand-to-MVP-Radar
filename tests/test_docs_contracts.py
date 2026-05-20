@@ -6,6 +6,9 @@ OPERATOR_RUNBOOK = ROOT / "docs" / "OPERATOR_RUNBOOK.md"
 BACKUP_RECOVERY = ROOT / "docs" / "BACKUP_RECOVERY.md"
 PRODUCTION_READINESS_REVIEW = ROOT / "docs" / "audit" / "PRODUCTION_READINESS_REVIEW.md"
 LIVE_SOURCE_PRODUCTION_ROADMAP = ROOT / "docs" / "LIVE_SOURCE_PRODUCTION_ROADMAP.md"
+TASKS = ROOT / "docs" / "tasks.md"
+CODEX_PROMPT = ROOT / "docs" / "CODEX_PROMPT.md"
+AI_DEVELOPMENT_PACK = ROOT / "docs" / "AI_DEVELOPMENT_PACK.md"
 
 
 def _operator_workflow_text() -> str:
@@ -26,6 +29,18 @@ def _production_readiness_text() -> str:
 
 def _live_source_roadmap_text() -> str:
     return LIVE_SOURCE_PRODUCTION_ROADMAP.read_text(encoding="utf-8")
+
+
+def _tasks_text() -> str:
+    return TASKS.read_text(encoding="utf-8")
+
+
+def _codex_prompt_text() -> str:
+    return CODEX_PROMPT.read_text(encoding="utf-8")
+
+
+def _ai_development_pack_text() -> str:
+    return AI_DEVELOPMENT_PACK.read_text(encoding="utf-8")
 
 
 def test_operator_workflow_contains_required_sections() -> None:
@@ -287,5 +302,56 @@ def test_live_source_roadmap_covers_ai_development_to_production() -> None:
         "Definition of Done for a Connector",
         "Backlog Seeds",
         "Hard Gates",
+    ):
+        assert phrase in content
+
+
+def test_live_source_tasks_are_in_authoritative_task_graph() -> None:
+    content = _tasks_text()
+
+    for phrase in (
+        "## Phase 11 - Live Source Connector Foundation",
+        "## Phase 12 - Source Health and Public Corpus Evaluation",
+        "## Phase 13 - Credentialed Source Wave",
+        "## Phase 14 - Community Source Wave",
+        "## Phase 15 - Source Value and Review UX",
+        "## Phase 16 - Beta and Hosted Decision",
+        "## T39: Live Source Connector Protocol",
+        "## T41: collect-sources Command",
+        "## T47: Live Public Corpus Retrieval Eval",
+        "## T52: Discord Allowlisted Channel Connector",
+        "## T57: Hosted/SaaS Decision ADR",
+        "docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#connector-contract",
+        "tests/test_live_source_connector.py::test_live_source_config_validates_required_fields",
+    ):
+        assert phrase in content
+
+
+def test_codex_prompt_points_to_live_source_next_task() -> None:
+    content = _codex_prompt_text()
+
+    for phrase in (
+        "Phase: 11",
+        "Baseline: 125 passing tests",
+        "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
+        "T39: Live Source Connector Protocol",
+        "Roadmap/task graph extension",
+        "Retrieval-related next tasks: T39-T47 live source connector protocol",
+    ):
+        assert phrase in content
+
+
+def test_ai_development_pack_extends_loop_through_production_decision() -> None:
+    content = _ai_development_pack_text()
+
+    for phrase in (
+        "T01-T38 are complete",
+        "Current verified baseline after the roadmap/task-graph extension is 125 passing tests",
+        "Sequence F - Live Source Connector Foundation",
+        "Sequence K - Beta and Hosted Decision",
+        "`T39: Live Source Connector Protocol`",
+        "`T57: Hosted/SaaS Decision ADR`",
+        "Discord allowlisted channels",
+        "X/Twitter",
     ):
         assert phrase in content

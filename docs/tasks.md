@@ -1377,3 +1377,640 @@ Files:
 Context-Refs:
   - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-9---private-beta-readiness
   - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-10---external-product-decision
+
+---
+
+## Phase 11 - Live Source Connector Foundation
+
+Business goal: make fresh public-source collection the primary workflow, while keeping manual exports and snapshots as fallback modes.
+
+## T39: Live Source Connector Protocol
+
+Owner:      codex
+Phase:      11
+Type:       rag:ingestion
+Depends-On: T38
+Status:     [ ]
+
+Objective: |
+  Define the shared connector protocol for live source collection, normalized evidence output, provenance, cursors, source health, and failure isolation.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Live connector configuration validates source name, source type, trust level, freshness window, enabled state, cursor support, raw snapshot policy, rate-limit policy, and approval requirements."
+    test: "tests/test_live_source_connector.py::test_live_source_config_validates_required_fields"
+  - id: AC-2
+    description: "Connector results expose normalized evidence rows, quarantined rows, source counts, error counts, cursor state, rate-limit state, and last-success metadata."
+    test: "tests/test_live_source_connector.py::test_connector_result_preserves_collection_metadata"
+  - id: AC-3
+    description: "Every live evidence row carries source name, source URL or source locator, captured_at, content_hash, source_fingerprint, connector version, and run ID."
+    test: "tests/test_live_source_connector.py::test_live_evidence_preserves_required_provenance"
+
+Files:
+  - demand_mvp_radar/sources/live.py
+  - demand_mvp_radar/models.py
+  - tests/test_live_source_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#connector-contract
+  - docs/IMPLEMENTATION_CONTRACT.md#evidence-and-provenance
+  - docs/ARCHITECTURE.md#runtime-and-isolation-model
+
+## T40: Credential Resolver and Secret Redaction
+
+Owner:      codex
+Phase:      11
+Type:       security
+Depends-On: T39
+Status:     [ ]
+
+Objective: |
+  Add credential resolution for live connectors without storing secret values in configs, logs, manifests, exceptions, or serialized models.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Source configs reference environment variable names, not secret values, and credential resolution returns typed available/missing/invalid states."
+    test: "tests/test_credentials.py::test_credentials_resolve_from_environment_names_only"
+  - id: AC-2
+    description: "Missing credentials disable only the affected source and produce a typed source error without failing unrelated sources."
+    test: "tests/test_credentials.py::test_missing_credentials_are_source_scoped_errors"
+  - id: AC-3
+    description: "Secrets are redacted from logs, run manifests, exceptions, model dumps, and health output."
+    test: "tests/test_credentials.py::test_secret_values_are_redacted_from_outputs"
+
+Files:
+  - demand_mvp_radar/credentials.py
+  - demand_mvp_radar/config.py
+  - demand_mvp_radar/sources/live.py
+  - tests/test_credentials.py
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#credential-strategy
+  - docs/OPERATOR_WORKFLOW.md#privacy-boundaries
+  - docs/IMPLEMENTATION_CONTRACT.md#local-first-data-hygiene
+
+## T41: collect-sources Command
+
+Owner:      codex
+Phase:      11
+Type:       rag:ingestion
+Depends-On: T39, T40, T24
+Status:     [ ]
+
+Objective: |
+  Add a `collect-sources` command that runs enabled live connectors, stores normalized evidence, updates retrieval, writes collection manifests, and isolates source failures.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`collect-sources --config ...` runs enabled live connectors, persists new evidence, updates retrieval chunks, and does not generate opportunity reports."
+    test: "tests/test_collect_sources_command.py::test_collect_sources_imports_live_evidence_without_reports"
+  - id: AC-2
+    description: "Per-source failures are recorded in the run manifest and health state without aborting successful sources."
+    test: "tests/test_collect_sources_command.py::test_collect_sources_isolates_source_failures"
+  - id: AC-3
+    description: "Repeated collection with the same fixture/cursor state is idempotent by content hash and source fingerprint."
+    test: "tests/test_collect_sources_command.py::test_collect_sources_is_idempotent_by_fingerprint"
+
+Files:
+  - demand_mvp_radar/cli.py
+  - demand_mvp_radar/sources/live.py
+  - demand_mvp_radar/storage.py
+  - tests/test_collect_sources_command.py
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p1---connector-sdk
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p2---public-connector-wave
+  - docs/retrieval_eval.md
+
+## T42: Hacker News Live Connector
+
+Owner:      codex
+Phase:      11
+Type:       rag:ingestion
+Depends-On: T41
+Status:     [ ]
+
+Objective: |
+  Collect Hacker News discussion and story signals through fixture-first live connector behavior without requiring credentials in CI.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps Hacker News stories/comments into normalized demand evidence with title, body, URL, author hash, captured_at, and source locator."
+    test: "tests/test_hacker_news_connector.py::test_hacker_news_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "Pagination and cursor state prevent duplicate collection across runs."
+    test: "tests/test_hacker_news_connector.py::test_hacker_news_connector_persists_cursor_state"
+  - id: AC-3
+    description: "Malformed or low-content rows are quarantined without blocking valid Hacker News evidence."
+    test: "tests/test_hacker_news_connector.py::test_hacker_news_connector_quarantines_malformed_rows"
+
+Files:
+  - demand_mvp_radar/sources/hacker_news.py
+  - tests/fixtures/hacker_news/
+  - tests/test_hacker_news_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+  - docs/SOURCE_CATALOG.md
+
+## T43: Stack Exchange Live Connector
+
+Owner:      codex
+Phase:      11
+Type:       rag:ingestion
+Depends-On: T41
+Status:     [ ]
+
+Objective: |
+  Collect Stack Exchange question and answer demand signals from configured sites and tags using fixture-first live connector behavior.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps Stack Exchange questions and answers into normalized evidence with site, tags, score, accepted-answer state, URLs, and captured_at."
+    test: "tests/test_stack_exchange_connector.py::test_stack_exchange_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "Configured sites/tags are validated and stored in source metadata for retrieval filtering and source health."
+    test: "tests/test_stack_exchange_connector.py::test_stack_exchange_connector_validates_sites_and_tags"
+  - id: AC-3
+    description: "Backoff/rate-limit responses produce source-scoped errors and preserved cursor state."
+    test: "tests/test_stack_exchange_connector.py::test_stack_exchange_connector_records_rate_limit_state"
+
+Files:
+  - demand_mvp_radar/sources/stack_exchange.py
+  - tests/fixtures/stack_exchange/
+  - tests/test_stack_exchange_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+  - docs/SOURCE_CATALOG.md
+
+## T44: RSS Feed Connector
+
+Owner:      codex
+Phase:      11
+Type:       rag:ingestion
+Depends-On: T41
+Status:     [ ]
+
+Objective: |
+  Collect configured RSS/Atom feeds as low-risk public evidence with feed-level provenance, dedupe, and freshness metadata.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector parses RSS and Atom fixtures into normalized evidence with feed URL, entry URL, title, summary/body, published_at, and captured_at."
+    test: "tests/test_rss_connector.py::test_rss_connector_maps_feeds_to_evidence"
+  - id: AC-2
+    description: "Entry GUID, URL, and content hash are used to dedupe repeated feed entries across collection runs."
+    test: "tests/test_rss_connector.py::test_rss_connector_dedupes_repeated_entries"
+  - id: AC-3
+    description: "Feed parse errors quarantine only the affected feed and appear in source health."
+    test: "tests/test_rss_connector.py::test_rss_connector_records_feed_parse_errors"
+
+Files:
+  - demand_mvp_radar/sources/rss.py
+  - tests/fixtures/rss/
+  - tests/test_rss_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+  - docs/SOURCE_CATALOG.md
+
+## T45: GitHub Public Search Connector
+
+Owner:      codex
+Phase:      11
+Type:       rag:ingestion
+Depends-On: T41, T23
+Status:     [ ]
+
+Objective: |
+  Collect public GitHub issue, discussion, and repository search signals using configured queries and optional token-based higher limits.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps public GitHub search fixtures into normalized evidence with repository locator, issue/discussion URL, labels, timestamps, and captured_at."
+    test: "tests/test_github_public_connector.py::test_github_public_connector_maps_search_results"
+  - id: AC-2
+    description: "The connector works without credentials in low-rate mode and uses `GITHUB_TOKEN` only when configured by env var name."
+    test: "tests/test_github_public_connector.py::test_github_public_connector_supports_optional_token"
+  - id: AC-3
+    description: "Private repository URLs, local paths, and raw token values are excluded from evidence and manifests."
+    test: "tests/test_github_public_connector.py::test_github_public_connector_redacts_private_values"
+
+Files:
+  - demand_mvp_radar/sources/github_public.py
+  - tests/fixtures/github_public/
+  - tests/test_github_public_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+  - docs/SOURCE_CATALOG.md
+  - docs/IMPLEMENTATION_CONTRACT.md#local-first-data-hygiene
+
+---
+
+## Phase 12 - Source Health and Public Corpus Evaluation
+
+Business goal: prove that the first public connector wave improves retrieval and decision quality before adding credentialed or noisy channels.
+
+## T46: Source Health in health --json
+
+Owner:      codex
+Phase:      12
+Type:       none
+Depends-On: T41, T42, T43, T44, T45
+Status:     [ ]
+
+Objective: |
+  Extend health output with live source status, freshness, cursor, rate-limit, credential, and failure summaries.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`health --json` reports per-source enabled state, last success, last error class, cursor age, freshness status, credential state, and rate-limit state."
+    test: "tests/test_live_source_health.py::test_health_reports_live_source_status"
+  - id: AC-2
+    description: "Health output redacts credential names and secret values while still identifying missing credential requirements by source."
+    test: "tests/test_live_source_health.py::test_health_redacts_live_source_credentials"
+  - id: AC-3
+    description: "Stale or repeatedly failing sources produce explicit warnings without marking the whole system unhealthy when other sources are current."
+    test: "tests/test_live_source_health.py::test_health_distinguishes_source_failures_from_system_failure"
+
+Files:
+  - demand_mvp_radar/cli.py
+  - demand_mvp_radar/health.py
+  - tests/test_live_source_health.py
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#production-requirements
+  - docs/OPERATOR_RUNBOOK.md
+
+## T47: Live Public Corpus Retrieval Eval
+
+Owner:      codex
+Phase:      12
+Type:       rag:evaluation
+Depends-On: T42, T43, T44, T45
+Status:     [ ]
+
+Objective: |
+  Add a retrieval evaluation slice that measures whether live public connectors improve cited demand-signal retrieval and no-answer behavior.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "A public-live fixture corpus covers Hacker News, Stack Exchange, RSS, and GitHub public evidence across at least ten queries."
+    test: "tests/test_live_public_retrieval_eval.py::test_live_public_eval_fixture_covers_required_sources"
+  - id: AC-2
+    description: "Retrieval evaluation reports hit@3, citation precision, no-answer accuracy, answer faithfulness, freshness compliance, source diversity, and public-source coverage."
+    test: "tests/test_live_public_retrieval_eval.py::test_live_public_eval_reports_required_metrics"
+  - id: AC-3
+    description: "`docs/retrieval_eval.md` records the public-live baseline and regression thresholds."
+    test: "tests/test_live_public_retrieval_eval.py::test_live_public_eval_updates_retrieval_docs"
+
+Files:
+  - scripts/eval_retrieval.py
+  - tests/fixtures/retrieval_live_public_queries.json
+  - tests/test_live_public_retrieval_eval.py
+  - docs/retrieval_eval.md
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p3---source-health-and-evaluation
+  - docs/retrieval_eval.md
+
+---
+
+## Phase 13 - Credentialed Source Wave
+
+Business goal: add higher-coverage sources only after the public-source baseline is measurable and secret handling is proven.
+
+## T48: SERP Credentialed Connector
+
+Owner:      codex
+Phase:      13
+Type:       rag:ingestion
+Depends-On: T40, T47
+Status:     [ ]
+
+Objective: |
+  Collect search result evidence through a credentialed SERP provider behind fixture-first tests, strict budget controls, and source-scoped failure handling.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps SERP fixtures into normalized evidence with query, rank, result URL, snippet, captured_at, and provider metadata."
+    test: "tests/test_serp_connector.py::test_serp_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "The connector requires an env-var-named credential and fails source-scoped when it is missing."
+    test: "tests/test_serp_connector.py::test_serp_connector_requires_credential_name"
+  - id: AC-3
+    description: "Configured daily and per-run budget limits prevent live calls after the cap is reached."
+    test: "tests/test_serp_connector.py::test_serp_connector_enforces_budget_limits"
+
+Files:
+  - demand_mvp_radar/sources/serp.py
+  - tests/fixtures/serp/
+  - tests/test_serp_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#credential-strategy
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p4---credentialed-connector-wave
+
+## T49: YouTube Connector
+
+Owner:      codex
+Phase:      13
+Type:       rag:ingestion
+Depends-On: T40, T47
+Status:     [ ]
+
+Objective: |
+  Collect YouTube search, video metadata, and comment signals for configured problem queries with quota-aware fixture-first behavior.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps YouTube fixture data into normalized evidence with video URL, channel hash, title, description/comment text, timestamps, and captured_at."
+    test: "tests/test_youtube_connector.py::test_youtube_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "Quota and page-token state are recorded so repeated runs resume safely."
+    test: "tests/test_youtube_connector.py::test_youtube_connector_records_quota_and_page_state"
+  - id: AC-3
+    description: "The connector requires `YOUTUBE_API_KEY` by env var name for live calls and redacts all secret values."
+    test: "tests/test_youtube_connector.py::test_youtube_connector_redacts_api_key"
+
+Files:
+  - demand_mvp_radar/sources/youtube.py
+  - tests/fixtures/youtube/
+  - tests/test_youtube_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#credential-strategy
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+
+## T50: Product Hunt Connector
+
+Owner:      codex
+Phase:      13
+Type:       rag:ingestion
+Depends-On: T40, T47
+Status:     [ ]
+
+Objective: |
+  Collect Product Hunt launches, comments, and category metadata as competitor and demand evidence using fixture-first connector behavior.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps Product Hunt fixture data into normalized evidence with product URL, tagline/body, topics, launch date, vote/comment counts, and captured_at."
+    test: "tests/test_product_hunt_connector.py::test_product_hunt_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "Credentialed and non-credentialed modes are explicit in source config and health output."
+    test: "tests/test_product_hunt_connector.py::test_product_hunt_connector_reports_access_mode"
+  - id: AC-3
+    description: "Product Hunt evidence is capped in scoring so launch popularity alone cannot produce `build`."
+    test: "tests/test_product_hunt_connector.py::test_product_hunt_only_evidence_cannot_trigger_build"
+
+Files:
+  - demand_mvp_radar/sources/product_hunt.py
+  - demand_mvp_radar/scoring.py
+  - tests/fixtures/product_hunt/
+  - tests/test_product_hunt_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+  - docs/IMPLEMENTATION_CONTRACT.md#deterministic-ownership-of-scores
+
+---
+
+## Phase 14 - Community Source Wave
+
+Business goal: add high-signal community channels only through allowlisted, auditable, and rate-limited connectors.
+
+## T51: Reddit Connector
+
+Owner:      codex
+Phase:      14
+Type:       rag:ingestion
+Depends-On: T40, T47
+Status:     [ ]
+
+Objective: |
+  Collect Reddit subreddit/search evidence from allowlisted communities with strict public-only provenance, rate-limit handling, and scoring caps.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps Reddit fixture posts/comments into normalized evidence with subreddit, thread URL, score/comment metadata, timestamps, and captured_at."
+    test: "tests/test_reddit_connector.py::test_reddit_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "Only allowlisted subreddits or configured queries can be collected."
+    test: "tests/test_reddit_connector.py::test_reddit_connector_enforces_allowlist"
+  - id: AC-3
+    description: "Reddit-only support cannot trigger `build` without independent non-Reddit evidence."
+    test: "tests/test_reddit_connector.py::test_reddit_only_support_cannot_trigger_build"
+
+Files:
+  - demand_mvp_radar/sources/reddit.py
+  - demand_mvp_radar/scoring.py
+  - tests/fixtures/reddit/
+  - tests/test_reddit_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+  - docs/SOURCE_CATALOG.md
+
+## T52: Discord Allowlisted Channel Connector
+
+Owner:      codex
+Phase:      14
+Type:       rag:ingestion
+Depends-On: T40, T47
+Status:     [ ]
+
+Objective: |
+  Collect Discord messages only from explicitly approved channels using bot-token credentials, redaction, and private-data guardrails.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps Discord fixture messages into normalized evidence with channel locator hash, message URL/locator, author hash, timestamps, and captured_at."
+    test: "tests/test_discord_connector.py::test_discord_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "Collection is blocked unless the channel is allowlisted and marked approved in source config."
+    test: "tests/test_discord_connector.py::test_discord_connector_requires_approved_allowlist"
+  - id: AC-3
+    description: "Author IDs, private channel names, and bot tokens are redacted from evidence, manifests, and health output."
+    test: "tests/test_discord_connector.py::test_discord_connector_redacts_private_values"
+
+Files:
+  - demand_mvp_radar/sources/discord.py
+  - tests/fixtures/discord/
+  - tests/test_discord_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#credential-strategy
+  - docs/IMPLEMENTATION_CONTRACT.md#local-first-data-hygiene
+
+## T53: Telegram Approved Channel Connector
+
+Owner:      codex
+Phase:      14
+Type:       rag:ingestion
+Depends-On: T40, T21, T47
+Status:     [ ]
+
+Objective: |
+  Add an approved-channel Telegram collector as an optional live alternative to sanitized export imports.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The connector maps approved Telegram channel fixture messages into normalized evidence with channel locator hash, message locator, timestamps, and captured_at."
+    test: "tests/test_telegram_live_connector.py::test_telegram_live_connector_maps_fixture_to_evidence"
+  - id: AC-2
+    description: "Only approved public or operator-owned channels can be collected; private chats remain unsupported."
+    test: "tests/test_telegram_live_connector.py::test_telegram_live_connector_rejects_private_chats"
+  - id: AC-3
+    description: "Live Telegram evidence follows the same redaction, dedupe, and quarantine behavior as the existing Telegram export bridge."
+    test: "tests/test_telegram_live_connector.py::test_telegram_live_connector_matches_export_redaction_contract"
+
+Files:
+  - demand_mvp_radar/sources/telegram_live.py
+  - demand_mvp_radar/telegram_import.py
+  - tests/fixtures/telegram_live/
+  - tests/test_telegram_live_connector.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#source-waves
+  - docs/OPERATOR_WORKFLOW.md#privacy-boundaries
+
+---
+
+## Phase 15 - Source Value and Review UX
+
+Business goal: make the expanded source set manageable by showing which sources improve decisions and by reducing review friction.
+
+## T54: Source Value Report
+
+Owner:      codex
+Phase:      15
+Type:       rag:evaluation
+Depends-On: T47, T48, T49, T50, T51, T52, T53
+Status:     [ ]
+
+Objective: |
+  Report which sources contribute useful, cited, decision-changing evidence and which sources should be disabled or demoted.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The source value report summarizes per-source evidence count, cited count, decision influence, quarantine rate, freshness, failures, and estimated cost."
+    test: "tests/test_source_value_report.py::test_source_value_report_contains_required_metrics"
+  - id: AC-2
+    description: "Sources with low value, high failure rate, stale evidence, or excessive cost are flagged with deterministic recommendations."
+    test: "tests/test_source_value_report.py::test_source_value_report_flags_low_value_sources"
+  - id: AC-3
+    description: "The report redacts private source locators and credential-related fields."
+    test: "tests/test_source_value_report.py::test_source_value_report_redacts_private_fields"
+
+Files:
+  - demand_mvp_radar/reports/source_value.py
+  - tests/test_source_value_report.py
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p5---source-value-and-noise-control
+  - docs/IMPLEMENTATION_CONTRACT.md#deterministic-ownership-of-scores
+
+## T55: Local Review Cockpit
+
+Owner:      codex
+Phase:      15
+Type:       none
+Depends-On: T31, T54
+Status:     [ ]
+
+Objective: |
+  Add a local review cockpit that lets the operator review dossiers, source value, missing evidence, and experiment actions without turning the product into a hosted SaaS.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The cockpit serves local-only views for opportunities, dossiers, source value, missing evidence, and experiment packs."
+    test: "tests/test_review_cockpit.py::test_review_cockpit_serves_required_local_views"
+  - id: AC-2
+    description: "Review actions use the existing decision-recording contract and preserve actor, timestamps, rationale, and requested evidence gaps."
+    test: "tests/test_review_cockpit.py::test_review_cockpit_records_existing_decision_contract"
+  - id: AC-3
+    description: "The cockpit binds to localhost by default and does not expose raw private evidence or secrets."
+    test: "tests/test_review_cockpit.py::test_review_cockpit_is_local_and_redacted_by_default"
+
+Files:
+  - demand_mvp_radar/review_cockpit.py
+  - demand_mvp_radar/cli.py
+  - tests/test_review_cockpit.py
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p6---local-review-cockpit
+  - docs/OPERATOR_WORKFLOW.md#review-time-target
+
+---
+
+## Phase 16 - Beta and Hosted Decision
+
+Business goal: decide from evidence whether the product should remain a personal local tool, support private beta, or move toward hosted SaaS.
+
+## T56: Private Beta Source Onboarding
+
+Owner:      codex
+Phase:      16
+Type:       docs
+Depends-On: T38, T55
+Status:     [ ]
+
+Objective: |
+  Define private beta onboarding for source setup, credential handling, local operation, support boundaries, and readiness evidence.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/PRIVATE_BETA_ONBOARDING.md` documents setup, source selection, credential environment variables, local scheduling, backup, privacy, and support boundaries."
+    test: "tests/test_docs_contracts.py::test_private_beta_onboarding_contains_required_sections"
+  - id: AC-2
+    description: "Beta remains gated on the four-run readiness review and at least three useful personal decisions."
+    test: "tests/test_docs_contracts.py::test_private_beta_onboarding_keeps_readiness_gate"
+  - id: AC-3
+    description: "The onboarding guide defines what data must never be sent to maintainers."
+    test: "tests/test_docs_contracts.py::test_private_beta_onboarding_defines_private_data_boundary"
+
+Files:
+  - docs/PRIVATE_BETA_ONBOARDING.md
+  - tests/test_docs_contracts.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p8---private-beta-package
+  - docs/audit/PRODUCTION_READINESS_REVIEW.md
+
+## T57: Hosted/SaaS Decision ADR
+
+Owner:      codex
+Phase:      16
+Type:       docs
+Depends-On: T56
+Status:     [ ]
+
+Objective: |
+  Write the architecture decision record that decides whether to remain local-first, support team deployment, or start hosted SaaS work.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/adr/ADR_HOSTED_SAAS_DECISION.md` compares local-only, team self-hosted, and hosted SaaS options."
+    test: "tests/test_docs_contracts.py::test_hosted_saas_adr_compares_required_options"
+  - id: AC-2
+    description: "The ADR requires evidence from personal readiness, private beta usage, source value, support burden, credential risk, and willingness-to-pay before hosted work can start."
+    test: "tests/test_docs_contracts.py::test_hosted_saas_adr_requires_beta_evidence"
+  - id: AC-3
+    description: "The ADR lists hosted-only prerequisites: auth, tenant isolation, encrypted secrets, billing, audit logs, abuse controls, and data deletion."
+    test: "tests/test_docs_contracts.py::test_hosted_saas_adr_lists_hosted_prerequisites"
+
+Files:
+  - docs/adr/ADR_HOSTED_SAAS_DECISION.md
+  - tests/test_docs_contracts.py
+
+Context-Refs:
+  - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p9---hostedsaas-decision-gate
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-10---external-product-decision

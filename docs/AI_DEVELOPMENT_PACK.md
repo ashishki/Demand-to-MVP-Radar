@@ -1,7 +1,7 @@
 # AI Development Pack
 
-Version: 1.0
-Date: 2026-05-19
+Version: 1.1
+Date: 2026-05-20
 Status: Active
 
 ---
@@ -16,12 +16,14 @@ The next work should not broaden the product into a SaaS. It should first produc
 
 ## Current Baseline
 
-- T01-T18 are complete.
-- The system has a CLI, SQLite storage, source fixtures, retrieval, insufficient-evidence behavior, clustering, scoring, report generation, decision memory, weekly fixture run, health output, and evaluation baselines.
+- T01-T38 are complete.
+- The system has a CLI, SQLite storage, source fixtures, retrieval, insufficient-evidence behavior, clustering, scoring, report generation, decision memory, weekly fixture run, owned-source imports, trust/freshness controls, evidence delta reports, decision dossiers, review commands, experiment packs, scheduled local operation, backup/recovery docs, and readiness review gates.
+- Current verified baseline after the roadmap/task-graph extension is 125 passing tests.
 - RAG is ON.
 - Tool-Use is ON.
 - Agentic and Planning profiles are OFF.
 - The product is local-first and single-operator.
+- The next implementation wave starts at T39 and changes the product from manual/snapshot-first collection to live-source-first collection with exports as fallback.
 
 ---
 
@@ -129,7 +131,7 @@ Implement:
 
 Expected result: the system is ready for weekly personal use before beta.
 
-### Sequence F - Live Source Production
+### Sequence F - Live Source Connector Foundation
 
 Use `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` as the planning authority for the next task wave after T38.
 
@@ -145,6 +147,53 @@ Implement first:
 
 Expected result: the system can collect fresh public demand signals automatically without manual exports as the primary workflow.
 
+### Sequence G - Source Health and Public Corpus Evaluation
+
+Implement:
+
+- `T46: Source Health in health --json`
+- `T47: Live Public Corpus Retrieval Eval`
+
+Expected result: public connector value and failures are measurable before adding credentialed sources.
+
+### Sequence H - Credentialed Source Wave
+
+Implement:
+
+- `T48: SERP Credentialed Connector`
+- `T49: YouTube Connector`
+- `T50: Product Hunt Connector`
+
+Expected result: paid/quota-bound sources can be collected through environment-based credentials, budget limits, and redaction.
+
+### Sequence I - Community Source Wave
+
+Implement:
+
+- `T51: Reddit Connector`
+- `T52: Discord Allowlisted Channel Connector`
+- `T53: Telegram Approved Channel Connector`
+
+Expected result: noisy or private-adjacent community sources are added only through allowlisted, auditable, credential-safe collection.
+
+### Sequence J - Source Value and Review UX
+
+Implement:
+
+- `T54: Source Value Report`
+- `T55: Local Review Cockpit`
+
+Expected result: the operator can see which sources actually improve decisions and can review dossiers locally without creating a hosted product.
+
+### Sequence K - Beta and Hosted Decision
+
+Implement:
+
+- `T56: Private Beta Source Onboarding`
+- `T57: Hosted/SaaS Decision ADR`
+
+Expected result: private beta and hosted/SaaS work remain gated on evidence, not assumptions.
+
 ---
 
 ## Source Expansion Sequence
@@ -153,11 +202,11 @@ Do not add all sources at once. Use this order:
 
 1. Owned sources: `telegram-research-agent`, notes, own GitHub repos.
 2. Manual competitor URLs and saved SERP snapshots.
-3. GitHub public issues/search.
-4. Hacker News and Stack Exchange.
-5. Product Hunt.
-6. YouTube and Google Trends.
-7. Paid or credentialed sources such as SerpApi, G2, app-store APIs, Reddit.
+3. Public connector foundation: GitHub public search, Hacker News, Stack Exchange, and RSS.
+4. Source health and public-live retrieval evaluation.
+5. Credentialed connectors: SERP, YouTube, and Product Hunt.
+6. Community connectors: Reddit, Discord allowlisted channels, and Telegram approved channels.
+7. Late-stage or high-risk connectors such as X/Twitter, G2, app-store APIs, and broad paid data providers.
 
 Each source must prove it improves decisions before the next source wave is added.
 
