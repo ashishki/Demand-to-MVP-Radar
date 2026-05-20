@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import UTC, datetime
 
@@ -106,7 +107,8 @@ class DecisionRepository:
                     created_at,
                     rationale,
                     reason,
-                    source_report_path
+                    source_report_path,
+                    requested_evidence_gaps
                 )
                 VALUES (
                     :opportunity_id,
@@ -116,7 +118,8 @@ class DecisionRepository:
                     :created_at,
                     :rationale,
                     :reason,
-                    :source_report_path
+                    :source_report_path,
+                    :requested_evidence_gaps
                 )
                 """,
                 {
@@ -128,6 +131,10 @@ class DecisionRepository:
                     "rationale": reason,
                     "reason": reason,
                     "source_report_path": decision.source_report_path,
+                    "requested_evidence_gaps": json.dumps(
+                        list(decision.requested_evidence_gaps),
+                        sort_keys=True,
+                    ),
                 },
             )
             self.connection.commit()
@@ -156,7 +163,8 @@ class DecisionRepository:
                     actor,
                     COALESCE(created_at, decided_at) AS created_at,
                     COALESCE(reason, rationale) AS reason,
-                    source_report_path
+                    source_report_path,
+                    requested_evidence_gaps
                 FROM decisions
                 WHERE opportunity_id = :opportunity_id
                 ORDER BY COALESCE(created_at, decided_at) ASC, id ASC

@@ -199,6 +199,36 @@ class OpportunityDossier(BaseModel):
         )
 
 
+class MVPExperimentPack(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    opportunity_id: str = Field(min_length=1)
+    one_function_scope: str = Field(min_length=1)
+    target_user: str = Field(min_length=1)
+    validation_method: str = Field(min_length=1)
+    first_10_targets: tuple[str, ...] = Field(min_length=10, max_length=10)
+    success_threshold: str = Field(min_length=1)
+    kill_threshold: str = Field(min_length=1)
+    revisit_threshold: str = Field(min_length=1)
+    timebox_days: int = Field(ge=7, le=14)
+    source_citations: tuple[DossierEvidenceItem, ...]
+    risk_flags: tuple[str, ...] = ()
+    human_decision: str = Field(min_length=1)
+    human_decision_reason: str = Field(min_length=1)
+
+
+class ExperimentOutcomeRecord(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    experiment_id: str = Field(min_length=1)
+    opportunity_id: str = Field(min_length=1)
+    outcome: Literal["validated", "killed", "inconclusive"]
+    evidence_summary: str = Field(min_length=1)
+    actor: str = Field(min_length=1)
+    created_at: datetime
+    decision_memory_value: str = Field(min_length=1)
+
+
 class DecisionRecord(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -210,3 +240,4 @@ class DecisionRecord(BaseModel):
     reason: str | None = None
     rationale: str | None = None
     source_report_path: str | None = None
+    requested_evidence_gaps: tuple[str, ...] = ()

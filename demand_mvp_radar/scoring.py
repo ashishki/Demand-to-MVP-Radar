@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from demand_mvp_radar.decisions import DecisionHistory
 from demand_mvp_radar.models import (
     EvidenceRecord,
+    ExperimentOutcomeRecord,
     OpportunityCandidate,
     OpportunityScore,
     ScoreComponent,
@@ -60,6 +61,8 @@ class ScoringConfig:
     reject_suppression_days: int = 30
     revisit_after_days: int = 14
     rejection_penalty: float = 40.0
+    experiment_kill_penalty: float = 50.0
+    experiment_validation_confidence_bonus: float = 20.0
     component_weights: Mapping[str, float] | None = None
     source_trust_weights: Mapping[str, float] | None = None
     source_type_caps: Mapping[str, int] | None = None
@@ -169,6 +172,45 @@ def apply_decision_memory(
                 "decision_memory_notes": (*score.decision_memory_notes, note),
             }
         )
+
+    return score
+
+
+def apply_experiment_outcomes(
+    score: OpportunityScore,
+    outcomes: Sequence[ExperimentOutcomeRecord],
+    *,
+    evidence_records: Sequence[EvidenceRecord] = (),
+    config: ScoringConfig | None = None,
+) -> OpportunityScore:
+    matching = tuple(
+        sorted(
+            (outcome for outcome in outcomes if outcome.opportunity_id == score.opportunity_id),
+            key=lambda outcome: outcome.created_at,
+        )
+    )
+    if not matching:
+        return score
+
+    scoring_config = config or ScoringConfig()
+    latest = matching[-1]
+    if latest.outcome == "killed" and not _has_new_evidence_since(
+        evidence_records,
+        created_at=latest.created_at,
+    ):
+        total_score = max(score.total_score - scoring_config.experiment_kill_penalty, 0)
+        note = f"killed experiment suppression: {latest.evidence_summary}"
+        return score.model_copy(
+            update={
+                "recommendation": "reject",
+                "total_score": round(total_score, 2),
+                "threshold_reasons": (*score.threshold_reasons, note),
+                "decision_memory_notes": (*score.decision_memory_notes, note),
+            }
+        )
+
+    if latest.outcome == "validated":
+        return _apply_validated_experiment_bonus(score, latest, scoring_config)
 
     return score
 
@@ -291,6 +333,72 @@ def _weighted_total(
     return round(total, 2)
 
 
+def _apply_validated_experiment_bonus(
+    score: OpportunityScore,
+    outcome: ExperimentOutcomeRecord,
+    config: ScoringConfig,
+) -> OpportunityScore:
+    components = dict(score.components)
+    current_confidence = components.get(
+        "confidence",
+        ScoreComponent(
+            name="confidence",
+            value=_confidence_value_for_band(score.confidence_band),
+            rationale="inferred from prior confidence band",
+        ),
+    )
+    new_confidence = min(
+        current_confidence.value + config.experiment_validation_confidence_bonus,
+        100,
+    )
+    components["confidence"] = ScoreComponent(
+        name="confidence",
+        value=round(new_confidence, 2),
+        rationale=(
+            f"{current_confidence.rationale}; validated experiment: "
+            f"{outcome.evidence_summary}"
+        ),
+    )
+    total_score = _total_with_updated_components(score, components, config)
+    recommendation = _recommendation(
+        total_score=total_score,
+        threshold_reasons=score.threshold_reasons,
+        config=config,
+    )
+    note = f"validated experiment support: {outcome.evidence_summary}"
+    return score.model_copy(
+        update={
+            "recommendation": recommendation,
+            "total_score": total_score,
+            "confidence_band": _confidence_band(components["confidence"].value),
+            "components": components,
+            "decision_memory_notes": (*score.decision_memory_notes, note),
+        }
+    )
+
+
+def _total_with_updated_components(
+    score: OpportunityScore,
+    components: dict[str, ScoreComponent],
+    config: ScoringConfig,
+) -> float:
+    if all(name in components for name in COMPONENT_NAMES):
+        return _weighted_total(components, config.weights())
+    return round(
+        min(score.total_score + config.experiment_validation_confidence_bonus, 100),
+        2,
+    )
+
+
+def _confidence_value_for_band(confidence_band: str) -> float:
+    values = {
+        "high": 80,
+        "medium": 55,
+        "low": 30,
+    }
+    return float(values.get(confidence_band, 30))
+
+
 def _threshold_reasons(
     candidate: OpportunityCandidate,
     evidence: tuple[EvidenceRecord, ...],
@@ -388,6 +496,14 @@ def _all_stale(
 ) -> bool:
     newest = max(_to_utc(record.captured_at) for record in evidence)
     return max((_to_utc(as_of) - newest).days, 0) > config.max_fresh_days
+
+
+def _has_new_evidence_since(
+    evidence_records: Sequence[EvidenceRecord],
+    *,
+    created_at: datetime,
+) -> bool:
+    return any(_to_utc(record.captured_at) > _to_utc(created_at) for record in evidence_records)
 
 
 def _to_utc(value: datetime) -> datetime:

@@ -111,4 +111,13 @@ def create_schema(connection: sqlite3.Connection) -> None:
     with span("sqlite.create_schema"):
         for statement in SCHEMA_STATEMENTS:
             connection.execute(statement)
+        _ensure_decision_columns(connection)
         connection.commit()
+
+
+def _ensure_decision_columns(connection: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"] for row in connection.execute("PRAGMA table_info(decisions)").fetchall()
+    }
+    if "requested_evidence_gaps" not in existing_columns:
+        connection.execute("ALTER TABLE decisions ADD COLUMN requested_evidence_gaps TEXT")

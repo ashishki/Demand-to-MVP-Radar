@@ -9,7 +9,21 @@ from decimal import Decimal
 from pathlib import Path
 
 from demand_mvp_radar.config import Settings, load_settings
+from demand_mvp_radar.decisions import DecisionValue, record_operator_decision
 from demand_mvp_radar.pipeline import import_sources, run_weekly_pipeline
+from demand_mvp_radar.storage.db import connect_database
+from demand_mvp_radar.storage.migrations import create_schema
+from demand_mvp_radar.storage.repositories import DecisionRepository
+
+REVIEW_DECISIONS: tuple[DecisionValue, ...] = (
+    "build",
+    "reject",
+    "revisit",
+    "needs_more_evidence",
+    "already_exists",
+    "not_my_icp",
+    "too_hard_to_distribute",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,6 +57,30 @@ def build_parser() -> argparse.ArgumentParser:
     import_sources_parser.add_argument("--run-id", help="Override the fixture run ID.")
     import_sources_parser.add_argument("--data-dir", help="Override the data directory.")
     import_sources_parser.add_argument("--report-dir", help="Override the report directory.")
+    review = subparsers.add_parser(
+        "review",
+        help="Record a human operator decision for a generated dossier.",
+    )
+    review.add_argument("--opportunity-id", required=True, type=int)
+    review.add_argument("--decision", required=True, choices=REVIEW_DECISIONS)
+    review.add_argument("--reason")
+    review.add_argument("--actor", default="operator")
+    review.add_argument(
+        "--dossier-path",
+        "--source-dossier-path",
+        dest="source_report_path",
+        required=True,
+    )
+    review.add_argument("--data-dir", help="Override the data directory.")
+    review.add_argument("--report-dir", help="Override the report directory.")
+    review.add_argument(
+        "--evidence-gap",
+        "--requested-evidence-gap",
+        dest="requested_evidence_gaps",
+        action="append",
+        default=[],
+        help="Missing evidence gap requested by the operator; may be repeated.",
+    )
     return parser
 
 
@@ -62,6 +100,7 @@ def build_health_payload(settings: Settings) -> dict[str, object]:
         },
         "corpus_version": database_status["corpus_version"],
         "index_age_days": database_status["index_age_days"],
+        "last_scheduled_run": database_status["last_scheduled_run"],
         "configured_sources": 0,
         "max_index_age_days": settings.max_index_age_days,
     }
@@ -94,6 +133,38 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(result.model_dump_json())
         return 0 if result.status == "imported" else 1
+    if args.command == "review":
+        return _run_review_command(args)
+    return 0
+
+
+def _run_review_command(args: argparse.Namespace) -> int:
+    reason = (args.reason or "").strip()
+    if args.decision == "build" and not reason:
+        print(json.dumps({"status": "error", "error": "build decisions require --reason"}))
+        return 2
+    if not reason:
+        print(json.dumps({"status": "error", "error": "operator reason is required"}))
+        return 2
+
+    settings = _settings_from_run_args(args)
+    connection = connect_database(settings.data_dir / "radar.sqlite3")
+    create_schema(connection)
+    try:
+        decision = record_operator_decision(
+            DecisionRepository(connection),
+            opportunity_id=args.opportunity_id,
+            decision=args.decision,
+            reason=reason,
+            actor=args.actor,
+            source_report_path=args.source_report_path,
+            requested_evidence_gaps=tuple(args.requested_evidence_gaps),
+        )
+    except (ValueError, sqlite3.IntegrityError) as exc:
+        print(json.dumps({"status": "error", "error": str(exc)}))
+        return 2
+
+    print(decision.model_dump_json())
     return 0
 
 
@@ -115,6 +186,7 @@ def _database_status(database_path: Path) -> dict[str, object]:
             "status": "not_initialized",
             "corpus_version": None,
             "index_age_days": None,
+            "last_scheduled_run": None,
         }
     try:
         connection = sqlite3.connect(database_path)
@@ -127,10 +199,29 @@ def _database_status(database_path: Path) -> dict[str, object]:
             LIMIT 1
             """
         ).fetchone()
+        scheduled_row = connection.execute(
+            """
+            SELECT run_id, status, ended_at
+            FROM runs
+            WHERE run_id LIKE 'scheduled-%'
+            ORDER BY COALESCE(ended_at, started_at) DESC
+            LIMIT 1
+            """
+        ).fetchone()
     except sqlite3.Error:
-        return {"status": "error", "corpus_version": None, "index_age_days": None}
+        return {
+            "status": "error",
+            "corpus_version": None,
+            "index_age_days": None,
+            "last_scheduled_run": None,
+        }
     if row is None:
-        return {"status": "initialized", "corpus_version": None, "index_age_days": None}
+        return {
+            "status": "initialized",
+            "corpus_version": None,
+            "index_age_days": None,
+            "last_scheduled_run": _scheduled_run_payload(scheduled_row),
+        }
 
     index_age_days = None
     if row["ended_at"]:
@@ -140,6 +231,17 @@ def _database_status(database_path: Path) -> dict[str, object]:
         "status": "ok",
         "corpus_version": row["corpus_version"],
         "index_age_days": index_age_days,
+        "last_scheduled_run": _scheduled_run_payload(scheduled_row),
+    }
+
+
+def _scheduled_run_payload(row: sqlite3.Row | None) -> dict[str, object] | None:
+    if row is None:
+        return None
+    return {
+        "run_id": row["run_id"],
+        "status": row["status"],
+        "ended_at": row["ended_at"],
     }
 
 
