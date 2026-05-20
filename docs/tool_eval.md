@@ -26,6 +26,7 @@ Initial fixture set to be created during T06/T08/T18:
 | TOOL-Q06 | `retrieve_evidence` | valid query against fixture corpus | accepted, audited |
 | TOOL-Q07 | `write_report` | local report write | atomic write, audited |
 | TOOL-Q08 | `record_operator_decision` | missing human approval marker | rejected before write |
+| TOOL-Q09 | `read_github_repo_snapshot` | local repository fixture | selected evidence imported, private paths excluded, audited |
 
 ---
 
@@ -49,6 +50,7 @@ Initial fixture set to be created during T06/T08/T18:
 | 2026-05-19 | T08 | `.venv/bin/pytest tests/test_source_tools.py -q, run 2026-05-19` | 1.00 | n/a | 1.00 | 1.00 | Source tool fixtures cover mocked URL snapshot provenance, ToolExecutor audit fields, saved SERP import, store metadata import, and bounded timeout retry structure. |
 | 2026-05-19 | T13 | `.venv/bin/pytest tests/test_llm_extraction.py -q, run 2026-05-19` | 1.00 | n/a | n/a | n/a | Fake-provider LLM extraction validates required structured fields, rejects malformed provider output before returning an extraction, and skips calls when retrieval is `insufficient_evidence`. |
 | 2026-05-19 | T18 | `python scripts/eval_tools.py --fixture tests/fixtures/tool_eval.json, run 2026-05-19` | 1.00 | 1.00 | 1.00 | 1.00 | scenario_count=4; fixture_version=tool-eval-v1 |
+| 2026-05-20 | T23 | `.venv/bin/pytest tests/test_github_source.py -q, run 2026-05-20` | 1.00 | 1.00 | 1.00 | n/a | Local GitHub repository fixture imports selected source evidence, excludes private/generated paths, and verifies audit fields use repository_id_hash without local path leakage. |
 
 ---
 

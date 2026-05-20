@@ -1,53 +1,57 @@
-# Phase 5 Decision Memory and Weekly Run Report
-_Date: 2026-05-19_
+# Phase 7 Report — Live Evidence Trust
 
-## Summary
+Date: 2026-05-20
 
-Phase 5 closed the local MVP loop. The project now records operator decisions append-only, applies decision memory to suppress recent rejects and preserve revisit rationale, runs the fixture-backed weekly pipeline, exposes richer health output, and records final active-profile evaluation baselines.
+## What Was Built
 
-## Built
+Phase 7 made imported evidence inspectable and measurable before generated briefs are trusted.
 
-- append-only operator decision recording with reason, actor, created timestamp, and source report path
-- decision history lookup with latest decision and full chronology
-- rejected-idea suppression and revisit rationale propagation
-- `demand-mvp-radar run --fixture ...` weekly pipeline command
-- fixture-backed SQLite evidence writes, retrieval ingestion, clustering, scoring, and Markdown report output
-- LLM budget ceiling guard before report synthesis
-- idempotent re-runs by source fingerprint
-- health JSON with database status, report directory status, corpus version, index age, max index age, and configured-source count
-- final RAG and Tool-Use evaluation baseline rows
+T24 added `import-sources`, which imports Telegram Research Agent exports, operator notes, and local GitHub source fixtures into storage, builds retrieval chunks for the configured corpus version, records skipped disabled sources, and intentionally does not generate weekly reports.
+
+T25 added source trust and freshness controls. Retrieval applies source freshness windows and trust-based downranking. Scoring applies default source trust weights, default source-type caps, and non-build threshold reasons when support is only low-trust or stale.
+
+T26 extended retrieval evaluation with sanitized live-like corpus and query fixtures. The fixture set covers seven source types and ten query cases, and eval output reports freshness compliance plus source diversity.
+
+T27 added evidence delta reports for source imports. Delta reports summarize new, duplicate, stale, quarantined, skipped, and changed-cluster evidence while redacting private source references.
 
 ## Test Delta
 
-- Before Phase 5: 47 passing tests
-- After Phase 5: 59 passing tests
-- Current local checks:
-  - `ruff check demand_mvp_radar/ tests/ scripts/` passes
-  - `ruff format --check demand_mvp_radar/ tests/ scripts/` passes
-  - `pytest tests/ -q` passes
+Baseline moved from 74 passing tests after Phase 6 to 86 passing tests after Phase 7.
 
-## Review
+Final local checks:
 
-Deep review Cycle 9 completed.
+- `.venv/bin/pytest tests/ -q` -> 86 passed
+- `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
 
-- Stop-Ship: No
+## Review Result
+
+Deep review Cycle 13 completed with Stop-Ship: No.
+
+Findings:
+
 - P0: 0
 - P1: 0
 - P2: 0
 
 ## Health Verdict
 
-Health: OK.
+OK.
 
-All tasks currently defined in `docs/tasks.md` are complete.
+The system remains local-first and deterministic where required. Retrieval trust changed without index schema drift, live-like evaluation is recorded, and import evidence can be inspected before synthesis.
 
-Notification summary:
+## Next Phase
 
-```text
-Ph5 Weekly Run DONE
-Built: decisions, suppression, weekly run, health, final eval baselines
-Tests: 47->59 pass
+Phase 8 — Decision-Grade Artifacts.
+
+Next task: T28 — Opportunity Dossier Schema.
+
+The key goal is to turn trusted evidence into decision-grade dossiers with citations, missing-evidence explanations, confidence, and countercase fields.
+
+## Notification Summary
+
+Ph7 Live Evidence Trust DONE
+Built: import-sources, source trust/freshness, live-like eval, evidence delta report
+Tests: 74->86 pass
 Issues: P1:0 P2:0
 Health: OK
-Next: none
-```
+Next: Ph8 Decision-Grade Artifacts

@@ -262,3 +262,113 @@ Status: append-only retrieval surface. This file records durable handoff context
 - Baseline after: 59 passing tests
 - Decisions/evidence updated: `docs/retrieval_eval.md`, `docs/tool_eval.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `docs/audit/REVIEW_REPORT.md`
 - Notes for next agent: T18 finalized active RAG and Tool-Use eval baselines and expanded health output for local runtime status.
+
+## 2026-05-20 - T19: Operator Workflow Contract
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/OPERATOR_WORKFLOW.md`, `tests/test_docs_contracts.py`
+- Tests: `.venv/bin/pytest tests/test_docs_contracts.py -q` -> 3 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/` -> pass; `.venv/bin/pytest tests/ -q` -> 62 passed
+- Baseline before: 59 passing tests
+- Baseline after: 62 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: T20 can use `docs/OPERATOR_WORKFLOW.md` and `docs/SOURCE_CATALOG.md` to align source catalog defaults with the personal weekly decision loop. No source adapters were implemented in T19.
+
+## 2026-05-20 - T20: Source Catalog Config Model
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/config.py`, `demand_mvp_radar/models.py`, `tests/test_source_catalog.py`
+- Tests: `.venv/bin/pytest tests/test_source_catalog.py -q` -> 3 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/` -> pass; `.venv/bin/pytest tests/ -q` -> 65 passed
+- Baseline before: 62 passing tests
+- Baseline after: 65 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: `Settings.source_catalog` now exposes disabled placeholders for GitHub, HN, Stack Exchange, Product Hunt, SERP, YouTube, app stores, G2, and Reddit. Enabled paid or credentialed API sources require approval.
+
+## 2026-05-20 - T21: Telegram Research Agent Bridge
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/sources/telegram_research_agent.py`, `tests/test_telegram_research_bridge.py`, `tests/fixtures/telegram_research_agent_export.json`
+- Tests: `.venv/bin/pytest tests/test_telegram_research_bridge.py -q` -> 3 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/` -> pass; `.venv/bin/pytest tests/ -q` -> 68 passed
+- Baseline before: 65 passing tests
+- Baseline after: 68 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: The bridge reads sanitized JSON fixture exports only; it does not read the external repository or private runtime data. Imported evidence uses source type `telegram_research_agent` and stable source fingerprints.
+
+## 2026-05-20 - T22: Operator Notes Source
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/sources/operator_notes.py`, `demand_mvp_radar/scoring.py`, `tests/test_operator_notes.py`, `tests/fixtures/operator_notes/private_signal.md`
+- Tests: `.venv/bin/pytest tests/test_operator_notes.py -q` -> 3 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/` -> pass; `.venv/bin/pytest tests/ -q` -> 71 passed
+- Baseline before: 68 passing tests
+- Baseline after: 71 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Operator note evidence uses source type `operator_note` and redacted source reference `operator_note:redacted`; scoring adds a threshold reason when all candidate support comes from operator notes.
+
+## 2026-05-20 - T23: Own GitHub Repository Source
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/sources/github_repo.py`, `demand_mvp_radar/tools/schemas.py`, `docs/ARCHITECTURE.md`, `docs/tool_eval.md`, `docs/CODEX_PROMPT.md`, `tests/test_github_source.py`, `tests/test_tools.py`, `tests/fixtures/github_repo/`
+- Tests: `.venv/bin/pytest tests/test_github_source.py tests/test_tools.py -q` -> 7 passed; `.venv/bin/pytest tests/ -q` -> 74 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/` -> pass
+- Baseline before: 71 passing tests
+- Baseline after: 74 passing tests
+- Decisions/evidence updated: `docs/tool_eval.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `docs/ARCHITECTURE.md`
+- Notes for next agent: `read_github_repo_snapshot` is local-snapshot only. Audit fields include run_id, repository_id_hash, source_count, and error_count; local repository paths and repository identifiers are excluded from audit fields.
+
+## 2026-05-20 - T24: Live Evidence Import Command
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/cli.py`, `demand_mvp_radar/pipeline.py`, `tests/test_import_sources_command.py`, `tests/fixtures/source_mix/`
+- Tests: `.venv/bin/pytest tests/test_import_sources_command.py -q` -> 3 passed; `.venv/bin/pytest tests/ -q` -> 77 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/` -> pass
+- Baseline before: 74 passing tests
+- Baseline after: 77 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: `import-sources` is intentionally separate from weekly report generation. It imports owned-source fixtures, builds retrieval chunks with the configured corpus version, and records skipped disabled sources in `runs.source_counts`.
+
+## 2026-05-20 - T25: Source Trust and Freshness Scoring
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/retrieval/query.py`, `demand_mvp_radar/scoring.py`, `tests/test_source_trust.py`, `docs/retrieval_eval.md`
+- Tests: `.venv/bin/pytest tests/test_source_trust.py -q` -> 3 passed; `.venv/bin/pytest tests/ -q` -> 80 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/` -> pass
+- Baseline before: 77 passing tests
+- Baseline after: 80 passing tests
+- Decisions/evidence updated: `docs/retrieval_eval.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Retrieval now applies default source trust downranking and accepts optional source-specific freshness windows/trust overrides. Scoring uses default trust-adjusted demand, default source-type caps, and non-build threshold reasons when support is only low-trust or stale.
+
+## 2026-05-20 - T26: Live-Like Retrieval Evaluation Fixtures
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `scripts/eval_retrieval.py`, `tests/fixtures/retrieval_live_like_corpus.json`, `tests/fixtures/retrieval_live_like_queries.json`, `tests/eval/test_retrieval_eval.py`, `docs/retrieval_eval.md`
+- Tests: `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json` -> all retrieval metrics 1.00; `.venv/bin/pytest tests/eval/test_retrieval_eval.py -q` -> 6 passed; `.venv/bin/pytest tests/ -q` -> 83 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 80 passing tests
+- Baseline after: 83 passing tests
+- Decisions/evidence updated: `docs/retrieval_eval.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Retrieval evaluation supports query fixtures that reference a separate corpus fixture. The T26 live-like corpus covers Telegram Research Agent, operator notes, GitHub repository snapshots, SERP, Hacker News, reviews, news, and stale forum evidence, with extended freshness and source-diversity metrics.
+
+## 2026-05-20 - T27: Evidence Delta Report
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/reports/evidence_delta.py`, `demand_mvp_radar/pipeline.py`, `tests/test_evidence_delta.py`
+- Tests: `.venv/bin/pytest tests/test_evidence_delta.py tests/test_import_sources_command.py -q` -> 6 passed; `.venv/bin/pytest tests/ -q` -> 86 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 83 passing tests
+- Baseline after: 86 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: `import-sources` now returns an `EvidenceDeltaReport`. It summarizes new, duplicate, stale, quarantined, and skipped counts by source type, groups new/changed evidence into changed clusters, and redacts private source references.
+
+## 2026-05-20 - T28: Opportunity Dossier Schema
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/models.py`, `demand_mvp_radar/dossiers.py`, `tests/test_dossiers.py`
+- Tests: `.venv/bin/pytest tests/test_dossiers.py -q` -> 3 passed; `.venv/bin/pytest tests/ -q` -> 89 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 86 passing tests
+- Baseline after: 89 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: `OpportunityDossier` requires decision-grade fields, known citation references for cited claims, explicit inference markers for uncited claims, confidence, and `why_this_may_be_wrong` countercase entries.

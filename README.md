@@ -74,9 +74,9 @@ LLM используется только ограниченно:
 
 ## Текущий статус
 
-Все задачи, описанные в `docs/tasks.md` на текущий момент, завершены. Phase 1-5 прошли review без stop-ship findings.
+Phase 1-7 завершены и прошли review без stop-ship findings. Следующая очередь начинается с Phase 8: decision-grade artifacts.
 
-Текущий baseline: 59 passing tests. Локально проходят:
+Текущий baseline: 86 passing tests. Локально проходят:
 
 - `ruff check demand_mvp_radar/ tests/ scripts/`
 - `ruff format --check demand_mvp_radar/ tests/ scripts/`
@@ -97,6 +97,14 @@ LLM используется только ограниченно:
 - Markdown report rendering and atomic report writes
 - fixture-backed weekly pipeline command with LLM budget guard
 - final RAG and Tool-Use evaluation rows
+- operator workflow contract and source catalog configuration
+- sanitized `telegram-research-agent` bridge
+- redacted operator notes importer with note-only build guard
+- local GitHub repository snapshot importer and `read_github_repo_snapshot` tool audit schema
+- `import-sources` command for owned-source imports without weekly report generation
+- source trust/freshness scoring controls and source-type evidence caps
+- live-like retrieval evaluation fixtures with freshness and source-diversity metrics
+- evidence delta reports for new, duplicate, stale, quarantined, skipped, and changed evidence
 - GitHub Actions workflow for install, ruff check, format check, and pytest
 
 Пример локального запуска:

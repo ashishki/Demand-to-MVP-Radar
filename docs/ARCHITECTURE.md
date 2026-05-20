@@ -1,7 +1,7 @@
 # Architecture - Demand-to-MVP Radar
 
 Version: 1.0
-Last updated: 2026-05-19
+Last updated: 2026-05-20
 Status: Draft
 
 ---
@@ -166,6 +166,8 @@ query analyze -> retrieve -> filter -> assemble evidence -> answer | insufficien
 
 The `insufficient_evidence` path is mandatory. A retrieval-backed synthesis path must not draft a recommendation when evidence coverage fails.
 
+Phase 7 added live evidence trust controls around this path: `import-sources` can ingest owned-source fixtures into storage and retrieval without generating weekly briefs, query-time retrieval can apply source freshness windows and source trust downranking, scoring applies trust-adjusted support and source-type caps, and import runs expose an evidence delta report before generated briefs are trusted.
+
 ### RAG Reference Implementation Guidance
 
 The RAG implementation may use `ashishki/Dream_Motif_Interpreter` as a pattern reference for source connectors, normalized document contracts, staged ingestion, ingestion/query separation, `insufficient_evidence`, and retrieval evaluation. The reference is not a source of truth for this project and does not change v1 choices: Demand-to-MVP Radar remains local-first, SQLite-backed, text-only, and opportunity-research focused.
@@ -235,6 +237,7 @@ See `docs/IMPLEMENTATION_REFERENCE_MAP.md` for file-level mapping from the refer
 | `fetch_url_snapshot` | read with local snapshot write | Idempotent by normalized URL and capture date | Local operator; credentialed sources require approval | Bounded retries with backoff; respect robots/source terms where applicable | run_id, url, status_code, content_hash, fetched_at |
 | `read_serp_snapshot` | read | Idempotent by query and snapshot timestamp | Local operator | No network retry for saved snapshots; provider retries only when configured | run_id, query, provider, snapshot_id |
 | `read_store_metadata` | read | Idempotent by store, listing ID, and captured_at | Local operator; credentialed source approval required | Bounded retries; rate-limit aware | run_id, store, listing_id, status |
+| `read_github_repo_snapshot` | read | Idempotent by repository identifier | Local operator | No retry for local snapshots | run_id, repository_id_hash, source_count, error_count |
 | `retrieve_evidence` | read | Idempotent for corpus version, query, filters, and top_k | Internal pipeline | No retry unless index read fails transiently | run_id, corpus_version, query_hash, top_k, hit_count |
 | `write_report` | local write | Idempotent by report run ID and output path | Local operator | Atomic write to temp file then rename | run_id, report_path, content_hash |
 | `record_operator_decision` | local write | Idempotent by opportunity_id and decision timestamp | Human-approved action | No automatic retry after validation failure | opportunity_id, decision, actor, timestamp |
@@ -287,7 +290,7 @@ No destructive external tools are in v1. The following actions are treated as un
 
 1. Operator runs `demand-mvp-radar run --config config/local.toml`.
 2. Configuration loads source paths, network-enabled sources, thresholds, budgets, and output directory.
-3. Source adapters read Telegram-derived evidence, manual URLs, saved search/store snapshots, competitor pages, Reddit/X exports, and notes.
+3. Source adapters read Telegram-derived evidence, operator notes, owned GitHub repository snapshots, manual URLs, saved search/store snapshots, competitor pages, and Reddit/X exports.
 4. Normalizers convert each source into typed evidence records with source provenance and stable fingerprints.
 5. Storage writes a run manifest, raw snapshot references, normalized evidence records, and audit events idempotently.
 6. Retrieval ingestion chunks, embeds, and indexes text evidence under the current corpus and schema version.
@@ -336,6 +339,7 @@ No destructive external tools are in v1. The following actions are treated as un
 | Integration | Used for | Credential required? | v1 posture |
 |-------------|----------|----------------------|------------|
 | Telegram-derived exports / `telegram-research-agent` output | Initial demand signal corpus | Maybe, depending on export path | Prefer local exports or files produced by the existing agent. |
+| Owned GitHub repositories | Active project direction, TODOs, issue snapshots, recent implementation friction | No for local snapshots; maybe for GitHub REST | Prefer local repository snapshots first; audit by repository identifier hash rather than local path. |
 | Manual URLs and competitor pages | Source evidence and positioning notes | No for public pages | Fetch politely with timeouts and source terms awareness. |
 | Search / SERP snapshots | Demand and query evidence | Optional provider key | Saved snapshots first; live provider later with approval. |
 | Reddit API or exports | Social proof and pain language | Optional | Use saved exports or API only after source-specific configuration. |
@@ -367,6 +371,9 @@ Demand-to-MVP-Radar/
       manual_urls.py
       serp_snapshot.py
       store_metadata.py
+      telegram_research_agent.py
+      operator_notes.py
+      github_repo.py
     tools/
       __init__.py
       schemas.py

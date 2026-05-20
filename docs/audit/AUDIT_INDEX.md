@@ -19,6 +19,10 @@ Append-only. One row per review cycle.
 | cycle-7 | Phase 4 | 2026-05-19 | Phase 4 implementation deep review after T12-T14 | No | 0 | 0 | 0 |
 | cycle-8 | Phase 5 | 2026-05-19 | Targeted RAG and Tool-Use deep review after T18 `rag:query tool:call` | No | 0 | 0 | 0 |
 | cycle-9 | Phase 5 | 2026-05-19 | Phase 5 final implementation deep review after T15-T18 | No | 0 | 0 | 0 |
+| cycle-10 | Phase 6 | 2026-05-20 | Phase 6 implementation deep review after T19-T23 | No | 0 | 0 | 0 |
+| cycle-11 | Phase 7 | 2026-05-20 | Targeted RAG deep review after T25 `rag:query` | No | 0 | 0 | 0 |
+| cycle-12 | Phase 7 | 2026-05-20 | Targeted RAG deep review after T26 `rag:query` | No | 0 | 0 | 0 |
+| cycle-13 | Phase 7 | 2026-05-20 | Phase 7 implementation deep review after T24-T27 | No | 0 | 0 | 0 |
 
 ---
 
@@ -37,6 +41,10 @@ Append-only. One row per review cycle.
 | cycle-7 | docs/archive/PHASE4_REVIEW.md | Phase 4 | PASS |
 | cycle-8 | docs/archive/CYCLE8_T18_REVIEW.md | Phase 5 | PASS |
 | cycle-9 | docs/archive/PHASE5_REVIEW.md | Phase 5 | PASS |
+| cycle-10 | docs/archive/PHASE6_REVIEW.md | Phase 6 | PASS |
+| cycle-11 | docs/archive/CYCLE11_T25_REVIEW.md | Phase 7 | PASS |
+| cycle-12 | docs/archive/CYCLE12_T26_REVIEW.md | Phase 7 | PASS |
+| cycle-13 | docs/archive/PHASE7_REVIEW.md | Phase 7 | PASS |
 
 ---
 

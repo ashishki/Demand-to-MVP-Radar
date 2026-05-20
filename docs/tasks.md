@@ -714,7 +714,7 @@ Owner:      codex
 Phase:      6
 Type:       docs
 Depends-On: T18
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Create the operator workflow contract that defines the personal pain, decision taxonomy, weekly review constraints, and adoption failure conditions.
@@ -747,7 +747,7 @@ Owner:      codex
 Phase:      6
 Type:       none
 Depends-On: T19
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add a typed source catalog configuration model that can represent source priority, trust level, freshness window, access method, and approval requirements.
@@ -781,7 +781,7 @@ Owner:      codex
 Phase:      6
 Type:       none
 Depends-On: T20
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Import sanitized outputs from `telegram-research-agent` as first-class Demand-to-MVP evidence without coupling to that repository's internal runtime.
@@ -815,7 +815,7 @@ Owner:      codex
 Phase:      6
 Type:       none
 Depends-On: T20
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add a local operator notes importer for Markdown or JSON notes that can seed hypotheses without alone justifying a build recommendation.
@@ -850,7 +850,7 @@ Owner:      codex
 Phase:      6
 Type:       tool:call
 Depends-On: T20
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Import selected evidence from operator-owned GitHub repositories, starting with local repository scans and optional GitHub REST snapshots.
@@ -891,7 +891,7 @@ Owner:      codex
 Phase:      7
 Type:       none
 Depends-On: T21, T22, T23
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add an import command that ingests configured owned sources, writes a run manifest, and updates retrieval without generating a weekly opportunity report.
@@ -926,7 +926,7 @@ Owner:      codex
 Phase:      7
 Type:       rag:query
 Depends-On: T20, T24
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Apply source trust, freshness windows, and source-type caps in retrieval and scoring so high-volume weak sources cannot dominate recommendations.
@@ -961,7 +961,7 @@ Owner:      codex
 Phase:      7
 Type:       rag:query
 Depends-On: T25
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Extend retrieval evaluation with sanitized live-like fixtures representing Telegram bridge, notes, GitHub, competitor URLs, and public developer demand.
@@ -996,7 +996,7 @@ Owner:      codex
 Phase:      7
 Type:       none
 Depends-On: T24, T26
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Generate an evidence delta report that shows new, changed, duplicated, stale, quarantined, and source-skipped evidence since the previous import.
@@ -1033,7 +1033,7 @@ Owner:      codex
 Phase:      8
 Type:       none
 Depends-On: T25, T27
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Define a structured dossier model for decision-grade opportunity review.
