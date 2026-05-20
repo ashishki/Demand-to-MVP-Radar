@@ -1,0 +1,13 @@
+[Unit]
+Description=Demand-to-MVP Radar weekly local run
+Documentation=docs/OPERATOR_RUNBOOK.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=DMR_DATA_DIR=%h/.local/share/demand-mvp-radar/data
+Environment=DMR_REPORT_DIR=%h/.local/share/demand-mvp-radar/reports
+Environment=DMR_WEEKLY_FIXTURE=%h/.config/demand-mvp-radar/weekly_run
+EnvironmentFile=-%h/.config/demand-mvp-radar/schedule.env
+ExecStart=/bin/sh -lc 'mkdir -p "$DMR_DATA_DIR/logs" "$DMR_REPORT_DIR"; demand-mvp-radar run --fixture "$DMR_WEEKLY_FIXTURE" --data-dir "$DMR_DATA_DIR" --report-dir "$DMR_REPORT_DIR" --run-id "scheduled-$(date +%%Y-%%m-%%d)" >> "$DMR_DATA_DIR/logs/scheduled-run.log" 2>&1'

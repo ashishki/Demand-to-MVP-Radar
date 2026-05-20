@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Demand-to-MVP Radar weekly
+Documentation=docs/OPERATOR_RUNBOOK.md
+
+[Timer]
+OnCalendar=Mon *-*-* 09:00:00
+Persistent=true
+Unit=demand-mvp-radar.service
+
+[Install]
+WantedBy=timers.target
