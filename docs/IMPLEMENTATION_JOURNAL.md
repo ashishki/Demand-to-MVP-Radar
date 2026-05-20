@@ -372,3 +372,113 @@ Status: append-only retrieval surface. This file records durable handoff context
 - Baseline after: 89 passing tests
 - Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
 - Notes for next agent: `OpportunityDossier` requires decision-grade fields, known citation references for cited claims, explicit inference markers for uncited claims, confidence, and `why_this_may_be_wrong` countercase entries.
+
+## 2026-05-20 - T29: Dossier Renderer
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/reports/dossier_markdown.py`, `demand_mvp_radar/reports/dossier_html.py`, `tests/test_dossier_renderer.py`
+- Tests: `.venv/bin/pytest tests/test_dossier_renderer.py tests/test_dossiers.py -q` -> 6 passed; `.venv/bin/pytest tests/ -q` -> 92 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 89 passing tests
+- Baseline after: 92 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Dossier Markdown rendering uses a stable section order, includes source provenance rows for every evidence item, marks uncited inference claims, and handles `insufficient_evidence` without presenting it as a build recommendation.
+
+## 2026-05-20 - T30: Missing Evidence Section
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/retrieval/query.py`, `demand_mvp_radar/dossiers.py`, `tests/test_missing_evidence.py`, `tests/eval/test_retrieval_eval.py`, `docs/retrieval_eval.md`
+- Tests: `.venv/bin/pytest tests/test_missing_evidence.py tests/eval/test_retrieval_eval.py -q` -> 9 passed; `.venv/bin/pytest tests/ -q` -> 95 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 92 passing tests
+- Baseline after: 95 passing tests
+- Decisions/evidence updated: `docs/retrieval_eval.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Missing-evidence analysis maps retrieval missing reasons and dossier fields into deterministic gap types with collection targets. It suggests source types and queries without claiming missing facts are true.
+
+## 2026-05-20 - T31: Review Command
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/cli.py`, `demand_mvp_radar/decisions.py`, `demand_mvp_radar/models.py`, `demand_mvp_radar/storage/migrations.py`, `demand_mvp_radar/storage/repositories.py`, `tests/test_review_command.py`
+- Tests: `.venv/bin/pytest tests/test_review_command.py tests/test_decisions.py tests/test_decision_memory.py -q` -> 9 passed; `.venv/bin/pytest tests/ -q` -> 98 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 95 passing tests
+- Baseline after: 98 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `docs/ARCHITECTURE.md`
+- Notes for next agent: `demand-mvp-radar review` records append-only operator decisions with dossier paths. `build` requires an explicit reason, and `needs_more_evidence` stores requested evidence gaps for later experiment or source-collection workflows.
+
+## 2026-05-20 - T32: MVP Experiment Pack Model
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/experiments.py`, `demand_mvp_radar/models.py`, `tests/test_experiments.py`
+- Tests: `.venv/bin/pytest tests/test_experiments.py tests/test_dossiers.py tests/test_decisions.py -q` -> 9 passed; `.venv/bin/pytest tests/ -q` -> 101 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 98 passing tests
+- Baseline after: 101 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Experiment packs require all validation fields, exactly ten discovery targets, a 7-14 day timebox, and a current human `build` or `revisit` decision. Generated packs inherit source dossier citations and risk flags.
+
+## 2026-05-20 - T33: Experiment Renderer
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/reports/experiment_markdown.py`, `tests/test_experiment_renderer.py`
+- Tests: `.venv/bin/pytest tests/test_experiment_renderer.py tests/test_experiments.py tests/test_reports.py -q` -> 9 passed; `.venv/bin/pytest tests/ -q` -> 104 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 101 passing tests
+- Baseline after: 104 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Experiment Markdown includes scope, target user, validation method, first 10 targets, thresholds, timebox, source citations, and risk flags. Artifact writes are keyed by opportunity ID and run ID; a different run ID creates a separate file, and the same run ID overwrites atomically.
+
+## 2026-05-20 - T34: Experiment Outcome Recording
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/experiments.py`, `demand_mvp_radar/decisions.py`, `demand_mvp_radar/scoring.py`, `demand_mvp_radar/models.py`, `tests/test_experiment_outcomes.py`
+- Tests: `.venv/bin/pytest tests/test_experiment_outcomes.py tests/test_scoring.py tests/test_decision_memory.py -q` -> 9 passed; `.venv/bin/pytest tests/ -q` -> 107 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 104 passing tests
+- Baseline after: 107 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Experiment outcomes map to decision-memory values deterministically. `killed` outcomes suppress matching opportunities until newer evidence is present; `validated` outcomes boost the confidence component through `ScoringConfig.experiment_validation_confidence_bonus`.
+
+## 2026-05-20 - T35: Operator Runbook
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/OPERATOR_RUNBOOK.md`, `tests/test_docs_contracts.py`
+- Tests: `.venv/bin/pytest tests/test_docs_contracts.py -q` -> 6 passed; `.venv/bin/pytest tests/ -q` -> 110 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 107 passing tests
+- Baseline after: 110 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: The runbook documents weekly operation, review, source failure handling, health checks, budget recovery, generated artifacts, local privacy boundaries, backup targets, and failed-run recovery.
+
+## 2026-05-20 - T36: Scheduled Run Support
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `deploy/demand-mvp-radar.service`, `deploy/demand-mvp-radar.timer`, `demand_mvp_radar/cli.py`, `tests/test_scheduled_run.py`, `docs/OPERATOR_RUNBOOK.md`
+- Tests: `.venv/bin/pytest tests/test_scheduled_run.py tests/test_health.py tests/test_smoke.py -q` -> 9 passed; `.venv/bin/pytest tests/ -q` -> 113 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 110 passing tests
+- Baseline after: 113 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: The systemd service uses local `DMR_DATA_DIR`, `DMR_REPORT_DIR`, and `DMR_WEEKLY_FIXTURE` values, writes logs under `$DMR_DATA_DIR/logs`, and uses `scheduled-YYYY-MM-DD` run IDs. Health JSON now includes `last_scheduled_run` when a scheduled run exists.
+
+## 2026-05-20 - T37: Backup and Recovery Guide
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/BACKUP_RECOVERY.md`, `tests/test_docs_contracts.py`
+- Tests: `.venv/bin/pytest tests/test_docs_contracts.py -q` -> 9 passed; `.venv/bin/pytest tests/ -q` -> 116 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 113 passing tests
+- Baseline after: 116 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Backup/recovery guidance covers SQLite files and sidecars, retrieval indexes, raw snapshots, private exports, operator notes, generated reports, restore verification commands, git-ignored private artifacts, and failed-run recovery.
+
+## 2026-05-20 - T38: Four-Run Readiness Review
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/audit/PRODUCTION_READINESS_REVIEW.md`, `tests/test_docs_contracts.py`
+- Tests: `.venv/bin/pytest tests/test_docs_contracts.py -q` -> 12 passed; `.venv/bin/pytest tests/ -q` -> 119 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 116 passing tests
+- Baseline after: 119 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Production readiness is explicitly `NOT READY` until four weekly local runs prove repeated personal value. Private beta and SaaS/hosted work remain blocked by the readiness review.

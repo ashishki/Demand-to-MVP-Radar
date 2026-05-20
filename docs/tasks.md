@@ -1064,7 +1064,7 @@ Owner:      codex
 Phase:      8
 Type:       none
 Depends-On: T28
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Render opportunity dossiers as Markdown and optional HTML with evidence, score, risk, missing-evidence, and decision sections.
@@ -1095,7 +1095,7 @@ Owner:      codex
 Phase:      8
 Type:       rag:query
 Depends-On: T28, T29
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add explicit missing-evidence analysis to dossiers so weak opportunities explain what proof is absent.
@@ -1127,7 +1127,7 @@ Owner:      codex
 Phase:      8
 Type:       none
 Depends-On: T15, T29
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add a local review command for recording operator decisions from generated dossiers.
@@ -1164,7 +1164,7 @@ Owner:      codex
 Phase:      9
 Type:       none
 Depends-On: T31
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Define a structured experiment pack for one selected opportunity.
@@ -1195,7 +1195,7 @@ Owner:      codex
 Phase:      9
 Type:       none
 Depends-On: T32
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Render MVP experiment packs as actionable Markdown artifacts.
@@ -1224,7 +1224,7 @@ Owner:      codex
 Phase:      9
 Type:       none
 Depends-On: T32, T33
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Record experiment outcomes and feed them back into decision history and future scoring.
@@ -1262,7 +1262,7 @@ Owner:      codex
 Phase:      10
 Type:       docs
 Depends-On: T34
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Write an operator runbook for weekly operation, failure recovery, source maintenance, budget review, and privacy checks.
@@ -1292,7 +1292,7 @@ Owner:      codex
 Phase:      10
 Type:       none
 Depends-On: T35
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add documented and testable support for scheduled local weekly runs without requiring a hosted service.
@@ -1325,7 +1325,7 @@ Owner:      codex
 Phase:      10
 Type:       docs
 Depends-On: T35
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add backup and recovery guidance for SQLite databases, retrieval indexes, reports, raw snapshots, and private source exports.
@@ -1354,7 +1354,7 @@ Owner:      codex
 Phase:      10
 Type:       docs
 Depends-On: T36, T37
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Define and run the readiness review for four weekly local runs before private beta.

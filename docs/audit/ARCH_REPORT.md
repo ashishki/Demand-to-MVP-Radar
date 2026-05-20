@@ -1,29 +1,26 @@
-# ARCH_REPORT — Cycle 13
+# ARCH_REPORT — Cycle 17
 _Date: 2026-05-20_
 
 ## Component Verdicts
 
 | Component | Verdict | Note |
 |-----------|---------|------|
-| Live evidence import | PASS | `import-sources` stores owned-source evidence, builds retrieval chunks, records source/skipped counts, and does not synthesize reports. |
-| Source trust/freshness | PASS | Retrieval and scoring apply deterministic source trust, source-type caps, freshness filters, and stale/low-trust build guards. |
-| Live-like retrieval eval | PASS | Eval fixtures cover seven source types and ten query cases with extended freshness and source-diversity metrics. |
-| Evidence delta report | PASS | Import output summarizes new, duplicate, stale, quarantined, skipped, and changed-cluster evidence with private references redacted. |
-| Phase 7 docs/state | PASS | Tasks, CODEX state, retrieval eval, audit index, README, architecture, journal, memory, and checkpoint were updated. |
+| Operator runbook | PASS | Weekly run, review, source failure, health, budget, artifact, privacy, backup, and recovery steps are documented. |
+| Scheduled run support | PASS | User-level systemd service/timer templates use local env paths and write logs under `DMR_DATA_DIR`. |
+| Health scheduled status | PASS | Health JSON reports the latest `scheduled-...` run with run ID, status, and timestamp when available. |
+| Backup/recovery guide | PASS | Backup targets, restore steps, verification commands, ignored private artifacts, and failed-run recovery are documented. |
+| Production readiness gate | PASS | Four-run checklist explicitly blocks private beta and SaaS/hosted work until personal weekly value is proven. |
 
 ## Contract Compliance
 
 | Rule | Verdict | Note |
 |------|---------|------|
-| Retrieval evaluation gate | PASS | T25 and T26 updated retrieval eval artifacts and CODEX evaluation state with metrics, dates, corpus versions, and regression classification. |
-| Ingestion/query separation | PASS | Ingestion, query-time retrieval, and eval orchestration remain separate modules. |
-| Source provenance mandatory | PASS | Imported evidence, retrieval chunks, eval fixtures, and delta clusters retain source type, source IDs/URLs or redacted references, timestamps, hashes, and run IDs where applicable. |
-| PII policy | PASS | Operator-note paths and private references are redacted in evidence import and delta report output. |
-| Credentials and secrets | PASS | No credentials or live source identifiers were added; fixtures use sanitized/example data. |
-| Deterministic scoring ownership | PASS | Trust weights, caps, freshness, and recommendation guards remain deterministic code paths. |
-| Human-owned decisions | PASS | Phase 7 does not record final build decisions or expand approval boundaries. |
-| Runtime tier guardrails | PASS | No dependency install, network call, privileged mutation, background worker, or T2/T3 behavior was introduced. |
-| Index schema versioning | PASS | Index schema remains `retrieval-index-v1`; no embedding model or modality change occurred. |
+| Local-first data hygiene | PASS | SQLite files, raw snapshots, private exports, notes, generated reports, and secrets remain documented as local/ignored artifacts. |
+| Human-owned decisions | PASS | Runbook and readiness review preserve operator ownership of decisions, outreach, publishing, and source approvals. |
+| Runtime tier guardrails | PASS | Scheduled support is local systemd, not a hosted service or autonomous persistent worker with elevated privileges. |
+| Credentials and secrets | PASS | Scheduling templates use environment files and do not embed API keys, tokens, cookies, passwords, or secrets. |
+| Auditability | PASS | Run IDs, scheduled status, logs, manifests, source counts, error counts, costs, backup checks, and readiness evidence are documented. |
+| Retrieval/index schema | PASS | Phase 10 did not change retrieval semantics, embedding model, index schema, or corpus construction. |
 
 ## ADR Compliance
 
@@ -39,29 +36,29 @@ None.
 
 | Check | Verdict | Note |
 |-------|---------|------|
-| Solution shape still appropriate | PASS | Phase 7 extends deterministic local evidence trust workflows without adding unnecessary infrastructure. |
+| Solution shape still appropriate | PASS | Phase 10 adds local operational docs and user-level scheduling without introducing infrastructure. |
 | Runtime tier unchanged / justified | PASS | The project remains a T1 local CLI/batch workflow. |
-| Evaluation coverage current | PASS | RAG eval has T25 and T26 rows; full suite passes at 86 tests. |
-| Evidence inspectability improved | PASS | Delta reports expose evidence changes before report generation. |
-| Phase 8 readiness | PASS | Phase 7 now provides the source-quality inputs needed for decision-grade dossier schemas and renderers. |
+| Evaluation coverage current | PASS | Full suite passes at 119 tests; no retrieval or tool eval baseline changed. |
+| Recovery posture | PASS | Backup, restore, SQLite integrity, fixture smoke, source quarantine, and failed-run recovery are documented. |
+| Expansion gate | PASS | Private beta and SaaS work are blocked until four weekly local runs prove repeated personal value. |
 
 ## Retrieval Architecture Checks
 
 | Check | Verdict | Note |
 |-------|---------|------|
-| Query-time freshness/trust | PASS | Source windows and trust weights are deterministic and covered by tests. |
-| `insufficient_evidence` path | PASS | Existing and live-like tests cover weak, stale-only, and unsupported cases. |
-| Citation/provenance path | PASS | Retrieval packets and eval fixtures carry source URLs/references and captured timestamps. |
-| Corpus isolation explicit | PASS | Eval and import paths operate on explicit local corpus versions/run IDs. |
+| Query-time behavior | PASS | No query path changes occurred in Phase 10. |
+| `insufficient_evidence` path | PASS | Operational docs tell the operator to treat weak/stale evidence as a review blocker. |
+| Citation/provenance path | PASS | Runbook and readiness review require cited dossiers and generated artifact inspection. |
+| Corpus isolation explicit | PASS | Scheduled and backup docs keep data under configured local directories. |
 | Text-only scope | PASS | No multimodal retrieval was introduced. |
 
 ## Tool-Use Architecture Checks
 
 | Check | Verdict | Note |
 |-------|---------|------|
-| Tool Catalog complete | PASS | No new tool schema was added in Phase 7. Existing `read_github_repo_snapshot` state remains current. |
-| Unsafe-action policy | PASS | No destructive, public, paid, or credentialed action was added. |
-| Auditability | PASS | Import runs record source counts, error counts, corpus version, and delta report output. |
+| Tool Catalog complete | PASS | No new LLM-callable tool schema was added in Phase 10. |
+| Unsafe-action policy | PASS | No destructive, public, paid, credentialed, outreach, or repository action was added. |
+| Auditability | PASS | Operational artifacts preserve run IDs, logs, manifests, source counts, errors, costs, backup checks, and readiness verdicts. |
 
 ## Doc Patches Needed
 

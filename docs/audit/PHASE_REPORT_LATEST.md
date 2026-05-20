@@ -1,31 +1,47 @@
-# Phase 7 Report — Live Evidence Trust
+# Phase 8 Report — Decision-Grade Artifacts
 
 Date: 2026-05-20
 
 ## What Was Built
 
-Phase 7 made imported evidence inspectable and measurable before generated briefs are trusted.
+Phase 8 is in progress. T28-T30 turn trusted evidence into decision-grade dossier artifacts that expose citations, uncertainty, and next evidence collection targets.
 
-T24 added `import-sources`, which imports Telegram Research Agent exports, operator notes, and local GitHub source fixtures into storage, builds retrieval chunks for the configured corpus version, records skipped disabled sources, and intentionally does not generate weekly reports.
+T28 added decision-grade dossier models and a validation helper. Claims must cite known evidence or be explicitly marked as inference, and dossiers include confidence plus countercase fields.
 
-T25 added source trust and freshness controls. Retrieval applies source freshness windows and trust-based downranking. Scoring applies default source trust weights, default source-type caps, and non-build threshold reasons when support is only low-trust or stale.
+T29 added Markdown and HTML dossier renderers with stable decision sections, provenance-rich citation rows, inference markers, and explicit `insufficient_evidence` handling.
 
-T26 extended retrieval evaluation with sanitized live-like corpus and query fixtures. The fixture set covers seven source types and ten query cases, and eval output reports freshness compliance plus source diversity.
+T30 added deterministic missing-evidence analysis for absent independent sources, stale evidence, weak competitor proof, missing acquisition proof, and missing willingness-to-pay signals. It also recorded missing-evidence no-answer coverage in the retrieval evaluation history.
 
-T27 added evidence delta reports for source imports. Delta reports summarize new, duplicate, stale, quarantined, skipped, and changed-cluster evidence while redacting private source references.
+T31 added a local `review` command for recording human operator decisions from generated dossiers. It records dossier paths, rejects `build` decisions without explicit operator rationale, and stores requested evidence gaps for `needs_more_evidence`.
+
+T32 added MVP experiment pack validation and generation. Experiment packs require validation scope, target user, method, first 10 targets, success/kill/revisit thresholds, and a 7-14 day timebox, and can only be generated from a current human `build` or `revisit` decision.
+
+T33 added actionable Markdown rendering for experiment packs. Artifacts include validation sections, citations, risk flags, thresholds, and run-id keyed atomic writes.
+
+T34 added experiment outcome recording and deterministic scoring feedback. Killed experiments suppress matching opportunities until newer evidence appears, and validated experiments raise confidence through configured scoring rules.
+
+T35 added the operator runbook for weekly operation, review, source failure handling, health checks, budget recovery, generated artifacts, privacy, backups, and failed-run recovery.
+
+T36 added local scheduled-run support through user-level systemd service/timer templates and health reporting for the latest `scheduled-...` run.
+
+T37 added the backup and recovery guide for SQLite files, retrieval indexes, reports, raw snapshots, private exports, restore verification, git-ignored artifacts, and failed-run recovery.
+
+T38 added the four-run production readiness review. The current verdict is `NOT READY`; private beta and SaaS or hosted work remain blocked until repeated personal value is proven across four weekly local runs.
 
 ## Test Delta
 
-Baseline moved from 74 passing tests after Phase 6 to 86 passing tests after Phase 7.
+Baseline moved from 86 passing tests after Phase 7 to 119 passing tests after T38.
 
-Final local checks:
+Current local checks:
 
-- `.venv/bin/pytest tests/ -q` -> 86 passed
+- `.venv/bin/pytest tests/ -q` -> 119 passed
 - `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
 
 ## Review Result
 
-Deep review Cycle 13 completed with Stop-Ship: No.
+Phase 8 deep review Cycle 15 completed with Stop-Ship: No.
+Phase 9 deep review Cycle 16 completed with Stop-Ship: No.
+Phase 10 deep review Cycle 17 completed with Stop-Ship: No.
 
 Findings:
 
@@ -37,21 +53,19 @@ Findings:
 
 OK.
 
-The system remains local-first and deterministic where required. Retrieval trust changed without index schema drift, live-like evaluation is recorded, and import evidence can be inspected before synthesis.
+The system remains local-first and deterministic where required. Decision artifacts now expose cited claims, inference markers, and missing-evidence collection gaps without retrieval schema drift.
 
-## Next Phase
+## Next Task
 
-Phase 8 — Decision-Grade Artifacts.
+All planned tasks are complete.
 
-Next task: T28 — Opportunity Dossier Schema.
-
-The key goal is to turn trusted evidence into decision-grade dossiers with citations, missing-evidence explanations, confidence, and countercase fields.
+The next goal is to run the system weekly and fill the four-run readiness checklist with real local evidence.
 
 ## Notification Summary
 
-Ph7 Live Evidence Trust DONE
-Built: import-sources, source trust/freshness, live-like eval, evidence delta report
-Tests: 74->86 pass
+Ph8 Decision-Grade Artifacts IN PROGRESS
+Built: dossier schema, dossier renderer, missing-evidence analysis, review command, experiment pack model, experiment renderer, experiment outcome feedback, operator runbook, scheduled-run support, backup/recovery guide, production readiness review
+Tests: 86->119 pass
 Issues: P1:0 P2:0
 Health: OK
-Next: Ph8 Decision-Grade Artifacts
+Next: Run four weekly local readiness cycles

@@ -1,10 +1,10 @@
-# META_ANALYSIS — Cycle 13
+# META_ANALYSIS — Cycle 17
 _Date: 2026-05-20 · Type: full_
 
 ## Project State
 
-Phase 7 (T24-T27) complete. Next: T28 — Opportunity Dossier Schema.
-Baseline: 86 pass, 0 skip.
+Phase 10 (T35-T38) complete. Planned task list complete.
+Baseline: 119 pass, 0 skip.
 
 ## Open Findings
 
@@ -14,31 +14,30 @@ Baseline: 86 pass, 0 skip.
 
 ## PROMPT_1 Scope (architecture)
 
-- Live source import: `import-sources` imports owned-source fixtures into storage and retrieval without report generation.
-- Source trust and freshness: retrieval applies freshness windows and trust downranking; scoring applies trust-adjusted support, source-type caps, and stale/low-trust build guards.
-- Retrieval evaluation: live-like corpus/query fixtures cover seven source types and ten query cases, with freshness compliance and source diversity metrics.
-- Evidence delta: import runs now expose new, duplicate, stale, quarantined, skipped, and changed-cluster summaries before briefs are trusted.
-- Governance: Phase 7 preserved local-first execution, no live network calls, no credentials, no index schema change, and no human approval boundary expansion.
+- Operator runbook: weekly operation, review, source failure handling, health checks, budget review, generated artifacts, privacy, backup, and recovery are documented.
+- Scheduled run support: user-level systemd service/timer templates run the weekly command using environment-based local paths and write logs under the configured data directory.
+- Health status: `health --json` reports the latest `scheduled-...` run when available.
+- Backup and recovery: local backup targets, restore steps, verification commands, git-ignored private artifacts, and failed-run recovery are documented.
+- Production readiness: four-run checklist and readiness verdict gate private beta and SaaS/hosted work until personal weekly value is proven.
+- Governance: Phase 10 preserved local-first operation, no hosted service, no external publication, no outreach, and no autonomous product decisions.
 
 ## PROMPT_2 Scope (code, priority order)
 
-1. `demand_mvp_radar/pipeline.py`
-2. `demand_mvp_radar/retrieval/query.py`
-3. `demand_mvp_radar/scoring.py`
-4. `demand_mvp_radar/reports/evidence_delta.py`
-5. `scripts/eval_retrieval.py`
-6. `tests/test_import_sources_command.py`
-7. `tests/test_source_trust.py`
-8. `tests/eval/test_retrieval_eval.py`
-9. `tests/test_evidence_delta.py`
-10. `docs/retrieval_eval.md`
-11. `docs/CODEX_PROMPT.md`
-12. `README.md` and `docs/ARCHITECTURE.md`
+1. `docs/OPERATOR_RUNBOOK.md`
+2. `deploy/demand-mvp-radar.service`
+3. `deploy/demand-mvp-radar.timer`
+4. `demand_mvp_radar/cli.py`
+5. `docs/BACKUP_RECOVERY.md`
+6. `docs/audit/PRODUCTION_READINESS_REVIEW.md`
+7. `tests/test_docs_contracts.py`
+8. `tests/test_scheduled_run.py`
+9. `docs/CODEX_PROMPT.md`
+10. `docs/tasks.md`
 
 ## Cycle Type
 
-Full — Phase 7 is complete and no Phase 7 archive entry exists yet.
+Full — Phase 10 is complete and closes the planned local production-readiness task list.
 
 ## Notes for PROMPT_3
 
-Focus consolidation on whether Phase 7 successfully makes imported evidence inspectable before synthesis, preserves RAG and PII contracts, keeps evaluation current, and leaves Phase 8 ready to build decision-grade dossier artifacts.
+Focus consolidation on whether Phase 10 makes weekly local operation repeatable, recoverable, auditable, and explicitly gated before private beta or SaaS expansion.

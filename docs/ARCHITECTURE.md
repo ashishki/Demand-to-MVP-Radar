@@ -240,7 +240,7 @@ See `docs/IMPLEMENTATION_REFERENCE_MAP.md` for file-level mapping from the refer
 | `read_github_repo_snapshot` | read | Idempotent by repository identifier | Local operator | No retry for local snapshots | run_id, repository_id_hash, source_count, error_count |
 | `retrieve_evidence` | read | Idempotent for corpus version, query, filters, and top_k | Internal pipeline | No retry unless index read fails transiently | run_id, corpus_version, query_hash, top_k, hit_count |
 | `write_report` | local write | Idempotent by report run ID and output path | Local operator | Atomic write to temp file then rename | run_id, report_path, content_hash |
-| `record_operator_decision` | local write | Idempotent by opportunity_id and decision timestamp | Human-approved action | No automatic retry after validation failure | opportunity_id, decision, actor, timestamp |
+| `record_operator_decision` | local write | Idempotent by opportunity_id and decision timestamp | Human-approved action | No automatic retry after validation failure | opportunity_id, decision, actor, timestamp, source_report_path, requested_evidence_gaps |
 
 ### Unsafe-Action Policy
 
