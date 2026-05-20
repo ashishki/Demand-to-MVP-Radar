@@ -1,0 +1,155 @@
+{
+  "run_id": "run-retrieval-live-like-001",
+  "corpus_version": "corpus-t26-live-like-v1",
+  "as_of": "2026-05-20T00:00:00+00:00",
+  "source_freshness_windows": {
+    "github_repo": 14,
+    "hacker_news": 14,
+    "operator_note": 30,
+    "reviews": 30,
+    "serp": 14,
+    "telegram_research_agent": 30
+  },
+  "source_trust_weights": {
+    "github_repo": 0.8,
+    "hacker_news": 0.8,
+    "operator_note": 0.35,
+    "reviews": 0.9,
+    "serp": 0.7,
+    "telegram_research_agent": 0.75
+  },
+  "evidence": [
+    {
+      "source_type": "telegram_research_agent",
+      "source_id": "telegram-live-001",
+      "source_url": "https://t.me/operators/ledgerpulse-001",
+      "captured_at": "2026-05-18T10:00:00+00:00",
+      "title": "LedgerPulse invoice reconciliation pain",
+      "snippet": "Operators repeatedly ask for LedgerPulse invoice reconciliation help.",
+      "normalized_text": "LedgerPulse invoice reconciliation demand appears in operator research exports where teams describe duplicate payment cleanup and manual matching.",
+      "content_hash": "hash-live-telegram-001",
+      "source_fingerprint": "telegram_research_agent:telegram-live-001:hash-live-telegram-001"
+    },
+    {
+      "source_type": "github_repo",
+      "source_id": "github-live-001",
+      "source_url": "https://github.example.local/operator/ledgerpulse/issues/12",
+      "captured_at": "2026-05-17T09:00:00+00:00",
+      "title": "LedgerPulse duplicate payment issue",
+      "snippet": "GitHub snapshot tracks duplicate payment reconciliation bugs.",
+      "normalized_text": "LedgerPulse invoice reconciliation duplicate payment issue asks for workflow automation and audit notes.",
+      "content_hash": "hash-live-github-001",
+      "source_fingerprint": "github_repo:github-live-001:hash-live-github-001"
+    },
+    {
+      "source_type": "reviews",
+      "source_id": "reviews-live-001",
+      "source_url": "https://reviews.example.local/ledgerpulse",
+      "captured_at": "2026-05-18T12:00:00+00:00",
+      "title": "LedgerPulse pricing alternatives",
+      "snippet": "Reviews mention LedgerPulse invoice reconciliation alternatives and pricing.",
+      "normalized_text": "LedgerPulse invoice reconciliation reviews mention alternative pricing, competitor workarounds, and repeated duplicate payment cleanup.",
+      "content_hash": "hash-live-reviews-001",
+      "source_fingerprint": "reviews:reviews-live-001:hash-live-reviews-001"
+    },
+    {
+      "source_type": "serp",
+      "source_id": "serp-live-001",
+      "source_url": "https://search.example.local/flowbot-staging-login",
+      "captured_at": "2026-05-19T09:00:00+00:00",
+      "title": "Flowbot staging login automation",
+      "snippet": "Search snippets show Flowbot staging login browser automation demand.",
+      "normalized_text": "Flowbot staging login browser automation appears in search snippets from teams needing scripted QA login checks.",
+      "content_hash": "hash-live-serp-001",
+      "source_fingerprint": "serp:serp-live-001:hash-live-serp-001"
+    },
+    {
+      "source_type": "hacker_news",
+      "source_id": "hn-live-001",
+      "source_url": "https://news.ycombinator.example/item?id=flowbot001",
+      "captured_at": "2026-05-18T18:00:00+00:00",
+      "title": "Flowbot developer browser automation",
+      "snippet": "Developers discuss Flowbot browser automation for staging login checks.",
+      "normalized_text": "Public developer demand for Flowbot browser automation includes staging login checks, QA scripts, and local browser workflows.",
+      "content_hash": "hash-live-hn-001",
+      "source_fingerprint": "hacker_news:hn-live-001:hash-live-hn-001"
+    },
+    {
+      "source_type": "operator_note",
+      "source_id": "note-live-001",
+      "source_url": "operator_note:redacted:flowbot-001",
+      "captured_at": "2026-05-19T20:00:00+00:00",
+      "title": "Flowbot private operator note",
+      "snippet": "Private operator note mentions Flowbot staging login automation.",
+      "normalized_text": "Flowbot browser automation for staging login was observed in an operator note, but it needs public corroboration.",
+      "content_hash": "hash-live-note-001",
+      "source_fingerprint": "operator_note:note-live-001:hash-live-note-001"
+    },
+    {
+      "source_type": "github_repo",
+      "source_id": "github-live-002",
+      "source_url": "https://github.example.local/operator/hookdecklite/issues/8",
+      "captured_at": "2026-05-18T08:00:00+00:00",
+      "title": "HookDeckLite webhook replay debugging",
+      "snippet": "GitHub snapshot records HookDeckLite webhook replay debugging pain.",
+      "normalized_text": "HookDeckLite webhook replay debugging appears in issues where developers ask for retry inspection and payload diff tools.",
+      "content_hash": "hash-live-github-002",
+      "source_fingerprint": "github_repo:github-live-002:hash-live-github-002"
+    },
+    {
+      "source_type": "serp",
+      "source_id": "serp-live-002",
+      "source_url": "https://search.example.local/hookdecklite-webhook-replay",
+      "captured_at": "2026-05-19T11:00:00+00:00",
+      "title": "HookDeckLite webhook replay competitors",
+      "snippet": "Search results show HookDeckLite webhook replay competitor pricing.",
+      "normalized_text": "HookDeckLite webhook replay debugging has search demand, competitor alternatives, and pricing pages for payload replay tools.",
+      "content_hash": "hash-live-serp-002",
+      "source_fingerprint": "serp:serp-live-002:hash-live-serp-002"
+    },
+    {
+      "source_type": "reviews",
+      "source_id": "reviews-live-002",
+      "source_url": "https://reviews.example.local/delimiterfix",
+      "captured_at": "2026-05-18T14:00:00+00:00",
+      "title": "DelimiterFix CSV cleanup reviews",
+      "snippet": "Reviews mention DelimiterFix CSV cleanup assistant requests.",
+      "normalized_text": "DelimiterFix CSV cleanup assistant reviews mention delimiter detection, messy exports, and repeated spreadsheet cleanup workflows.",
+      "content_hash": "hash-live-reviews-002",
+      "source_fingerprint": "reviews:reviews-live-002:hash-live-reviews-002"
+    },
+    {
+      "source_type": "telegram_research_agent",
+      "source_id": "telegram-live-002",
+      "source_url": "https://t.me/operators/delimiterfix-002",
+      "captured_at": "2026-05-19T07:00:00+00:00",
+      "title": "DelimiterFix operator CSV cleanup",
+      "snippet": "Operators ask for DelimiterFix CSV cleanup assistant support.",
+      "normalized_text": "DelimiterFix CSV cleanup assistant demand appears in operator research where messy exports and delimiter detection slow weekly reporting.",
+      "content_hash": "hash-live-telegram-002",
+      "source_fingerprint": "telegram_research_agent:telegram-live-002:hash-live-telegram-002"
+    },
+    {
+      "source_type": "news",
+      "source_id": "news-live-stale-001",
+      "source_url": "https://news.example.local/meeting-summarizer-2025",
+      "captured_at": "2025-01-01T09:00:00+00:00",
+      "title": "Old meeting summarizer roundup",
+      "snippet": "Old roundup mentions meeting summarizer automation.",
+      "normalized_text": "Meeting summarizer automation appeared in an old roundup without current user demand.",
+      "content_hash": "hash-live-news-stale-001",
+      "source_fingerprint": "news:news-live-stale-001:hash-live-news-stale-001"
+    },
+    {
+      "source_type": "forum",
+      "source_id": "forum-live-stale-001",
+      "source_url": "https://forum.example.local/pdf-converter-2024",
+      "captured_at": "2024-01-01T09:00:00+00:00",
+      "title": "Old PDF converter forum thread",
+      "snippet": "Old forum thread mentions PDF converter workflow automation.",
+      "normalized_text": "PDF converter workflow automation appears only in an old forum thread and should not support a fresh opportunity.",
+      "content_hash": "hash-live-forum-stale-001",
+      "source_fingerprint": "forum:forum-live-stale-001:hash-live-forum-stale-001"
+    }
+  ]
+}

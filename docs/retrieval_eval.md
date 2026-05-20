@@ -79,6 +79,16 @@ Initial slices to add during implementation:
 | 2026-05-19 | T09 | corpus-t09-v1 | `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_corpus.json, run 2026-05-19` | n/a | n/a | n/a | n/a | n/a | chunk_count=3; index_schema_version=retrieval-index-v1; embedding_model=local-hash-embedding-v1 |
 | 2026-05-19 | T10 | corpus-t10-v1 | `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_queries.json, run 2026-05-19` | 1.00 | 1.00 | 1.00 | 1.00 | 2ms | query_count=4; index_schema_version=retrieval-index-v1; embedding_model=local-hash-embedding-v1 |
 | 2026-05-19 | T18 | corpus-t10-v1 | `python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_queries.json, run 2026-05-19` | 1.00 | 1.00 | 1.00 | 1.00 | 2ms | final_baseline=true; query_count=4; index_schema_version=retrieval-index-v1; embedding_model=local-hash-embedding-v1 |
+| 2026-05-20 | T25 | corpus-t25-source-trust-v1 | `.venv/bin/pytest tests/test_source_trust.py -q, run 2026-05-20` | 1.00 | 1.00 | 1.00 | 1.00 | n/a | source_freshness=true; source_trust=true; type_caps=true; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
+| 2026-05-20 | T26 | corpus-t26-live-like-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20` | 1.00 | 1.00 | 1.00 | 1.00 | 13ms | query_count=10; source_types=7; freshness_compliance=1.00; source_diversity=1.00; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
+
+---
+
+## Extended Live-Like Metrics
+
+| Date | Task | Corpus Version | Eval Source | freshness_compliance | source_diversity | Notes |
+|------|------|----------------|-------------|----------------------|------------------|-------|
+| 2026-05-20 | T26 | corpus-t26-live-like-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20` | 1.00 | 1.00 | Sanitized live-like fixture covers Telegram Research Agent, operator notes, GitHub repository snapshots, SERP, Hacker News, reviews, news, and stale forum evidence. |
 
 ---
 
@@ -92,7 +102,9 @@ Initial slices to add during implementation:
 
 ## Regression Notes
 
-None.
+2026-05-20 T25: No regression versus T18 query baseline. Expected behavior changed only for source trust/freshness filtering and source-type cap cases; regression cause classification: code-change-induced expected improvement.
+
+2026-05-20 T26: No regression versus T18 query baseline. Live-like fixture expansion is classified as corpus-change-induced coverage growth; evaluation runner metric additions are classified as code-change-induced instrumentation with no metric regression.
 
 ---
 

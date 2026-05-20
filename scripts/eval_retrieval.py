@@ -4,7 +4,7 @@ import argparse
 import json
 import tempfile
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from demand_mvp_radar.models import EvidenceRecord
@@ -22,7 +22,7 @@ def main() -> int:
     parser.add_argument("--corpus-version")
     args = parser.parse_args()
 
-    payload = json.loads(Path(args.fixture).read_text())
+    payload = _load_payload(Path(args.fixture))
     corpus_version = args.corpus_version or str(payload.get("corpus_version", "corpus-t09-v1"))
     if args.database == ":memory:":
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -38,7 +38,38 @@ def main() -> int:
     return 0
 
 
-def _run_eval(database_path: Path, payload: dict[str, object], *, corpus_version: str) -> dict[str, object]:
+def _load_payload(fixture_path: Path) -> dict[str, object]:
+    payload = json.loads(fixture_path.read_text())
+    if "evidence" in payload:
+        return payload
+
+    corpus_fixture = payload.get("corpus_fixture")
+    if corpus_fixture is None:
+        return payload
+
+    corpus_path = Path(str(corpus_fixture))
+    if not corpus_path.is_absolute():
+        corpus_path = fixture_path.parent / corpus_path
+    corpus_payload = json.loads(corpus_path.read_text())
+    merged = dict(corpus_payload)
+    merged["queries"] = payload["queries"]
+    for field in (
+        "as_of",
+        "source_freshness_windows",
+        "source_trust_weights",
+        "corpus_version",
+    ):
+        if field in payload:
+            merged[field] = payload[field]
+    return merged
+
+
+def _run_eval(
+    database_path: Path,
+    payload: dict[str, object],
+    *,
+    corpus_version: str,
+) -> dict[str, object]:
     connection = connect_database(database_path)
     create_schema(connection)
 
@@ -88,26 +119,64 @@ def _run_query_eval(
     no_answer_correct = 0
     no_answer_count = 0
     faithfulness_scores: list[float] = []
+    freshness_pass = 0
+    freshness_total = 0
+    source_diversity_hits = 0
+    source_diversity_total = 0
+    as_of = datetime.fromisoformat(str(payload["as_of"]))
+    source_freshness_windows = {
+        str(source_type): int(window_days)
+        for source_type, window_days in dict(payload.get("source_freshness_windows", {})).items()
+    }
+    source_trust_weights = {
+        str(source_type): float(weight)
+        for source_type, weight in dict(payload.get("source_trust_weights", {})).items()
+    }
+    source_type_by_url = {
+        str(item["source_url"]): str(item["source_type"])
+        for item in payload["evidence"]
+        if item.get("source_url") is not None
+    }
 
     started = time.perf_counter()
     for item in queries:
         expected_status = str(item["expected_status"])
         expected_urls = set(item.get("expected_source_urls", []))
+        max_age_days = int(item.get("max_age_days", 365))
         response = query_evidence(
             connection,
             str(item["query"]),
             corpus_version=corpus_version,
             min_independent_sources=int(item.get("min_independent_sources", 2)),
             top_k=int(item.get("top_k", 3)),
-            max_age_days=int(item.get("max_age_days", 365)),
-            as_of=datetime.fromisoformat(str(payload["as_of"])),
+            max_age_days=max_age_days,
+            source_freshness_windows=source_freshness_windows,
+            source_trust_weights=source_trust_weights,
+            as_of=as_of,
         )
         returned_urls = {packet.source_url for packet in response.evidence_packets[:3]}
+        returned_source_types = {
+            source_type_by_url[packet.source_url]
+            for packet in response.evidence_packets
+            if packet.source_url in source_type_by_url
+        }
+
+        for packet in response.evidence_packets:
+            source_type = source_type_by_url.get(packet.source_url)
+            window_days = source_freshness_windows.get(source_type, max_age_days)
+            freshness_total += 1
+            if packet.captured_at >= as_of - timedelta(days=window_days):
+                freshness_pass += 1
 
         if expected_status == "ok":
             answerable_count += 1
             if expected_urls and expected_urls <= returned_urls:
                 hit_count += 1
+            expected_source_types = set(item.get("expected_source_types", []))
+            if expected_source_types:
+                source_diversity_total += 1
+                if expected_source_types <= returned_source_types:
+                    source_diversity_hits += 1
             if response.evidence_packets:
                 supporting = [
                     packet.source_url in expected_urls for packet in response.evidence_packets
@@ -129,6 +198,8 @@ def _run_query_eval(
         "citation_precision": _average(precision_scores),
         "no_answer_accuracy": _ratio(no_answer_correct, no_answer_count),
         "answer_faithfulness": _average(faithfulness_scores),
+        "freshness_compliance": _ratio(freshness_pass, freshness_total),
+        "source_diversity": _ratio(source_diversity_hits, source_diversity_total),
         "retrieval_ms": elapsed_ms,
     }
 

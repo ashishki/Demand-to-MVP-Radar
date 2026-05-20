@@ -1,0 +1,137 @@
+{
+  "corpus_fixture": "retrieval_live_like_corpus.json",
+  "corpus_version": "corpus-t26-live-like-v1",
+  "as_of": "2026-05-20T00:00:00+00:00",
+  "queries": [
+    {
+      "id": "LQ01",
+      "query": "LedgerPulse invoice reconciliation demand",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://t.me/operators/ledgerpulse-001",
+        "https://github.example.local/operator/ledgerpulse/issues/12",
+        "https://reviews.example.local/ledgerpulse"
+      ],
+      "expected_source_types": [
+        "telegram_research_agent",
+        "github_repo",
+        "reviews"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 3
+    },
+    {
+      "id": "LQ02",
+      "query": "Flowbot staging login browser automation",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://search.example.local/flowbot-staging-login",
+        "https://news.ycombinator.example/item?id=flowbot001",
+        "operator_note:redacted:flowbot-001"
+      ],
+      "expected_source_types": [
+        "serp",
+        "hacker_news",
+        "operator_note"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 3
+    },
+    {
+      "id": "LQ03",
+      "query": "HookDeckLite webhook replay debugging",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://github.example.local/operator/hookdecklite/issues/8",
+        "https://search.example.local/hookdecklite-webhook-replay"
+      ],
+      "expected_source_types": [
+        "github_repo",
+        "serp"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 2
+    },
+    {
+      "id": "LQ04",
+      "query": "DelimiterFix CSV cleanup assistant demand",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://reviews.example.local/delimiterfix",
+        "https://t.me/operators/delimiterfix-002"
+      ],
+      "expected_source_types": [
+        "reviews",
+        "telegram_research_agent"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 2
+    },
+    {
+      "id": "LQ05",
+      "query": "search snippets public developer demand browser automation",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://news.ycombinator.example/item?id=flowbot001",
+        "https://search.example.local/flowbot-staging-login"
+      ],
+      "expected_source_types": [
+        "hacker_news",
+        "serp"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 2
+    },
+    {
+      "id": "LQ06",
+      "query": "LedgerPulse invoice reconciliation alternative pricing",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://reviews.example.local/ledgerpulse"
+      ],
+      "expected_source_types": [
+        "reviews"
+      ],
+      "min_independent_sources": 1,
+      "top_k": 1
+    },
+    {
+      "id": "LQ07",
+      "query": "GitHub issue HookDeckLite payload diff tools",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://github.example.local/operator/hookdecklite/issues/8"
+      ],
+      "expected_source_types": [
+        "github_repo"
+      ],
+      "min_independent_sources": 1,
+      "top_k": 1
+    },
+    {
+      "id": "LQ08",
+      "query": "private operator note Flowbot observed",
+      "expected_status": "insufficient_evidence",
+      "expected_source_urls": [],
+      "min_independent_sources": 2,
+      "top_k": 3
+    },
+    {
+      "id": "LQ09",
+      "query": "meeting summarizer automation roundup",
+      "expected_status": "insufficient_evidence",
+      "expected_source_urls": [],
+      "min_independent_sources": 1,
+      "top_k": 3,
+      "max_age_days": 365
+    },
+    {
+      "id": "LQ10",
+      "query": "unsupported medical diagnosis automation",
+      "expected_status": "insufficient_evidence",
+      "expected_source_urls": [],
+      "min_independent_sources": 2,
+      "top_k": 3
+    }
+  ]
+}

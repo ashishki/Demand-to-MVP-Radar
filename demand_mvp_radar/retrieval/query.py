@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,6 +13,19 @@ from demand_mvp_radar.observability import span
 from demand_mvp_radar.retrieval.index import IndexedChunk, load_indexed_chunks
 
 TOKEN_RE = re.compile(r"[a-z0-9]+")
+DEFAULT_SOURCE_TRUST_WEIGHTS = {
+    "operator_note": 0.35,
+    "manual_note": 0.35,
+    "news": 0.5,
+    "rss": 0.5,
+    "reddit": 0.5,
+    "product_hunt": 0.6,
+    "serp": 0.7,
+    "telegram_research_agent": 0.75,
+    "github": 0.8,
+    "github_repo": 0.8,
+    "reviews": 0.9,
+}
 
 
 class EvidencePacket(BaseModel):
@@ -43,6 +57,8 @@ def query_evidence(
     top_k: int = 3,
     max_age_days: int = 365,
     min_relevance_score: float = 0.5,
+    source_freshness_windows: Mapping[str, int] | None = None,
+    source_trust_weights: Mapping[str, float] | None = None,
     as_of: datetime | None = None,
 ) -> RetrievalResponse:
     query_tokens = _tokenize(query)
@@ -61,6 +77,8 @@ def query_evidence(
             query_tokens=query_tokens,
             max_age_days=max_age_days,
             min_relevance_score=min_relevance_score,
+            source_freshness_windows=source_freshness_windows,
+            source_trust_weights=source_trust_weights,
             as_of=query_as_of,
         )
         packets = _assemble_packets(scored, top_k=top_k)
@@ -82,6 +100,7 @@ def query_evidence(
                 chunks,
                 query_tokens=query_tokens,
                 max_age_days=max_age_days,
+                source_freshness_windows=source_freshness_windows,
                 as_of=query_as_of,
             )
         ):
@@ -107,13 +126,21 @@ def _score_chunks(
     query_tokens: set[str],
     max_age_days: int,
     min_relevance_score: float,
+    source_freshness_windows: Mapping[str, int] | None,
+    source_trust_weights: Mapping[str, float] | None,
     as_of: datetime,
 ) -> list[tuple[IndexedChunk, float]]:
-    min_captured_at = as_of - timedelta(days=max_age_days)
     scored: list[tuple[IndexedChunk, float]] = []
     for chunk in chunks:
         if chunk.source_url is None:
             continue
+        min_captured_at = as_of - timedelta(
+            days=_source_freshness_window(
+                chunk.source_type,
+                source_freshness_windows=source_freshness_windows,
+                default_days=max_age_days,
+            )
+        )
         if _to_utc(chunk.captured_at) < min_captured_at:
             continue
 
@@ -122,8 +149,12 @@ def _score_chunks(
         if not overlap:
             continue
 
-        score = len(overlap) / len(query_tokens)
-        if score < min_relevance_score:
+        base_score = len(overlap) / len(query_tokens)
+        score = base_score * _source_trust_weight(
+            chunk.source_type,
+            source_trust_weights=source_trust_weights,
+        )
+        if base_score < min_relevance_score:
             continue
         scored.append((chunk, round(score, 6)))
 
@@ -180,15 +211,46 @@ def _has_relevant_stale_chunk(
     *,
     query_tokens: set[str],
     max_age_days: int,
+    source_freshness_windows: Mapping[str, int] | None,
     as_of: datetime,
 ) -> bool:
-    min_captured_at = as_of - timedelta(days=max_age_days)
-    return any(
-        chunk.source_url is not None
-        and _to_utc(chunk.captured_at) < min_captured_at
-        and query_tokens & _tokenize(chunk.chunk_text)
-        for chunk in chunks
-    )
+    for chunk in chunks:
+        min_captured_at = as_of - timedelta(
+            days=_source_freshness_window(
+                chunk.source_type,
+                source_freshness_windows=source_freshness_windows,
+                default_days=max_age_days,
+            )
+        )
+        if (
+            chunk.source_url is not None
+            and _to_utc(chunk.captured_at) < min_captured_at
+            and query_tokens & _tokenize(chunk.chunk_text)
+        ):
+            return True
+    return False
+
+
+def _source_freshness_window(
+    source_type: str,
+    *,
+    source_freshness_windows: Mapping[str, int] | None,
+    default_days: int,
+) -> int:
+    if not source_freshness_windows:
+        return default_days
+    window_days = source_freshness_windows.get(source_type, default_days)
+    return max(int(window_days), 1)
+
+
+def _source_trust_weight(
+    source_type: str,
+    *,
+    source_trust_weights: Mapping[str, float] | None,
+) -> float:
+    weights = source_trust_weights or DEFAULT_SOURCE_TRUST_WEIGHTS
+    weight = float(weights.get(source_type, 1.0))
+    return min(max(weight, 0.0), 1.0)
 
 
 def _snippet(text: str, *, max_chars: int = 220) -> str:
