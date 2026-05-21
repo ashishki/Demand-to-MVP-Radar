@@ -16,6 +16,7 @@ SCHEMA_STATEMENTS = [
         source_counts TEXT NOT NULL DEFAULT '{}',
         error_counts TEXT NOT NULL DEFAULT '{}',
         source_errors TEXT NOT NULL DEFAULT '{}',
+        source_health TEXT NOT NULL DEFAULT '{}',
         duplicate_count INTEGER NOT NULL DEFAULT 0,
         corpus_version TEXT NOT NULL,
         index_schema_version TEXT NOT NULL DEFAULT 'retrieval-index-v1',
@@ -131,3 +132,5 @@ def _ensure_run_columns(connection: sqlite3.Connection) -> None:
     }
     if "source_errors" not in existing_columns:
         connection.execute("ALTER TABLE runs ADD COLUMN source_errors TEXT NOT NULL DEFAULT '{}'")
+    if "source_health" not in existing_columns:
+        connection.execute("ALTER TABLE runs ADD COLUMN source_health TEXT NOT NULL DEFAULT '{}'")

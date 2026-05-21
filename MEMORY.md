@@ -2,9 +2,9 @@
 
 ## Demand-to-MVP Radar
 
-- Last completed: T45 - GitHub Public Search Connector at 2026-05-21
-- Baseline: 148 pass / 0 skip
-- Next task: T46 - Source Health in health --json
-- Phase: Phase 11 - Live Source Connector Foundation
+- Last completed: T46 - Source Health in health --json at 2026-05-21
+- Baseline: 151 pass / 0 skip
+- Next task: T47 - Live Public Corpus Retrieval Eval
+- Phase: Phase 12 - Source Health and Public Corpus Evaluation
 - Review tier next: deep
 - Any blockers: none

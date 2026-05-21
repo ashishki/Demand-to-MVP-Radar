@@ -1,6 +1,6 @@
 # AI Development Pack
 
-Version: 1.1
+Version: 1.2
 Date: 2026-05-21
 Status: Active
 
@@ -16,14 +16,14 @@ The next work should not broaden the product into a SaaS. It should first produc
 
 ## Current Baseline
 
-- T01-T45 are complete.
+- T01-T46 are complete.
 - The system has a CLI, SQLite storage, source fixtures, retrieval, insufficient-evidence behavior, clustering, scoring, report generation, decision memory, weekly fixture run, owned-source imports, trust/freshness controls, evidence delta reports, decision dossiers, review commands, experiment packs, scheduled local operation, backup/recovery docs, and readiness review gates.
-- Current verified baseline after T45 is 148 passing tests.
+- Current verified baseline after T46 is 151 passing tests.
 - RAG is ON.
 - Tool-Use is ON.
 - Agentic and Planning profiles are OFF.
 - The product is local-first and single-operator.
-- The current implementation wave started at T39 and changes the product from manual/snapshot-first collection to live-source-first collection with exports as fallback. The next task is T46.
+- The current implementation wave started at T39 and changes the product from manual/snapshot-first collection to live-source-first collection with exports as fallback. The next task is T47.
 
 ---
 

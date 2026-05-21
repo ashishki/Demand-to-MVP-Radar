@@ -12,6 +12,7 @@ from pathlib import Path
 from demand_mvp_radar.config import Settings, load_settings
 from demand_mvp_radar.credentials import CredentialRequirement, resolve_credentials
 from demand_mvp_radar.decisions import DecisionValue, record_operator_decision
+from demand_mvp_radar.health import build_live_source_health
 from demand_mvp_radar.pipeline import collect_sources, import_sources, run_weekly_pipeline
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
@@ -105,6 +106,7 @@ def build_health_payload(
     database_path = settings.data_dir / "radar.sqlite3"
     database_status = _database_status(database_path)
     report_dir_status = _report_dir_status(settings.report_dir)
+    live_sources, source_warnings = build_live_source_health(settings, database_status, env=env)
     return {
         "status": "ok",
         "database": {
@@ -119,6 +121,8 @@ def build_health_payload(
         "index_age_days": database_status["index_age_days"],
         "last_scheduled_run": database_status["last_scheduled_run"],
         "last_source_errors": database_status["last_source_errors"],
+        "live_sources": live_sources,
+        "source_warnings": source_warnings,
         "configured_sources": 0,
         "credentials": _credential_health(settings, env=env),
         "max_index_age_days": settings.max_index_age_days,
@@ -242,13 +246,23 @@ def _database_status(database_path: Path) -> dict[str, object]:
             "index_age_days": None,
             "last_scheduled_run": None,
             "last_source_errors": {},
+            "source_health": {},
         }
     try:
         connection = sqlite3.connect(database_path)
         connection.row_factory = sqlite3.Row
+        run_columns = {
+            column["name"] for column in connection.execute("PRAGMA table_info(runs)").fetchall()
+        }
+        source_errors_column = (
+            "source_errors" if "source_errors" in run_columns else "'{}' AS source_errors"
+        )
+        source_health_column = (
+            "source_health" if "source_health" in run_columns else "'{}' AS source_health"
+        )
         row = connection.execute(
-            """
-            SELECT corpus_version, ended_at, source_errors
+            f"""
+            SELECT corpus_version, ended_at, {source_errors_column}, {source_health_column}
             FROM runs
             ORDER BY ended_at DESC
             LIMIT 1
@@ -270,6 +284,7 @@ def _database_status(database_path: Path) -> dict[str, object]:
             "index_age_days": None,
             "last_scheduled_run": None,
             "last_source_errors": {},
+            "source_health": {},
         }
     if row is None:
         return {
@@ -278,6 +293,7 @@ def _database_status(database_path: Path) -> dict[str, object]:
             "index_age_days": None,
             "last_scheduled_run": _scheduled_run_payload(scheduled_row),
             "last_source_errors": {},
+            "source_health": {},
         }
 
     index_age_days = None
@@ -290,6 +306,7 @@ def _database_status(database_path: Path) -> dict[str, object]:
         "index_age_days": index_age_days,
         "last_scheduled_run": _scheduled_run_payload(scheduled_row),
         "last_source_errors": json.loads(row["source_errors"] or "{}"),
+        "source_health": json.loads(row["source_health"] or "{}"),
     }
 
 

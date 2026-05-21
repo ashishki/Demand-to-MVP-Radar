@@ -243,6 +243,7 @@ def collect_sources(
     source_counts: dict[str, object] = {}
     error_counts: dict[str, int] = {}
     source_errors: dict[str, str] = {}
+    source_health: dict[str, dict[str, object]] = {}
     skipped_sources: list[str] = []
     duplicate_count = 0
 
@@ -260,6 +261,10 @@ def collect_sources(
             source_errors[live_config.source_name] = (
                 credential_state.source_error.to_manifest_value()
             )
+            source_health[live_config.source_name] = _source_health_from_error(
+                live_config,
+                credential_state.source_error.status,
+            )
             continue
 
         try:
@@ -273,6 +278,10 @@ def collect_sources(
             source_counts[live_config.source_name] = 0
             error_counts[live_config.source_name] = 1
             source_errors[live_config.source_name] = f"{live_config.source_name}: {error}"
+            source_health[live_config.source_name] = _source_health_from_error(
+                live_config,
+                "source_error",
+            )
             continue
 
         source_counts[live_config.source_name] = len(result_records.evidence)
@@ -281,6 +290,11 @@ def collect_sources(
             source_errors[live_config.source_name] = "; ".join(
                 row.error_reason for row in result_records.quarantined
             )
+        source_health[live_config.source_name] = _source_health_from_result(
+            live_config,
+            result_records,
+            collected_at=datetime.now(UTC),
+        )
 
         for evidence in result_records.evidence:
             evidence_id, inserted = repository.write_with_status(evidence)
@@ -302,6 +316,7 @@ def collect_sources(
         source_counts=source_counts,
         error_counts=error_counts,
         source_errors=source_errors,
+        source_health=source_health,
         duplicate_count=duplicate_count,
     )
 
@@ -379,6 +394,45 @@ def _live_config_from_payload(source_config: dict[str, object]) -> LiveSourceCon
             for env_var_name in credential_env_vars
         ),
     )
+
+
+def _source_health_from_result(
+    live_config: LiveSourceConfig,
+    result: LiveConnectorResult,
+    *,
+    collected_at: datetime,
+) -> dict[str, object]:
+    return {
+        "enabled": live_config.enabled,
+        "freshness_window_days": live_config.freshness_window_days,
+        "credential_status": "not_required"
+        if not live_config.credential_requirements
+        else "available",
+        "last_success_at": result.last_success_at.isoformat()
+        if result.last_success_at
+        else None,
+        "last_collected_at": collected_at.isoformat(),
+        "last_error_class": "source_error" if result.quarantined else None,
+        "cursor_state": result.cursor_state,
+        "rate_limit_state": result.rate_limit_state.model_dump(mode="json"),
+    }
+
+
+def _source_health_from_error(
+    live_config: LiveSourceConfig,
+    error_class: str,
+) -> dict[str, object]:
+    now = datetime.now(UTC).isoformat()
+    return {
+        "enabled": live_config.enabled,
+        "freshness_window_days": live_config.freshness_window_days,
+        "credential_status": error_class if error_class in {"missing", "invalid"} else "unknown",
+        "last_success_at": None,
+        "last_collected_at": now,
+        "last_error_class": error_class,
+        "cursor_state": {},
+        "rate_limit_state": {"limited": False},
+    }
 
 
 def _collect_configured_live_source(
@@ -612,6 +666,7 @@ def _record_collect_run(
     source_counts: dict[str, object],
     error_counts: dict[str, int],
     source_errors: dict[str, str],
+    source_health: dict[str, dict[str, object]],
     duplicate_count: int,
 ) -> None:
     now = datetime.now(UTC).isoformat()
@@ -625,6 +680,7 @@ def _record_collect_run(
             source_counts,
             error_counts,
             source_errors,
+            source_health,
             duplicate_count,
             corpus_version,
             max_weekly_llm_cost_usd
@@ -637,6 +693,7 @@ def _record_collect_run(
             :source_counts,
             :error_counts,
             :source_errors,
+            :source_health,
             :duplicate_count,
             :corpus_version,
             :max_weekly_llm_cost_usd
@@ -647,6 +704,7 @@ def _record_collect_run(
             source_counts = excluded.source_counts,
             error_counts = excluded.error_counts,
             source_errors = excluded.source_errors,
+            source_health = excluded.source_health,
             duplicate_count = excluded.duplicate_count,
             corpus_version = excluded.corpus_version,
             max_weekly_llm_cost_usd = excluded.max_weekly_llm_cost_usd
@@ -659,6 +717,7 @@ def _record_collect_run(
             "source_counts": json.dumps(source_counts, sort_keys=True),
             "error_counts": json.dumps(error_counts, sort_keys=True),
             "source_errors": json.dumps(source_errors, sort_keys=True),
+            "source_health": json.dumps(source_health, sort_keys=True),
             "duplicate_count": duplicate_count,
             "corpus_version": corpus_version,
             "max_weekly_llm_cost_usd": "0",

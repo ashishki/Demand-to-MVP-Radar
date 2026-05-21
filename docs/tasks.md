@@ -1621,7 +1621,7 @@ Owner:      codex
 Phase:      12
 Type:       none
 Depends-On: T41, T42, T43, T44, T45
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Extend health output with live source status, freshness, cursor, rate-limit, credential, and failure summaries.

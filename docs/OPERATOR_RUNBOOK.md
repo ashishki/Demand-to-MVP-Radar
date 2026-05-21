@@ -84,6 +84,8 @@ Use `demand-mvp-radar health --json` before and after weekly operation. Confirm:
 - `configured_sources` matches the expected local source catalog.
 - `credentials` reports only source credential status and environment variable names; it must never contain API keys, tokens, cookies, or secret values.
 - `last_source_errors` reports the latest source-scoped collection failures without aborting unrelated sources.
+- `live_sources` reports each live source's enabled state, last success timestamp, last error class, cursor age, freshness status, credential status, and rate-limit state.
+- `source_warnings` lists stale or failing live sources while keeping the overall system `ok` when the database and other sources are healthy.
 - `last_scheduled_run` shows the latest scheduled run timestamp and status when a `scheduled-...` run has completed.
 
 Treat stale index warnings as a review blocker. A stale index means the latest report may not reflect current evidence; import sources or run the weekly pipeline before recording build decisions.

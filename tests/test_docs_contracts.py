@@ -331,9 +331,10 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
     content = _codex_prompt_text()
 
     for phrase in (
-        "Phase: 11",
-        "Baseline: 148 passing tests",
+        "Phase: 12",
+        "Baseline: 151 passing tests",
         "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
+        "T47: Live Public Corpus Retrieval Eval",
         "T46: Source Health in health --json",
         "T45: GitHub Public Search Connector",
         "T44: RSS Feed Connector",
@@ -343,7 +344,7 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
         "T40: Credential Resolver and Secret Redaction",
         "T39: Live Source Connector Protocol",
         "Roadmap/task graph extension",
-        "Retrieval-related next tasks: T46-T47 source health",
+        "Retrieval-related next tasks: T47 public-live retrieval evaluation",
     ):
         assert phrase in content
 
@@ -352,8 +353,8 @@ def test_ai_development_pack_extends_loop_through_production_decision() -> None:
     content = _ai_development_pack_text()
 
     for phrase in (
-        "T01-T45 are complete",
-        "Current verified baseline after T45 is 148 passing tests",
+        "T01-T46 are complete",
+        "Current verified baseline after T46 is 151 passing tests",
         "Sequence F - Live Source Connector Foundation",
         "Sequence K - Beta and Hosted Decision",
         "`T39: Live Source Connector Protocol`",
