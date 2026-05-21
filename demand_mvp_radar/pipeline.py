@@ -37,6 +37,7 @@ from demand_mvp_radar.sources.live import (
 )
 from demand_mvp_radar.sources.operator_notes import OperatorNotesAdapter
 from demand_mvp_radar.sources.product_hunt import ProductHuntConnector
+from demand_mvp_radar.sources.reddit import RedditConnector
 from demand_mvp_radar.sources.rss import RSSFeedConnector
 from demand_mvp_radar.sources.serp import SERPSearchConnector
 from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
@@ -541,6 +542,22 @@ def _collect_configured_live_source(
     if live_config.source_type == "product_hunt":
         fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
         return ProductHuntConnector(fixture_path).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "reddit":
+        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        return RedditConnector(
+            fixture_path,
+            allowed_subreddits=tuple(
+                str(subreddit) for subreddit in source_config.get("allowed_subreddits", ())
+            ),
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+        ).collect(
             live_config,
             run_id=run_id,
             cursor_state={

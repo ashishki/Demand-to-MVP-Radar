@@ -2,9 +2,9 @@
 
 ## Demand-to-MVP Radar
 
-- Last completed: T50 - Product Hunt Connector at 2026-05-21
-- Baseline: 163 pass / 0 skip
-- Next task: T51 - Reddit Connector
+- Last completed: T51 - Reddit Connector at 2026-05-21
+- Baseline: 166 pass / 0 skip
+- Next task: T52 - Discord Allowlisted Channel Connector
 - Phase: Phase 14 - Community Source Wave
 - Review tier next: deep
 - Any blockers: none

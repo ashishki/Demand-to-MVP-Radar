@@ -112,6 +112,7 @@ class EvidenceRecord(BaseModel):
     launch_date: datetime | None = None
     vote_count: int | None = None
     comment_count: int | None = None
+    subreddit: str | None = None
 
 
 class OpportunityCandidate(BaseModel):

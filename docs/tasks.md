@@ -1791,7 +1791,7 @@ Owner:      codex
 Phase:      14
 Type:       rag:ingestion
 Depends-On: T40, T47
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect Reddit subreddit/search evidence from allowlisted communities with strict public-only provenance, rate-limit handling, and scoring caps.

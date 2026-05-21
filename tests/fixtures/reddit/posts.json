@@ -1,0 +1,43 @@
+{
+  "rate_limit": {
+    "limited": false,
+    "remaining": 42
+  },
+  "posts": [
+    {
+      "query": "csv cleanup automation",
+      "subreddit": "SaaS",
+      "post_id": "reddit-post-001",
+      "url": "https://www.reddit.com/r/SaaS/comments/reddit-post-001/csv_cleanup_automation/",
+      "title": "CSV cleanup automation for client exports",
+      "body": "I keep cleaning client CSV exports by hand every week and need automation for delimiter detection, headers, and broken columns.",
+      "score": 37,
+      "comment_count": 11,
+      "created_at": "2026-05-20T10:00:00+00:00",
+      "captured_at": "2026-05-21T15:00:00+00:00",
+      "comments": [
+        {
+          "comment_id": "reddit-comment-001",
+          "author_id": "reddit-user-private-001",
+          "body": "Same CSV cleanup pain here; the workaround is a brittle spreadsheet macro and manual checks after every export.",
+          "score": 9,
+          "created_at": "2026-05-20T12:00:00+00:00",
+          "captured_at": "2026-05-21T15:05:00+00:00"
+        }
+      ]
+    },
+    {
+      "query": "unapproved private community",
+      "subreddit": "PrivateBeta",
+      "post_id": "reddit-post-private",
+      "url": "https://www.reddit.com/r/PrivateBeta/comments/reddit-post-private/private/",
+      "title": "Private beta request",
+      "body": "This post should be quarantined when neither its subreddit nor query is allowlisted.",
+      "score": 1,
+      "comment_count": 0,
+      "created_at": "2026-05-20T10:00:00+00:00",
+      "captured_at": "2026-05-21T15:00:00+00:00",
+      "comments": []
+    }
+  ]
+}

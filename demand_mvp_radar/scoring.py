@@ -71,6 +71,7 @@ class ScoringConfig:
         "news",
         "rss",
         "product_hunt",
+        "reddit",
     )
 
     def weights(self) -> Mapping[str, float]:
