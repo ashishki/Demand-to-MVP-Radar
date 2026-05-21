@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "guild_id": "guild-private-001",
+      "channel_id": "channel-private-001",
+      "channel_name": "founder-secret-backlog",
+      "message_id": "discord-message-001",
+      "author_id": "discord-author-private-001",
+      "content": "Teams in this allowlisted Discord channel keep asking for webhook replay debugging with payload diff and retry history.",
+      "created_at": "2026-05-20T18:00:00+00:00",
+      "captured_at": "2026-05-21T16:00:00+00:00"
+    },
+    {
+      "guild_id": "guild-private-001",
+      "channel_id": "channel-not-approved",
+      "channel_name": "private-random",
+      "message_id": "discord-message-002",
+      "author_id": "discord-author-private-002",
+      "content": "This message should be blocked because the channel is not approved in the source config.",
+      "created_at": "2026-05-20T18:30:00+00:00",
+      "captured_at": "2026-05-21T16:00:00+00:00"
+    }
+  ]
+}

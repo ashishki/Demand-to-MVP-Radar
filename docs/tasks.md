@@ -1823,7 +1823,7 @@ Owner:      codex
 Phase:      14
 Type:       rag:ingestion
 Depends-On: T40, T47
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect Discord messages only from explicitly approved channels using bot-token credentials, redaction, and private-data guardrails.

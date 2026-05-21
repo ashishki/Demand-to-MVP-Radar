@@ -113,6 +113,8 @@ class EvidenceRecord(BaseModel):
     vote_count: int | None = None
     comment_count: int | None = None
     subreddit: str | None = None
+    channel_locator_hash: str | None = None
+    message_locator: str | None = None
 
 
 class OpportunityCandidate(BaseModel):

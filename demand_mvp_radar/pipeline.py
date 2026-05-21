@@ -26,6 +26,7 @@ from demand_mvp_radar.retrieval.ingestion import build_corpus
 from demand_mvp_radar.retrieval.query import EvidencePacket
 from demand_mvp_radar.scoring import score_opportunity
 from demand_mvp_radar.sources.base import SourceImportResult
+from demand_mvp_radar.sources.discord import DiscordConnector
 from demand_mvp_radar.sources.github_public import GitHubPublicSearchConnector
 from demand_mvp_radar.sources.github_repo import GitHubRepoSnapshotImporter
 from demand_mvp_radar.sources.hacker_news import HackerNewsLiveConnector
@@ -557,6 +558,21 @@ def _collect_configured_live_source(
                 str(subreddit) for subreddit in source_config.get("allowed_subreddits", ())
             ),
             queries=tuple(str(query) for query in source_config.get("queries", ())),
+        ).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "discord":
+        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        return DiscordConnector(
+            fixture_path,
+            approved_channels=tuple(
+                dict(channel) for channel in source_config.get("approved_channels", ())
+            ),
         ).collect(
             live_config,
             run_id=run_id,
