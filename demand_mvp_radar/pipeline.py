@@ -36,6 +36,7 @@ from demand_mvp_radar.sources.live import (
     RateLimitState,
 )
 from demand_mvp_radar.sources.operator_notes import OperatorNotesAdapter
+from demand_mvp_radar.sources.product_hunt import ProductHuntConnector
 from demand_mvp_radar.sources.rss import RSSFeedConnector
 from demand_mvp_radar.sources.serp import SERPSearchConnector
 from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
@@ -407,6 +408,8 @@ def _source_health_from_result(
     return {
         "enabled": live_config.enabled,
         "freshness_window_days": live_config.freshness_window_days,
+        "credential_required": bool(live_config.credential_requirements),
+        "access_mode": "credentialed" if live_config.credential_requirements else "public",
         "credential_status": "not_required"
         if not live_config.credential_requirements
         else "available",
@@ -428,6 +431,8 @@ def _source_health_from_error(
     return {
         "enabled": live_config.enabled,
         "freshness_window_days": live_config.freshness_window_days,
+        "credential_required": bool(live_config.credential_requirements),
+        "access_mode": "credentialed" if live_config.credential_requirements else "public",
         "credential_status": error_class if error_class in {"missing", "invalid"} else "unknown",
         "last_success_at": None,
         "last_collected_at": now,
@@ -526,6 +531,16 @@ def _collect_configured_live_source(
             per_run_quota_limit=int(source_config["per_run_quota_limit"]),
             quota_used=int(source_config.get("quota_used", 0)),
         ).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "product_hunt":
+        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        return ProductHuntConnector(fixture_path).collect(
             live_config,
             run_id=run_id,
             cursor_state={

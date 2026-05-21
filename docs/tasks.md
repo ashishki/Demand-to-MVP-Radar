@@ -1753,7 +1753,7 @@ Owner:      codex
 Phase:      13
 Type:       rag:ingestion
 Depends-On: T40, T47
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect Product Hunt launches, comments, and category metadata as competitor and demand evidence using fixture-first connector behavior.

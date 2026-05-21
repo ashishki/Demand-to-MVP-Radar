@@ -1,0 +1,27 @@
+{
+  "launches": [
+    {
+      "product_id": "ph-ledgerpulse",
+      "name": "LedgerPulse",
+      "url": "https://www.producthunt.com/products/ledgerpulse",
+      "tagline": "Invoice reconciliation alerts for finance teams",
+      "body": "LedgerPulse launches with duplicate payment detection, invoice matching workflows, and competitor positioning for small finance teams.",
+      "topics": [
+        "Fintech",
+        "Productivity",
+        "Finance"
+      ],
+      "launch_date": "2026-05-20T00:00:00+00:00",
+      "captured_at": "2026-05-21T14:00:00+00:00",
+      "votes_count": 412,
+      "comments_count": 18,
+      "comments": [
+        {
+          "comment_id": "ph-comment-001",
+          "body": "The launch comments compare LedgerPulse with existing invoice reconciliation alternatives and ask about duplicate payment cleanup.",
+          "captured_at": "2026-05-21T14:05:00+00:00"
+        }
+      ]
+    }
+  ]
+}

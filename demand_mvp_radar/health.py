@@ -23,12 +23,19 @@ def build_live_source_health(
         source_name = source.source_type
         credential_status = _credential_status(source_name, source.credential_env_vars, env=env)
         run_state = dict(run_source_health.get(source_name, {}))
+        credential_required = bool(source.credential_env_vars)
         live_sources[source_name] = _source_health_payload(
             source_name=source_name,
             enabled=source.enabled,
             freshness_window_days=source.freshness_window_days,
             credential_status=credential_status,
-            credential_required=bool(source.credential_env_vars),
+            credential_required=credential_required,
+            access_mode=str(
+                run_state.get(
+                    "access_mode",
+                    "credentialed" if credential_required else "public",
+                )
+            ),
             run_state=run_state,
             run_error=run_errors.get(source_name),
         )
@@ -37,12 +44,19 @@ def build_live_source_health(
         if source_name in live_sources:
             continue
         run_state = dict(run_state_value)
+        credential_required = bool(run_state.get("credential_required", False))
         live_sources[source_name] = _source_health_payload(
             source_name=source_name,
             enabled=bool(run_state.get("enabled", True)),
             freshness_window_days=int(run_state.get("freshness_window_days", 7)),
             credential_status=str(run_state.get("credential_status", "not_required")),
-            credential_required=False,
+            credential_required=credential_required,
+            access_mode=str(
+                run_state.get(
+                    "access_mode",
+                    "credentialed" if credential_required else "public",
+                )
+            ),
             run_state=run_state,
             run_error=run_errors.get(source_name),
         )
@@ -62,6 +76,7 @@ def _source_health_payload(
     freshness_window_days: int,
     credential_status: str,
     credential_required: bool,
+    access_mode: str,
     run_state: dict[str, object],
     run_error: object,
 ) -> dict[str, object]:
@@ -87,6 +102,7 @@ def _source_health_payload(
         "freshness_status": freshness_status,
         "credential_status": credential_status,
         "credential_required": credential_required,
+        "access_mode": access_mode,
         "rate_limit_state": run_state.get(
             "rate_limit_state",
             {"limited": False},

@@ -331,9 +331,10 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
     content = _codex_prompt_text()
 
     for phrase in (
-        "Phase: 13",
-        "Baseline: 160 passing tests",
+        "Phase: 14",
+        "Baseline: 163 passing tests",
         "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
+        "T51: Reddit Connector",
         "T50: Product Hunt Connector",
         "T49: YouTube Connector",
         "T48: SERP Credentialed Connector",
@@ -347,7 +348,7 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
         "T40: Credential Resolver and Secret Redaction",
         "T39: Live Source Connector Protocol",
         "Roadmap/task graph extension",
-        "Retrieval-related next tasks: T50 credentialed connector ingestion",
+        "Retrieval-related next tasks: T51-T53 community connector ingestion",
     ):
         assert phrase in content
 
@@ -356,8 +357,8 @@ def test_ai_development_pack_extends_loop_through_production_decision() -> None:
     content = _ai_development_pack_text()
 
     for phrase in (
-        "T01-T49 are complete",
-        "Current verified baseline after T49 is 160 passing tests",
+        "T01-T50 are complete",
+        "Current verified baseline after T50 is 163 passing tests",
         "Sequence F - Live Source Connector Foundation",
         "Sequence K - Beta and Hosted Decision",
         "`T39: Live Source Connector Protocol`",

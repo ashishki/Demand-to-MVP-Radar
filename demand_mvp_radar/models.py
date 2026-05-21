@@ -108,6 +108,10 @@ class EvidenceRecord(BaseModel):
     channel_hash: str | None = None
     video_id: str | None = None
     comment_id: str | None = None
+    topics: tuple[str, ...] = ()
+    launch_date: datetime | None = None
+    vote_count: int | None = None
+    comment_count: int | None = None
 
 
 class OpportunityCandidate(BaseModel):
