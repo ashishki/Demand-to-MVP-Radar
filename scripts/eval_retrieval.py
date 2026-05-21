@@ -137,6 +137,8 @@ def _run_query_eval(
         for item in payload["evidence"]
         if item.get("source_url") is not None
     }
+    public_source_types = {str(source_type) for source_type in payload.get("public_source_types", [])}
+    public_source_types_seen: set[str] = set()
 
     started = time.perf_counter()
     for item in queries:
@@ -160,6 +162,7 @@ def _run_query_eval(
             for packet in response.evidence_packets
             if packet.source_url in source_type_by_url
         }
+        public_source_types_seen.update(returned_source_types & public_source_types)
 
         for packet in response.evidence_packets:
             source_type = source_type_by_url.get(packet.source_url)
@@ -200,6 +203,7 @@ def _run_query_eval(
         "answer_faithfulness": _average(faithfulness_scores),
         "freshness_compliance": _ratio(freshness_pass, freshness_total),
         "source_diversity": _ratio(source_diversity_hits, source_diversity_total),
+        "public_source_coverage": _ratio(len(public_source_types_seen), len(public_source_types)),
         "retrieval_ms": elapsed_ms,
     }
 

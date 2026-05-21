@@ -1,0 +1,159 @@
+{
+  "corpus_fixture": "retrieval_live_public_corpus.json",
+  "corpus_version": "corpus-t47-public-live-v1",
+  "as_of": "2026-05-21T00:00:00+00:00",
+  "public_source_types": [
+    "github_public",
+    "hacker_news",
+    "rss",
+    "stack_exchange"
+  ],
+  "source_freshness_windows": {
+    "github_public": 14,
+    "hacker_news": 14,
+    "rss": 14,
+    "stack_exchange": 14
+  },
+  "source_trust_weights": {
+    "github_public": 1.0,
+    "hacker_news": 1.0,
+    "rss": 1.0,
+    "stack_exchange": 1.0
+  },
+  "queries": [
+    {
+      "id": "PLQ01",
+      "query": "WebhookReplayKit replay debugging demand",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://news.ycombinator.example/item?id=910001",
+        "https://github.com/example/webhookreplaykit/issues/44",
+        "https://stackoverflow.example/questions/910001/webhookreplaykit"
+      ],
+      "expected_source_types": [
+        "hacker_news",
+        "github_public",
+        "stack_exchange"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 3
+    },
+    {
+      "id": "PLQ02",
+      "query": "FeedSentry RSS feed monitoring errors",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://feeds.example.com/fedsentry/outage-errors",
+        "https://github.com/example/feedsentry/issues/12"
+      ],
+      "expected_source_types": [
+        "rss",
+        "github_public"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 2
+    },
+    {
+      "id": "PLQ03",
+      "query": "SchemaScout JSON schema drift validation",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://stackoverflow.example/questions/910002/schemascout",
+        "https://feeds.example.com/schemascout/migration-changelog",
+        "https://news.ycombinator.example/item?id=910002"
+      ],
+      "expected_source_types": [
+        "stack_exchange",
+        "rss",
+        "hacker_news"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 3
+    },
+    {
+      "id": "PLQ04",
+      "query": "DeployGuard preview environment rollback",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://github.com/example/deployguard/issues/7",
+        "https://stackoverflow.example/questions/910003/deployguard"
+      ],
+      "expected_source_types": [
+        "github_public",
+        "stack_exchange"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 2
+    },
+    {
+      "id": "PLQ05",
+      "query": "WebhookReplayKit developer replay thread",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://news.ycombinator.example/item?id=910001",
+        "https://stackoverflow.example/questions/910001/webhookreplaykit"
+      ],
+      "expected_source_types": [
+        "hacker_news",
+        "stack_exchange"
+      ],
+      "min_independent_sources": 2,
+      "top_k": 2
+    },
+    {
+      "id": "PLQ06",
+      "query": "GitHub public FeedSentry outage issue",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://github.com/example/feedsentry/issues/12"
+      ],
+      "expected_source_types": [
+        "github_public"
+      ],
+      "min_independent_sources": 1,
+      "top_k": 1
+    },
+    {
+      "id": "PLQ07",
+      "query": "RSS SchemaScout migration changelog",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://feeds.example.com/schemascout/migration-changelog"
+      ],
+      "expected_source_types": [
+        "rss"
+      ],
+      "min_independent_sources": 1,
+      "top_k": 1
+    },
+    {
+      "id": "PLQ08",
+      "query": "Stack Exchange DeployGuard preview rollback",
+      "expected_status": "ok",
+      "expected_source_urls": [
+        "https://stackoverflow.example/questions/910003/deployguard"
+      ],
+      "expected_source_types": [
+        "stack_exchange"
+      ],
+      "min_independent_sources": 1,
+      "top_k": 1
+    },
+    {
+      "id": "PLQ09",
+      "query": "LegacyMeetingBot meeting summarizer old",
+      "expected_status": "insufficient_evidence",
+      "expected_source_urls": [],
+      "min_independent_sources": 1,
+      "top_k": 3
+    },
+    {
+      "id": "PLQ10",
+      "query": "SoloClipper transcript clipping one source only",
+      "expected_status": "insufficient_evidence",
+      "expected_source_urls": [],
+      "min_independent_sources": 2,
+      "top_k": 3
+    }
+  ]
+}

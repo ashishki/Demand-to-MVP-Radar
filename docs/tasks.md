@@ -1653,7 +1653,7 @@ Owner:      codex
 Phase:      12
 Type:       rag:evaluation
 Depends-On: T42, T43, T44, T45
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add a retrieval evaluation slice that measures whether live public connectors improve cited demand-signal retrieval and no-answer behavior.

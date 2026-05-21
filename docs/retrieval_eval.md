@@ -45,6 +45,17 @@ Initial dataset to be created during T09/T10:
 | no_answer_accuracy | Share of unsupported queries that return `insufficient_evidence`. | 0.90 after baseline |
 | answer_faithfulness | Share of synthesized claims supported by retrieved evidence. | 0.85 after baseline |
 | retrieval_ms | Query-time retrieval latency over fixture set. | record baseline, no target before T10 |
+| public_source_coverage | Share of required public connector source types represented in retrieved public-live packets. | 1.00 for the T47 public connector slice |
+
+## Regression Thresholds
+
+| Signal | Severity |
+|--------|----------|
+| Retrieval hit@3 drop greater than 15 percent vs baseline | P0 |
+| Retrieval hit@3 drop greater than 5 percent vs baseline | P1 |
+| Citation precision drop greater than 10 percent vs baseline | P1 |
+| No-answer accuracy below 0.90 after baseline | P1 |
+| Public source coverage below 1.00 on the T47 public connector slice | P1 |
 
 ---
 
@@ -82,14 +93,16 @@ Initial slices to add during implementation:
 | 2026-05-20 | T25 | corpus-t25-source-trust-v1 | `.venv/bin/pytest tests/test_source_trust.py -q, run 2026-05-20` | 1.00 | 1.00 | 1.00 | 1.00 | n/a | source_freshness=true; source_trust=true; type_caps=true; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
 | 2026-05-20 | T26 | corpus-t26-live-like-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20` | 1.00 | 1.00 | 1.00 | 1.00 | 13ms | query_count=10; source_types=7; freshness_compliance=1.00; source_diversity=1.00; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
 | 2026-05-20 | T30 | corpus-t26-live-like-v1 | `.venv/bin/pytest tests/test_missing_evidence.py tests/eval/test_retrieval_eval.py -q, run 2026-05-20` | n/a | n/a | 1.00 | n/a | n/a | missing_evidence_cases=3; no_answer_accuracy=1.00; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
+| 2026-05-21 | T47 | corpus-t47-public-live-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_public_queries.json, run 2026-05-21` | 1.00 | 1.00 | 1.00 | 1.00 | 4ms | query_count=10; public_source_coverage=1.00; freshness_compliance=1.00; source_diversity=1.00; baseline_delta=0.00; index_schema_version=retrieval-index-v1 |
 
 ---
 
 ## Extended Live-Like Metrics
 
-| Date | Task | Corpus Version | Eval Source | freshness_compliance | source_diversity | Notes |
-|------|------|----------------|-------------|----------------------|------------------|-------|
-| 2026-05-20 | T26 | corpus-t26-live-like-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20` | 1.00 | 1.00 | Sanitized live-like fixture covers Telegram Research Agent, operator notes, GitHub repository snapshots, SERP, Hacker News, reviews, news, and stale forum evidence. |
+| Date | Task | Corpus Version | Eval Source | freshness_compliance | source_diversity | public_source_coverage | Notes |
+|------|------|----------------|-------------|----------------------|------------------|------------------------|-------|
+| 2026-05-20 | T26 | corpus-t26-live-like-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20` | 1.00 | 1.00 | n/a | Sanitized live-like fixture covers Telegram Research Agent, operator notes, GitHub repository snapshots, SERP, Hacker News, reviews, news, and stale forum evidence. |
+| 2026-05-21 | T47 | corpus-t47-public-live-v1 | `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_public_queries.json, run 2026-05-21` | 1.00 | 1.00 | 1.00 | Public-live fixture covers Hacker News, Stack Exchange, RSS, and GitHub public evidence across ten queries with stale and single-source no-answer cases. |
 
 ---
 
@@ -108,6 +121,8 @@ Initial slices to add during implementation:
 2026-05-20 T26: No regression versus T18 query baseline. Live-like fixture expansion is classified as corpus-change-induced coverage growth; evaluation runner metric additions are classified as code-change-induced instrumentation with no metric regression.
 
 2026-05-20 T30: No regression versus T18 query baseline. Missing-evidence analysis is classified as code-change-induced dossier instrumentation; retrieval no-answer behavior remains covered at 1.00 accuracy for missing-evidence cases.
+
+2026-05-21 T47: No regression versus T18 query baseline. Public-live fixture expansion is classified as corpus-change-induced coverage growth; public_source_coverage and public connector retrieval checks are classified as code-change-induced instrumentation with no metric regression.
 
 ---
 

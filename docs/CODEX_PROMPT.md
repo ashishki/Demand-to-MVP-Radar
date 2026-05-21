@@ -1,8 +1,8 @@
 # CODEX_PROMPT.md
 
-Version: 2.37
+Version: 2.38
 Date: 2026-05-21
-Phase: 12
+Phase: 13
 
 This file is the session handoff and state authority for Codex implementation roles.
 
@@ -20,8 +20,8 @@ This file is the session handoff and state authority for Codex implementation ro
 
 ## Current State
 
-- Phase: 12
-- Baseline: 151 passing tests
+- Phase: 13
+- Baseline: 154 passing tests
 - Ruff: configured; `ruff check demand_mvp_radar/ tests/ scripts/` passes locally. `ruff format --check demand_mvp_radar/ tests/ scripts/` currently reports pre-existing formatting drift in untouched code/test files and needs a separate formatting-only commit.
 - Last CI: workflow configured; remote run not yet observed
 - Last updated: 2026-05-21
@@ -48,7 +48,7 @@ This file is the session handoff and state authority for Codex implementation ro
 
 ## Next Task
 
-T47: Live Public Corpus Retrieval Eval
+T48: SERP Credentialed Connector
 
 Before implementation, the orchestrator should hand Codex a narrow task digest inline:
 
@@ -107,6 +107,7 @@ none
 - T44: RSS Feed Connector — DONE on 2026-05-21. Baseline moved from 141 to 145 passing tests. Added a stdlib RSS/Atom fixture connector with feed and entry provenance, published/captured timestamps, cursor dedupe by source fingerprint, malformed-feed quarantine, and `collect-sources` support for `source_type=rss`. Deep review passed with Stop-Ship: No.
 - T45: GitHub Public Search Connector — DONE on 2026-05-21. Baseline moved from 145 to 148 passing tests. Added a fixture-first GitHub public search connector for issue/discussion evidence, repository/label/timestamp metadata, optional `GITHUB_TOKEN` env-var resolution, private/local URL quarantine, and `collect-sources` support for `source_type=github_public`. Deep review passed with Stop-Ship: No.
 - T46: Source Health in health --json — DONE on 2026-05-21. Baseline moved from 148 to 151 passing tests. Health JSON now reports per-live-source enabled state, credential/freshness/cursor/rate-limit/failure summaries, redacts credential names from live source health, and separates source warnings from system health. Deep review passed with Stop-Ship: No.
+- T47: Live Public Corpus Retrieval Eval — DONE on 2026-05-21. Baseline moved from 151 to 154 passing tests. Added a public-live retrieval slice for Hacker News, Stack Exchange, RSS, and GitHub public evidence, public_source_coverage metric, and retrieval eval documentation with the T47 baseline. Deep review passed with Stop-Ship: No.
 
 ## Completed Tasks Archive
 
@@ -127,6 +128,7 @@ none
 - Phase 9 MVP Experiment Conversion — completed 2026-05-20. Built experiment pack validation, experiment rendering, and deterministic outcome feedback. Deep review Cycle 16 passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
 - Phase 10 Operator Production Readiness — completed 2026-05-20. Built operator runbook, scheduled local run support, backup/recovery guide, and four-run readiness gate. Deep review Cycle 17 passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
 - Phase 11 Live Source Connector Foundation — completed 2026-05-21. Built the live connector protocol, credential resolver/redaction, `collect-sources`, and fixture-first public connectors for Hacker News, Stack Exchange, RSS/Atom, and GitHub public search. Deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
+- Phase 12 Source Health and Public Corpus Evaluation — completed 2026-05-21. Built live-source health JSON and the public-live retrieval evaluation slice with public source coverage metrics. Deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
 
 ## Phase History Archive
 
@@ -141,7 +143,7 @@ none
 
 Bootstrap package generated on 2026-05-19. T01 created the minimal Python package skeleton, editable install metadata, CLI help entrypoint, shared config/observability stubs, package directories including retrieval and tools namespaces, and smoke tests. T02 configured GitHub Actions, dev dependencies, and ruff checks. T03 added health JSON and default configuration smoke coverage. T04 added Pydantic settings and run manifest models. T05 added domain records plus SQLite schema/repositories for evidence and decisions. T06 added the v1 Tool-Use schema catalog, executor validation/permission boundary, audit persistence, and Tool-Use baseline evaluation. T07 added source adapter contracts and Telegram export normalization with quarantine handling. T08 added bounded source tools for mocked URL snapshots, SERP snapshots, and store metadata fixtures. T09 added text-only retrieval ingestion, chunk metadata preservation, deterministic local embeddings, SQLite index writes, and RAG ingestion evaluation. T10 added query-time retrieval, cited evidence packet assembly, metadata/freshness/source-link filtering, minimum independent source gating, and the required `insufficient_evidence` path. T11 added deterministic opportunity clustering with stable candidate IDs, normalized pain/audience/workflow/channel fields, and source evidence IDs. T12 added deterministic score components, recommendations, confidence bands, and threshold reasons. T13 added fake-provider LLM extraction with schema validation and skip-on-insufficient-evidence behavior. T14 added Markdown report rendering and atomic report writes. T15 added append-only operator decision recording and history lookup. T16 added rejected-idea suppression and revisit rationale propagation. T17 added the fixture-based weekly run command and budget guard. T19 added the personal operator workflow contract for weekly inputs/outputs, decision taxonomy, adoption failure conditions, and privacy boundaries. T20 added typed source catalog entries and disabled default source placeholders with approval requirements for paid and credentialed sources. T21 added a sanitized `telegram-research-agent` bridge that writes evidence idempotently and quarantines malformed/private rows. T22 added a redacted operator notes importer and deterministic scoring guard so notes alone cannot justify `build`. T23 added a local GitHub repository source and `read_github_repo_snapshot` tool schema/audit path with Tool-Use evaluation. T24 added the `import-sources` command that stores owned-source evidence, updates retrieval chunks, records disabled sources, and skips report generation. T25 added default query-time source trust downranking, optional source-specific freshness controls, and default trust-adjusted scoring caps so stale or low-trust-only support cannot produce `build`. T26 added sanitized live-like retrieval fixtures and extended retrieval evaluation metrics for freshness compliance and source diversity. T27 added evidence delta reporting for source imports, including redacted changed-cluster summaries. T28 added decision-grade dossier models with citation/inference validation. T29 added stable Markdown/HTML dossier renderers. T30 added deterministic missing-evidence analysis and RAG no-answer eval history. T31 added local review-command decision recording from generated dossiers, including `needs_more_evidence` gaps. T32 added human-gated MVP experiment pack validation with dossier citation and risk inheritance. T33 added run-id keyed Markdown experiment rendering and atomic artifact writes. T34 added experiment outcome recording and deterministic scoring feedback for killed and validated experiments. T35 added the operator runbook for weekly operation, failures, health checks, privacy, and backup. T36 added user-level systemd scheduling templates and scheduled-run health reporting. T37 added the backup and recovery guide. T38 added the four-run production readiness review gate. Dream Motif Interpreter is available as a RAG implementation pattern reference through `docs/IMPLEMENTATION_REFERENCE_MAP.md`. The active workflow is Codex-only and nonstop across phases: no Claude Code layer, no nested `codex exec` calls, and no pause between phases unless an explicit stop condition applies.
 
-After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the authoritative implementation queue as T39-T57 across Phase 11 through Phase 16. T39 added the shared live connector protocol. T40 added credential-safe resolution and redaction. T41 added `collect-sources`. T42 added the Hacker News live connector. T43 added the Stack Exchange live connector. T44 added RSS/Atom. T45 added GitHub public search. T46 added live source health output. The next loop starts at T47 with public-live retrieval evaluation.
+After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the authoritative implementation queue as T39-T57 across Phase 11 through Phase 16. T39 added the shared live connector protocol. T40 added credential-safe resolution and redaction. T41 added `collect-sources`. T42 added the Hacker News live connector. T43 added the Stack Exchange live connector. T44 added RSS/Atom. T45 added GitHub public search. T46 added live source health output. T47 added public-live retrieval evaluation. The next loop starts at T48 with the SERP credentialed connector.
 
 ---
 
@@ -149,12 +151,12 @@ After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the author
 
 - RAG Status: ON
 - Active corpora: local single-operator text evidence corpus
-- Retrieval baseline: T09 ingestion baseline established for corpus-t09-v1 (chunk_count=3, index_schema_version=retrieval-index-v1); T10 query baseline established for corpus-t10-v1 (hit@3=1.00, citation_precision=1.00, no_answer_accuracy=1.00, answer_faithfulness=1.00); T25 trust/freshness slice established for corpus-t25-source-trust-v1 (hit@3=1.00, citation_precision=1.00, no_answer_accuracy=1.00, answer_faithfulness=1.00); T26 live-like slice established for corpus-t26-live-like-v1 (hit@3=1.00, citation_precision=1.00, no_answer_accuracy=1.00, answer_faithfulness=1.00, freshness_compliance=1.00, source_diversity=1.00)
+- Retrieval baseline: T09 ingestion baseline established for corpus-t09-v1 (chunk_count=3, index_schema_version=retrieval-index-v1); T10 query baseline established for corpus-t10-v1 (hit@3=1.00, citation_precision=1.00, no_answer_accuracy=1.00, answer_faithfulness=1.00); T25 trust/freshness slice established for corpus-t25-source-trust-v1 (hit@3=1.00, citation_precision=1.00, no_answer_accuracy=1.00, answer_faithfulness=1.00); T26 live-like slice established for corpus-t26-live-like-v1 (hit@3=1.00, citation_precision=1.00, no_answer_accuracy=1.00, answer_faithfulness=1.00, freshness_compliance=1.00, source_diversity=1.00); T47 public-live slice established for corpus-t47-public-live-v1 (hit@3=1.00, citation_precision=1.00, no_answer_accuracy=1.00, answer_faithfulness=1.00, freshness_compliance=1.00, source_diversity=1.00, public_source_coverage=1.00)
 - Open retrieval findings: none
 - Index schema version: retrieval-index-v1
 - Pending reindex actions: none
-- Retrieval-related next tasks: T47 public-live retrieval evaluation
-- Retrieval-driven tasks: Phase 12 source health/evaluation
+- Retrieval-related next tasks: T48-T50 credentialed connector ingestion and source value checks
+- Retrieval-driven tasks: Phase 13 credentialed source wave
 
 ---
 
@@ -214,11 +216,11 @@ After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the author
 ### Last Evaluation
 
 - Profile: RAG
-- Task: T26
-- Date: 2026-05-20
-- Eval Source: `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20`
-- Metric(s): hit@3, citation_precision, no_answer_accuracy, answer_faithfulness, freshness_compliance, source_diversity
-- Score: 1.00, 1.00, 1.00, 1.00, 1.00, 1.00
+- Task: T47
+- Date: 2026-05-21
+- Eval Source: `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_public_queries.json, run 2026-05-21`
+- Metric(s): hit@3, citation_precision, no_answer_accuracy, answer_faithfulness, freshness_compliance, source_diversity, public_source_coverage
+- Score: 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00
 - Baseline: compared against T18 RAG query baseline
 - Delta: 0.00
 - Regression: No
@@ -231,6 +233,7 @@ After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the author
 - No-answer accuracy below 0.90 after baseline: P1
 - Tool schema validation pass rate below 1.00 after baseline: P1
 - Tool audit field completeness below 1.00 after baseline: P1
+- Public source coverage below 1.00 on the T47 public connector slice: P1
 
 ### Open Evaluation Issues
 
@@ -247,6 +250,7 @@ none
 - 2026-05-20 — T23 Tool-Use GitHub repository source: schema_validation_pass_rate 1.00, permission_check_pass_rate 1.00, audit_field_completeness 1.00, retry policy n/a. Eval Source: `.venv/bin/pytest tests/test_github_source.py -q, run 2026-05-20`.
 - 2026-05-20 — T25 RAG source trust and freshness slice: corpus_version corpus-t25-source-trust-v1, hit@3 1.00, citation_precision 1.00, no_answer_accuracy 1.00, answer_faithfulness 1.00. Eval Source: `.venv/bin/pytest tests/test_source_trust.py -q, run 2026-05-20`.
 - 2026-05-20 — T26 RAG live-like retrieval slice: corpus_version corpus-t26-live-like-v1, hit@3 1.00, citation_precision 1.00, no_answer_accuracy 1.00, answer_faithfulness 1.00, freshness_compliance 1.00, source_diversity 1.00. Eval Source: `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_like_queries.json, run 2026-05-20`.
+- 2026-05-21 — T47 RAG public-live retrieval slice: corpus_version corpus-t47-public-live-v1, hit@3 1.00, citation_precision 1.00, no_answer_accuracy 1.00, answer_faithfulness 1.00, freshness_compliance 1.00, source_diversity 1.00, public_source_coverage 1.00. Eval Source: `.venv/bin/python scripts/eval_retrieval.py --fixture tests/fixtures/retrieval_live_public_queries.json, run 2026-05-21`.
 
 ---
 

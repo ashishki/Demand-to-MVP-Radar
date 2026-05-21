@@ -1,0 +1,157 @@
+{
+  "run_id": "run-retrieval-live-public-001",
+  "corpus_version": "corpus-t47-public-live-v1",
+  "as_of": "2026-05-21T00:00:00+00:00",
+  "public_source_types": [
+    "github_public",
+    "hacker_news",
+    "rss",
+    "stack_exchange"
+  ],
+  "source_freshness_windows": {
+    "github_public": 14,
+    "hacker_news": 14,
+    "rss": 14,
+    "stack_exchange": 14
+  },
+  "source_trust_weights": {
+    "github_public": 1.0,
+    "hacker_news": 1.0,
+    "rss": 1.0,
+    "stack_exchange": 1.0
+  },
+  "evidence": [
+    {
+      "source_type": "hacker_news",
+      "source_id": "hn-public-001",
+      "source_url": "https://news.ycombinator.example/item?id=910001",
+      "captured_at": "2026-05-20T09:00:00+00:00",
+      "title": "WebhookReplayKit replay debugging demand",
+      "snippet": "Developers discuss webhook replay debugging demand.",
+      "normalized_text": "WebhookReplayKit replay debugging demand appears in a public developer thread where teams ask for retry inspection and payload diff workflows.",
+      "content_hash": "hash-public-hn-001",
+      "source_fingerprint": "hacker_news:hn-public-001:hash-public-hn-001"
+    },
+    {
+      "source_type": "github_public",
+      "source_id": "github-public-001",
+      "source_url": "https://github.com/example/webhookreplaykit/issues/44",
+      "captured_at": "2026-05-20T10:00:00+00:00",
+      "title": "WebhookReplayKit public issue",
+      "snippet": "GitHub public issue asks for webhook replay debugging.",
+      "normalized_text": "WebhookReplayKit replay debugging demand is visible in a public GitHub issue requesting payload diff tools and retry inspection.",
+      "content_hash": "hash-public-github-001",
+      "source_fingerprint": "github_public:github-public-001:hash-public-github-001"
+    },
+    {
+      "source_type": "stack_exchange",
+      "source_id": "stack-public-001",
+      "source_url": "https://stackoverflow.example/questions/910001/webhookreplaykit",
+      "captured_at": "2026-05-19T15:00:00+00:00",
+      "title": "WebhookReplayKit developer replay thread",
+      "snippet": "Stack Exchange question covers webhook replay debugging.",
+      "normalized_text": "WebhookReplayKit developer replay thread asks how to inspect failed webhook payloads and repeat delivery during debugging.",
+      "content_hash": "hash-public-stack-001",
+      "source_fingerprint": "stack_exchange:stack-public-001:hash-public-stack-001"
+    },
+    {
+      "source_type": "rss",
+      "source_id": "rss-public-001",
+      "source_url": "https://feeds.example.com/fedsentry/outage-errors",
+      "captured_at": "2026-05-20T08:00:00+00:00",
+      "title": "FeedSentry RSS feed monitoring errors",
+      "snippet": "RSS article covers feed monitoring errors.",
+      "normalized_text": "FeedSentry RSS feed monitoring errors are reported in a public feed where operators need alerts for broken partner feeds.",
+      "content_hash": "hash-public-rss-001",
+      "source_fingerprint": "rss:rss-public-001:hash-public-rss-001"
+    },
+    {
+      "source_type": "github_public",
+      "source_id": "github-public-002",
+      "source_url": "https://github.com/example/feedsentry/issues/12",
+      "captured_at": "2026-05-19T12:00:00+00:00",
+      "title": "FeedSentry outage issue",
+      "snippet": "GitHub public issue reports feed outage monitoring gaps.",
+      "normalized_text": "FeedSentry RSS feed monitoring errors appear in a GitHub public outage issue asking for per-feed retry alerts.",
+      "content_hash": "hash-public-github-002",
+      "source_fingerprint": "github_public:github-public-002:hash-public-github-002"
+    },
+    {
+      "source_type": "stack_exchange",
+      "source_id": "stack-public-002",
+      "source_url": "https://stackoverflow.example/questions/910002/schemascout",
+      "captured_at": "2026-05-20T11:00:00+00:00",
+      "title": "SchemaScout JSON schema drift validation",
+      "snippet": "Question asks for schema drift validation.",
+      "normalized_text": "SchemaScout JSON schema drift validation demand appears when developers compare API payload changes against generated contracts.",
+      "content_hash": "hash-public-stack-002",
+      "source_fingerprint": "stack_exchange:stack-public-002:hash-public-stack-002"
+    },
+    {
+      "source_type": "rss",
+      "source_id": "rss-public-002",
+      "source_url": "https://feeds.example.com/schemascout/migration-changelog",
+      "captured_at": "2026-05-19T13:00:00+00:00",
+      "title": "SchemaScout migration changelog",
+      "snippet": "RSS changelog mentions schema drift validation.",
+      "normalized_text": "SchemaScout JSON schema drift validation is described in a migration changelog for teams checking breaking API changes.",
+      "content_hash": "hash-public-rss-002",
+      "source_fingerprint": "rss:rss-public-002:hash-public-rss-002"
+    },
+    {
+      "source_type": "hacker_news",
+      "source_id": "hn-public-002",
+      "source_url": "https://news.ycombinator.example/item?id=910002",
+      "captured_at": "2026-05-18T17:00:00+00:00",
+      "title": "SchemaScout validation discussion",
+      "snippet": "Public developer comments discuss schema drift validation.",
+      "normalized_text": "SchemaScout JSON schema drift validation comes up in public developer comments about contract testing and API payload reviews.",
+      "content_hash": "hash-public-hn-002",
+      "source_fingerprint": "hacker_news:hn-public-002:hash-public-hn-002"
+    },
+    {
+      "source_type": "github_public",
+      "source_id": "github-public-003",
+      "source_url": "https://github.com/example/deployguard/issues/7",
+      "captured_at": "2026-05-20T14:00:00+00:00",
+      "title": "DeployGuard preview rollback issue",
+      "snippet": "GitHub public issue asks for preview environment rollback.",
+      "normalized_text": "DeployGuard preview environment rollback demand appears in a GitHub public issue after teams lose test deployments.",
+      "content_hash": "hash-public-github-003",
+      "source_fingerprint": "github_public:github-public-003:hash-public-github-003"
+    },
+    {
+      "source_type": "stack_exchange",
+      "source_id": "stack-public-003",
+      "source_url": "https://stackoverflow.example/questions/910003/deployguard",
+      "captured_at": "2026-05-19T18:00:00+00:00",
+      "title": "DeployGuard preview rollback question",
+      "snippet": "Question covers preview environment rollback.",
+      "normalized_text": "Stack Exchange DeployGuard preview environment rollback demand appears in deployment questions about restoring failed review apps.",
+      "content_hash": "hash-public-stack-003",
+      "source_fingerprint": "stack_exchange:stack-public-003:hash-public-stack-003"
+    },
+    {
+      "source_type": "rss",
+      "source_id": "rss-public-stale-001",
+      "source_url": "https://feeds.example.com/legacymeetingbot/old-roundup",
+      "captured_at": "2025-01-01T09:00:00+00:00",
+      "title": "LegacyMeetingBot old meeting summarizer roundup",
+      "snippet": "Old RSS roundup mentions meeting summarizer automation.",
+      "normalized_text": "LegacyMeetingBot meeting summarizer old demand appears only in an old RSS roundup without current corroboration.",
+      "content_hash": "hash-public-rss-stale-001",
+      "source_fingerprint": "rss:rss-public-stale-001:hash-public-rss-stale-001"
+    },
+    {
+      "source_type": "hacker_news",
+      "source_id": "hn-public-single-001",
+      "source_url": "https://news.ycombinator.example/item?id=910009",
+      "captured_at": "2026-05-20T16:00:00+00:00",
+      "title": "SoloClipper transcript clipping",
+      "snippet": "Single public thread mentions transcript clipping.",
+      "normalized_text": "SoloClipper transcript clipping one source only appears in a single public developer comment and needs independent corroboration.",
+      "content_hash": "hash-public-hn-single-001",
+      "source_fingerprint": "hacker_news:hn-public-single-001:hash-public-hn-single-001"
+    }
+  ]
+}

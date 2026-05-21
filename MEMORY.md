@@ -2,9 +2,9 @@
 
 ## Demand-to-MVP Radar
 
-- Last completed: T46 - Source Health in health --json at 2026-05-21
-- Baseline: 151 pass / 0 skip
-- Next task: T47 - Live Public Corpus Retrieval Eval
-- Phase: Phase 12 - Source Health and Public Corpus Evaluation
+- Last completed: T47 - Live Public Corpus Retrieval Eval at 2026-05-21
+- Baseline: 154 pass / 0 skip
+- Next task: T48 - SERP Credentialed Connector
+- Phase: Phase 13 - Credentialed Source Wave
 - Review tier next: deep
 - Any blockers: none
