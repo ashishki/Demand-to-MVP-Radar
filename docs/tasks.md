@@ -1722,7 +1722,7 @@ Owner:      codex
 Phase:      13
 Type:       rag:ingestion
 Depends-On: T40, T47
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect YouTube search, video metadata, and comment signals for configured problem queries with quota-aware fixture-first behavior.

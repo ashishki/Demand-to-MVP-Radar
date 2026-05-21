@@ -1,0 +1,44 @@
+{
+  "captured_at": "2026-05-21T13:00:00+00:00",
+  "searches": [
+    {
+      "query": "spreadsheet cleanup automation tutorial",
+      "captured_at": "2026-05-21T13:00:00+00:00",
+      "quota_cost": 101,
+      "next_page_token": "yt-page-2",
+      "videos": [
+        {
+          "video_id": "vid-spreadsheet-cleanup-001",
+          "channel_id": "UC-private-channel-001",
+          "title": "Spreadsheet cleanup automation tutorial",
+          "description": "Tutorial viewers ask for spreadsheet cleanup automation that detects messy CSV columns and fixes repeated weekly exports.",
+          "published_at": "2026-05-20T08:00:00+00:00",
+          "comments": [
+            {
+              "comment_id": "comment-cleanup-001",
+              "author_channel_id": "UC-comment-author-001",
+              "text": "I need this spreadsheet cleanup automation for client CSV exports every Friday, especially delimiter detection and header fixes.",
+              "published_at": "2026-05-21T09:00:00+00:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "webhook replay debugging video",
+      "captured_at": "2026-05-21T13:05:00+00:00",
+      "quota_cost": 101,
+      "next_page_token": "yt-webhook-page-2",
+      "videos": [
+        {
+          "video_id": "vid-webhook-replay-001",
+          "channel_id": "UC-private-channel-002",
+          "title": "Webhook replay debugging walkthrough",
+          "description": "Developers ask for webhook replay debugging videos that inspect payload history and retry failed delivery attempts.",
+          "published_at": "2026-05-19T10:00:00+00:00",
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

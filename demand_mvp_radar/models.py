@@ -105,6 +105,9 @@ class EvidenceRecord(BaseModel):
     result_rank: int | None = None
     provider: str | None = None
     provider_metadata: dict[str, str] = Field(default_factory=dict)
+    channel_hash: str | None = None
+    video_id: str | None = None
+    comment_id: str | None = None
 
 
 class OpportunityCandidate(BaseModel):

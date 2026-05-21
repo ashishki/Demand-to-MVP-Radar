@@ -40,6 +40,7 @@ from demand_mvp_radar.sources.rss import RSSFeedConnector
 from demand_mvp_radar.sources.serp import SERPSearchConnector
 from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
+from demand_mvp_radar.sources.youtube import YouTubeConnector
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
 from demand_mvp_radar.storage.repositories import EvidenceRepository
@@ -508,6 +509,22 @@ def _collect_configured_live_source(
             daily_budget_limit=int(source_config["daily_budget_limit"]),
             per_run_budget_limit=int(source_config["per_run_budget_limit"]),
             daily_budget_used=int(source_config.get("daily_budget_used", 0)),
+        ).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "youtube":
+        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        return YouTubeConnector(
+            fixture_path,
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+            quota_limit=int(source_config["quota_limit"]),
+            per_run_quota_limit=int(source_config["per_run_quota_limit"]),
+            quota_used=int(source_config.get("quota_used", 0)),
         ).collect(
             live_config,
             run_id=run_id,
