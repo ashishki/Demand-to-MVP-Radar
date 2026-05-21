@@ -1961,7 +1961,7 @@ Owner:      codex
 Phase:      16
 Type:       docs
 Depends-On: T38, T55
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Define private beta onboarding for source setup, credential handling, local operation, support boundaries, and readiness evidence.

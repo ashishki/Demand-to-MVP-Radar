@@ -1,6 +1,6 @@
 # CODEX_PROMPT.md
 
-Version: 2.46
+Version: 2.47
 Date: 2026-05-21
 Phase: 16
 
@@ -21,7 +21,7 @@ This file is the session handoff and state authority for Codex implementation ro
 ## Current State
 
 - Phase: 16
-- Baseline: 178 passing tests
+- Baseline: 181 passing tests
 - Ruff: configured; `ruff check demand_mvp_radar/ tests/ scripts/` passes locally. `ruff format --check demand_mvp_radar/ tests/ scripts/` currently reports pre-existing formatting drift in untouched code/test files and needs a separate formatting-only commit.
 - Last CI: workflow configured; remote run not yet observed
 - Last updated: 2026-05-21
@@ -48,7 +48,7 @@ This file is the session handoff and state authority for Codex implementation ro
 
 ## Next Task
 
-T56: Private Beta Source Onboarding
+T57: Hosted/SaaS Decision ADR
 
 Before implementation, the orchestrator should hand Codex a narrow task digest inline:
 
@@ -116,6 +116,7 @@ none
 - T53: Telegram Approved Channel Connector — DONE on 2026-05-21. Baseline moved from 169 to 172 passing tests. Added a fixture-first Telegram live connector for approved public/operator-owned channels, redacted message locators, channel locator hashes, author hashes, dedupe cursor state, and private chat quarantine aligned with Telegram export redaction. Deep review passed with Stop-Ship: No.
 - T54: Source Value Report — DONE on 2026-05-21. Baseline moved from 172 to 175 passing tests. Added deterministic source value report models and Markdown rendering for evidence count, cited count, decision influence, quarantine rate, freshness, failures, cost, keep/demote/disable recommendations, and private locator/credential redaction. Deep review passed with Stop-Ship: No.
 - T55: Local Review Cockpit — DONE on 2026-05-21. Baseline moved from 175 to 178 passing tests. Added local-only review cockpit payload/HTML helpers, localhost bind validation, redacted opportunity/dossier/source-value/missing-evidence/experiment views, and a review action adapter that uses the existing decision-recording contract. Deep review passed with Stop-Ship: No.
+- T56: Private Beta Source Onboarding — DONE on 2026-05-21. Baseline moved from 178 to 181 passing tests. Added private beta onboarding docs for local setup, source selection, credential environment variables, scheduling, backup, privacy, support boundaries, readiness gates, and maintainer data boundaries. Deep review passed with Stop-Ship: No.
 
 ## Completed Tasks Archive
 
@@ -154,7 +155,7 @@ none
 
 Bootstrap package generated on 2026-05-19. T01 created the minimal Python package skeleton, editable install metadata, CLI help entrypoint, shared config/observability stubs, package directories including retrieval and tools namespaces, and smoke tests. T02 configured GitHub Actions, dev dependencies, and ruff checks. T03 added health JSON and default configuration smoke coverage. T04 added Pydantic settings and run manifest models. T05 added domain records plus SQLite schema/repositories for evidence and decisions. T06 added the v1 Tool-Use schema catalog, executor validation/permission boundary, audit persistence, and Tool-Use baseline evaluation. T07 added source adapter contracts and Telegram export normalization with quarantine handling. T08 added bounded source tools for mocked URL snapshots, SERP snapshots, and store metadata fixtures. T09 added text-only retrieval ingestion, chunk metadata preservation, deterministic local embeddings, SQLite index writes, and RAG ingestion evaluation. T10 added query-time retrieval, cited evidence packet assembly, metadata/freshness/source-link filtering, minimum independent source gating, and the required `insufficient_evidence` path. T11 added deterministic opportunity clustering with stable candidate IDs, normalized pain/audience/workflow/channel fields, and source evidence IDs. T12 added deterministic score components, recommendations, confidence bands, and threshold reasons. T13 added fake-provider LLM extraction with schema validation and skip-on-insufficient-evidence behavior. T14 added Markdown report rendering and atomic report writes. T15 added append-only operator decision recording and history lookup. T16 added rejected-idea suppression and revisit rationale propagation. T17 added the fixture-based weekly run command and budget guard. T19 added the personal operator workflow contract for weekly inputs/outputs, decision taxonomy, adoption failure conditions, and privacy boundaries. T20 added typed source catalog entries and disabled default source placeholders with approval requirements for paid and credentialed sources. T21 added a sanitized `telegram-research-agent` bridge that writes evidence idempotently and quarantines malformed/private rows. T22 added a redacted operator notes importer and deterministic scoring guard so notes alone cannot justify `build`. T23 added a local GitHub repository source and `read_github_repo_snapshot` tool schema/audit path with Tool-Use evaluation. T24 added the `import-sources` command that stores owned-source evidence, updates retrieval chunks, records disabled sources, and skips report generation. T25 added default query-time source trust downranking, optional source-specific freshness controls, and default trust-adjusted scoring caps so stale or low-trust-only support cannot produce `build`. T26 added sanitized live-like retrieval fixtures and extended retrieval evaluation metrics for freshness compliance and source diversity. T27 added evidence delta reporting for source imports, including redacted changed-cluster summaries. T28 added decision-grade dossier models with citation/inference validation. T29 added stable Markdown/HTML dossier renderers. T30 added deterministic missing-evidence analysis and RAG no-answer eval history. T31 added local review-command decision recording from generated dossiers, including `needs_more_evidence` gaps. T32 added human-gated MVP experiment pack validation with dossier citation and risk inheritance. T33 added run-id keyed Markdown experiment rendering and atomic artifact writes. T34 added experiment outcome recording and deterministic scoring feedback for killed and validated experiments. T35 added the operator runbook for weekly operation, failures, health checks, privacy, and backup. T36 added user-level systemd scheduling templates and scheduled-run health reporting. T37 added the backup and recovery guide. T38 added the four-run production readiness review gate. Dream Motif Interpreter is available as a RAG implementation pattern reference through `docs/IMPLEMENTATION_REFERENCE_MAP.md`. The active workflow is Codex-only and nonstop across phases: no Claude Code layer, no nested `codex exec` calls, and no pause between phases unless an explicit stop condition applies.
 
-After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the authoritative implementation queue as T39-T57 across Phase 11 through Phase 16. T39 added the shared live connector protocol. T40 added credential-safe resolution and redaction. T41 added `collect-sources`. T42 added the Hacker News live connector. T43 added the Stack Exchange live connector. T44 added RSS/Atom. T45 added GitHub public search. T46 added live source health output. T47 added public-live retrieval evaluation. T48 added the SERP credentialed connector. T49 added the YouTube connector. T50 added the Product Hunt connector. T51 added the Reddit connector. T52 added the Discord allowlisted channel connector. T53 added the Telegram approved channel connector. T54 added the source value report. T55 added the local review cockpit. The next loop starts at T56 with private beta source onboarding.
+After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the authoritative implementation queue as T39-T57 across Phase 11 through Phase 16. T39 added the shared live connector protocol. T40 added credential-safe resolution and redaction. T41 added `collect-sources`. T42 added the Hacker News live connector. T43 added the Stack Exchange live connector. T44 added RSS/Atom. T45 added GitHub public search. T46 added live source health output. T47 added public-live retrieval evaluation. T48 added the SERP credentialed connector. T49 added the YouTube connector. T50 added the Product Hunt connector. T51 added the Reddit connector. T52 added the Discord allowlisted channel connector. T53 added the Telegram approved channel connector. T54 added the source value report. T55 added the local review cockpit. T56 added private beta source onboarding. The next loop starts at T57 with the hosted/SaaS decision ADR.
 
 ---
 
@@ -166,7 +167,7 @@ After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the author
 - Open retrieval findings: none
 - Index schema version: retrieval-index-v1
 - Pending reindex actions: none
-- Retrieval-related next tasks: T56 private beta onboarding
+- Retrieval-related next tasks: T57 hosted/SaaS decision ADR
 - Retrieval-driven tasks: Phase 16 beta and hosted decision
 
 ---

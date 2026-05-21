@@ -6,6 +6,7 @@ OPERATOR_RUNBOOK = ROOT / "docs" / "OPERATOR_RUNBOOK.md"
 BACKUP_RECOVERY = ROOT / "docs" / "BACKUP_RECOVERY.md"
 PRODUCTION_READINESS_REVIEW = ROOT / "docs" / "audit" / "PRODUCTION_READINESS_REVIEW.md"
 LIVE_SOURCE_PRODUCTION_ROADMAP = ROOT / "docs" / "LIVE_SOURCE_PRODUCTION_ROADMAP.md"
+PRIVATE_BETA_ONBOARDING = ROOT / "docs" / "PRIVATE_BETA_ONBOARDING.md"
 TASKS = ROOT / "docs" / "tasks.md"
 CODEX_PROMPT = ROOT / "docs" / "CODEX_PROMPT.md"
 AI_DEVELOPMENT_PACK = ROOT / "docs" / "AI_DEVELOPMENT_PACK.md"
@@ -29,6 +30,10 @@ def _production_readiness_text() -> str:
 
 def _live_source_roadmap_text() -> str:
     return LIVE_SOURCE_PRODUCTION_ROADMAP.read_text(encoding="utf-8")
+
+
+def _private_beta_onboarding_text() -> str:
+    return PRIVATE_BETA_ONBOARDING.read_text(encoding="utf-8")
 
 
 def _tasks_text() -> str:
@@ -332,8 +337,9 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
 
     for phrase in (
         "Phase: 16",
-        "Baseline: 178 passing tests",
+        "Baseline: 181 passing tests",
         "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
+        "T57: Hosted/SaaS Decision ADR",
         "T56: Private Beta Source Onboarding",
         "T55: Local Review Cockpit",
         "T54: Source Value Report",
@@ -353,7 +359,7 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
         "T40: Credential Resolver and Secret Redaction",
         "T39: Live Source Connector Protocol",
         "Roadmap/task graph extension",
-        "Retrieval-related next tasks: T56 private beta onboarding",
+        "Retrieval-related next tasks: T57 hosted/SaaS decision ADR",
     ):
         assert phrase in content
 
@@ -362,13 +368,66 @@ def test_ai_development_pack_extends_loop_through_production_decision() -> None:
     content = _ai_development_pack_text()
 
     for phrase in (
-        "T01-T55 are complete",
-        "Current verified baseline after T55 is 178 passing tests",
+        "T01-T56 are complete",
+        "Current verified baseline after T56 is 181 passing tests",
         "Sequence F - Live Source Connector Foundation",
         "Sequence K - Beta and Hosted Decision",
         "`T39: Live Source Connector Protocol`",
         "`T57: Hosted/SaaS Decision ADR`",
         "Discord allowlisted channels",
         "X/Twitter",
+    ):
+        assert phrase in content
+
+
+def test_private_beta_onboarding_contains_required_sections() -> None:
+    content = _private_beta_onboarding_text()
+
+    for phrase in (
+        "## Setup",
+        "## Source Selection",
+        "## Credential Environment Variables",
+        "## Local Scheduling",
+        "## Backup",
+        "## Privacy",
+        "## Support Boundaries",
+        "GITHUB_TOKEN",
+        "SERPAPI_API_KEY",
+        "YOUTUBE_API_KEY",
+        "PRODUCT_HUNT_TOKEN",
+        "DISCORD_BOT_TOKEN",
+    ):
+        assert phrase in content
+
+
+def test_private_beta_onboarding_keeps_readiness_gate() -> None:
+    content = _private_beta_onboarding_text()
+
+    for phrase in (
+        "four-run production readiness review",
+        "at least three useful personal decisions",
+        "Private beta remains blocked",
+        "docs/audit/PRODUCTION_READINESS_REVIEW.md",
+        "Source value reports",
+    ):
+        assert phrase in content
+
+
+def test_private_beta_onboarding_defines_private_data_boundary() -> None:
+    content = _private_beta_onboarding_text()
+
+    for phrase in (
+        "Never send maintainers",
+        "raw exports",
+        "SQLite databases",
+        "generated private reports",
+        "raw Discord or Telegram messages",
+        "private notes",
+        "API keys",
+        "bot tokens",
+        "OAuth refresh tokens",
+        "channel IDs",
+        "guild IDs",
+        "unredacted source locators",
     ):
         assert phrase in content
