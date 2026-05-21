@@ -1,0 +1,46 @@
+{
+  "provider": "serpapi",
+  "captured_at": "2026-05-21T12:00:00+00:00",
+  "searches": [
+    {
+      "query": "invoice reconciliation duplicate payment",
+      "captured_at": "2026-05-21T12:00:00+00:00",
+      "provider_metadata": {
+        "engine": "google",
+        "region": "us",
+        "device": "desktop"
+      },
+      "results": [
+        {
+          "rank": 1,
+          "title": "Teams need duplicate payment reconciliation alerts",
+          "url": "https://example.com/invoice-reconciliation-alerts",
+          "snippet": "Finance operators describe invoice reconciliation pain when duplicate payments require manual cleanup and exception tracking."
+        },
+        {
+          "rank": 2,
+          "title": "Invoice matching workflow alternatives",
+          "url": "https://example.com/invoice-matching-alternatives",
+          "snippet": "Search results show invoice matching workflow alternatives for teams comparing reconciliation tools and duplicate payment checks."
+        }
+      ]
+    },
+    {
+      "query": "webhook replay debugging tools",
+      "captured_at": "2026-05-21T12:05:00+00:00",
+      "provider_metadata": {
+        "engine": "google",
+        "region": "us",
+        "device": "desktop"
+      },
+      "results": [
+        {
+          "rank": 1,
+          "title": "Webhook replay debugging tools",
+          "url": "https://example.com/webhook-replay-debugging",
+          "snippet": "Developers search for webhook replay debugging tools that inspect payloads, retry failed deliveries, and compare request bodies."
+        }
+      ]
+    }
+  ]
+}

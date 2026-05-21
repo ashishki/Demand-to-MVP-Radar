@@ -37,6 +37,7 @@ from demand_mvp_radar.sources.live import (
 )
 from demand_mvp_radar.sources.operator_notes import OperatorNotesAdapter
 from demand_mvp_radar.sources.rss import RSSFeedConnector
+from demand_mvp_radar.sources.serp import SERPSearchConnector
 from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.storage.db import connect_database
@@ -490,6 +491,23 @@ def _collect_configured_live_source(
         return GitHubPublicSearchConnector(
             fixture_path,
             queries=tuple(str(query) for query in source_config.get("queries", ())),
+        ).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "serp":
+        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        return SERPSearchConnector(
+            fixture_path,
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+            provider=str(source_config.get("provider", "serpapi")),
+            daily_budget_limit=int(source_config["daily_budget_limit"]),
+            per_run_budget_limit=int(source_config["per_run_budget_limit"]),
+            daily_budget_used=int(source_config.get("daily_budget_used", 0)),
         ).collect(
             live_config,
             run_id=run_id,

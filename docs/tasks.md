@@ -1691,7 +1691,7 @@ Owner:      codex
 Phase:      13
 Type:       rag:ingestion
 Depends-On: T40, T47
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect search result evidence through a credentialed SERP provider behind fixture-first tests, strict budget controls, and source-scoped failure handling.

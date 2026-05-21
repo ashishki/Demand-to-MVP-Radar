@@ -101,6 +101,10 @@ class EvidenceRecord(BaseModel):
     labels: tuple[str, ...] = ()
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    search_query: str | None = None
+    result_rank: int | None = None
+    provider: str | None = None
+    provider_metadata: dict[str, str] = Field(default_factory=dict)
 
 
 class OpportunityCandidate(BaseModel):
