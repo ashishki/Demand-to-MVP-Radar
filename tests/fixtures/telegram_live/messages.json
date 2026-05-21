@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "channel_id": "telegram-channel-approved-001",
+      "channel_username": "approved_public_channel",
+      "channel_type": "public",
+      "message_id": "101",
+      "author_id": "telegram-author-private-001",
+      "text": "Operators in this approved Telegram channel ask for invoice reconciliation alerts and duplicate payment cleanup workflows.",
+      "created_at": "2026-05-20T19:00:00+00:00",
+      "captured_at": "2026-05-21T17:00:00+00:00"
+    },
+    {
+      "channel_id": "telegram-private-chat-001",
+      "channel_username": "private_chat_name",
+      "channel_type": "private",
+      "message_id": "102",
+      "author_id": "telegram-author-private-002",
+      "text": "This private Telegram chat must be quarantined and never imported by the live connector.",
+      "created_at": "2026-05-20T19:30:00+00:00",
+      "captured_at": "2026-05-21T17:00:00+00:00"
+    }
+  ]
+}

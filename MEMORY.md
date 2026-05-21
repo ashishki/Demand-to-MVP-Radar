@@ -2,9 +2,9 @@
 
 ## Demand-to-MVP Radar
 
-- Last completed: T52 - Discord Allowlisted Channel Connector at 2026-05-21
-- Baseline: 169 pass / 0 skip
-- Next task: T53 - Telegram Approved Channel Connector
-- Phase: Phase 14 - Community Source Wave
+- Last completed: T53 - Telegram Approved Channel Connector at 2026-05-21
+- Baseline: 172 pass / 0 skip
+- Next task: T54 - Source Value Report
+- Phase: Phase 15 - Source Value and Review UX
 - Review tier next: deep
 - Any blockers: none

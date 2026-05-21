@@ -1854,7 +1854,7 @@ Owner:      codex
 Phase:      14
 Type:       rag:ingestion
 Depends-On: T40, T21, T47
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add an approved-channel Telegram collector as an optional live alternative to sanitized export imports.

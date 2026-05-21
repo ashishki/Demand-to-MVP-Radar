@@ -42,6 +42,7 @@ from demand_mvp_radar.sources.reddit import RedditConnector
 from demand_mvp_radar.sources.rss import RSSFeedConnector
 from demand_mvp_radar.sources.serp import SERPSearchConnector
 from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
+from demand_mvp_radar.sources.telegram_live import TelegramLiveConnector
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.sources.youtube import YouTubeConnector
 from demand_mvp_radar.storage.db import connect_database
@@ -569,6 +570,21 @@ def _collect_configured_live_source(
     if live_config.source_type == "discord":
         fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
         return DiscordConnector(
+            fixture_path,
+            approved_channels=tuple(
+                dict(channel) for channel in source_config.get("approved_channels", ())
+            ),
+        ).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "telegram_live":
+        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        return TelegramLiveConnector(
             fixture_path,
             approved_channels=tuple(
                 dict(channel) for channel in source_config.get("approved_channels", ())
