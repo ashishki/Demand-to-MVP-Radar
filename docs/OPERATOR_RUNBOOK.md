@@ -116,6 +116,7 @@ Check these local artifacts after a successful weekly loop:
 - opportunity dossiers
 - MVP experiment packs
 - evidence delta report
+- source value report showing which sources produced cited, decision-changing evidence and which should be kept, demoted, or disabled
 - SQLite `runs`, `evidence`, `decisions`, and retrieval chunk rows
 - audit/evaluation docs when a task changes retrieval, tools, scoring, or governance
 

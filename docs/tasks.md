@@ -1892,7 +1892,7 @@ Owner:      codex
 Phase:      15
 Type:       rag:evaluation
 Depends-On: T47, T48, T49, T50, T51, T52, T53
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Report which sources contribute useful, cited, decision-changing evidence and which sources should be disabled or demoted.
