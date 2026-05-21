@@ -1,0 +1,27 @@
+{
+  "items": [
+    {
+      "id": 423456,
+      "type": "story",
+      "title": "Developers need cleaner changelog monitoring",
+      "text": "Teams are manually scanning changelogs for breaking changes and missing release notes that affect production deploys.",
+      "url": "https://example.com/changelog-monitoring",
+      "by": "founder123",
+      "captured_at": "2026-05-21T09:30:00+00:00"
+    },
+    {
+      "id": 423458,
+      "type": "comment",
+      "text": "same",
+      "by": "short_user",
+      "captured_at": "2026-05-21T09:36:00+00:00"
+    },
+    {
+      "type": "story",
+      "title": "Missing identifier",
+      "text": "This row should be quarantined because it has no item id.",
+      "by": "bad_user",
+      "captured_at": "2026-05-21T09:37:00+00:00"
+    }
+  ]
+}

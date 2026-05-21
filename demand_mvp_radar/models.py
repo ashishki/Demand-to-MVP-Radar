@@ -90,6 +90,7 @@ class EvidenceRecord(BaseModel):
     source_fingerprint: str
     source_url: str | None = None
     connector_version: str | None = None
+    author_hash: str | None = None
 
 
 class OpportunityCandidate(BaseModel):

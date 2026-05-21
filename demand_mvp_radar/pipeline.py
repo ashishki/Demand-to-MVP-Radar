@@ -27,6 +27,7 @@ from demand_mvp_radar.retrieval.query import EvidencePacket
 from demand_mvp_radar.scoring import score_opportunity
 from demand_mvp_radar.sources.base import SourceImportResult
 from demand_mvp_radar.sources.github_repo import GitHubRepoSnapshotImporter
+from demand_mvp_radar.sources.hacker_news import HackerNewsLiveConnector
 from demand_mvp_radar.sources.live import (
     LiveConnectorResult,
     LiveSourceConfig,
@@ -226,6 +227,7 @@ def collect_sources(
     run_id: str | None = None,
 ) -> CollectSourcesResult:
     payload = json.loads(config.read_text(encoding="utf-8"))
+    config_dir = config.parent
     effective_run_id = run_id or str(payload["run_id"])
     corpus_version = str(payload.get("corpus_version", f"{effective_run_id}-corpus"))
     database_path = settings.data_dir / "radar.sqlite3"
@@ -262,6 +264,7 @@ def collect_sources(
                 live_config,
                 source_config,
                 run_id=effective_run_id,
+                config_dir=config_dir,
             )
         except (KeyError, TypeError, ValueError) as error:
             source_counts[live_config.source_name] = 0
@@ -377,9 +380,22 @@ def _collect_configured_live_source(
     source_config: dict[str, object],
     *,
     run_id: str,
+    config_dir: Path,
 ) -> LiveConnectorResult:
     if bool(source_config.get("fail", False)):
         raise ValueError("fixture failure requested")
+    if live_config.source_type == "hacker_news":
+        fixture_path = Path(str(source_config["fixture_path"]))
+        if not fixture_path.is_absolute():
+            fixture_path = config_dir / fixture_path
+        return HackerNewsLiveConnector(fixture_path).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
     if live_config.source_type != "fixture_live":
         raise ValueError(f"unsupported live source: {live_config.source_type}")
 

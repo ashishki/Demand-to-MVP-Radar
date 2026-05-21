@@ -1,0 +1,21 @@
+{
+  "items": [
+    {
+      "id": 423456,
+      "type": "story",
+      "title": "Developers need cleaner changelog monitoring",
+      "text": "Teams are manually scanning changelogs for breaking changes and missing release notes that affect production deploys.",
+      "url": "https://example.com/changelog-monitoring",
+      "by": "founder123",
+      "captured_at": "2026-05-21T09:30:00+00:00"
+    },
+    {
+      "id": 423457,
+      "type": "comment",
+      "text": "I built an internal script because vendor changelog emails miss the specific API changes my team cares about.",
+      "by": "ops_builder",
+      "parent": 423456,
+      "captured_at": "2026-05-21T09:35:00+00:00"
+    }
+  ]
+}

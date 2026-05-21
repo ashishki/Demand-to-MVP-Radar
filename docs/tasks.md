@@ -1490,7 +1490,7 @@ Owner:      codex
 Phase:      11
 Type:       rag:ingestion
 Depends-On: T41
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect Hacker News discussion and story signals through fixture-first live connector behavior without requiring credentials in CI.
