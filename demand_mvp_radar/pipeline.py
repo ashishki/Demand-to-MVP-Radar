@@ -26,6 +26,7 @@ from demand_mvp_radar.retrieval.ingestion import build_corpus
 from demand_mvp_radar.retrieval.query import EvidencePacket
 from demand_mvp_radar.scoring import score_opportunity
 from demand_mvp_radar.sources.base import SourceImportResult
+from demand_mvp_radar.sources.github_public import GitHubPublicSearchConnector
 from demand_mvp_radar.sources.github_repo import GitHubRepoSnapshotImporter
 from demand_mvp_radar.sources.hacker_news import HackerNewsLiveConnector
 from demand_mvp_radar.sources.live import (
@@ -371,7 +372,10 @@ def _live_config_from_payload(source_config: dict[str, object]) -> LiveSourceCon
         rate_limit_policy=RateLimitPolicy(**rate_limit_config),
         approval_required=bool(source_config.get("approval_required", False)),
         credential_requirements=tuple(
-            CredentialRequirement(env_var_name=env_var_name)
+            CredentialRequirement(
+                env_var_name=env_var_name,
+                required=str(source_config["source_type"]) != "github_public",
+            )
             for env_var_name in credential_env_vars
         ),
     )
@@ -420,6 +424,19 @@ def _collect_configured_live_source(
             for path in source_config.get("fixture_paths", ())
         )
         return RSSFeedConnector(fixture_paths).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "github_public":
+        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        return GitHubPublicSearchConnector(
+            fixture_path,
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+        ).collect(
             live_config,
             run_id=run_id,
             cursor_state={

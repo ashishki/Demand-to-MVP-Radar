@@ -97,6 +97,10 @@ class EvidenceRecord(BaseModel):
     accepted_answer: bool | None = None
     feed_url: str | None = None
     published_at: datetime | None = None
+    repository_locator: str | None = None
+    labels: tuple[str, ...] = ()
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class OpportunityCandidate(BaseModel):

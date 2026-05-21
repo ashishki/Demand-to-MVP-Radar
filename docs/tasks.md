@@ -1583,7 +1583,7 @@ Owner:      codex
 Phase:      11
 Type:       rag:ingestion
 Depends-On: T41, T23
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect public GitHub issue, discussion, and repository search signals using configured queries and optional token-based higher limits.
