@@ -35,6 +35,7 @@ from demand_mvp_radar.sources.live import (
     RateLimitState,
 )
 from demand_mvp_radar.sources.operator_notes import OperatorNotesAdapter
+from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
@@ -389,6 +390,22 @@ def _collect_configured_live_source(
         if not fixture_path.is_absolute():
             fixture_path = config_dir / fixture_path
         return HackerNewsLiveConnector(fixture_path).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "stack_exchange":
+        fixture_path = Path(str(source_config["fixture_path"]))
+        if not fixture_path.is_absolute():
+            fixture_path = config_dir / fixture_path
+        return StackExchangeLiveConnector(
+            fixture_path,
+            sites=tuple(str(site) for site in source_config.get("sites", ())),
+            tags=tuple(str(tag) for tag in source_config.get("tags", ())),
+        ).collect(
             live_config,
             run_id=run_id,
             cursor_state={

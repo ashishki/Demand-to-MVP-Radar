@@ -91,6 +91,10 @@ class EvidenceRecord(BaseModel):
     source_url: str | None = None
     connector_version: str | None = None
     author_hash: str | None = None
+    source_site: str | None = None
+    tags: tuple[str, ...] = ()
+    score: int | None = None
+    accepted_answer: bool | None = None
 
 
 class OpportunityCandidate(BaseModel):

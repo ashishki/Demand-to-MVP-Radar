@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "type": "question",
+      "site": "stackoverflow",
+      "question_id": 101,
+      "title": "How do teams monitor vendor API changelog breaking changes?",
+      "body": "We depend on several SaaS APIs and keep missing breaking changes buried in release notes. How are other teams monitoring this reliably?",
+      "tags": ["api", "changelog", "monitoring"],
+      "score": 18,
+      "is_answered": true,
+      "accepted_answer_id": 202,
+      "link": "https://stackoverflow.com/questions/101/vendor-api-changelog-monitoring",
+      "captured_at": "2026-05-21T10:00:00+00:00"
+    },
+    {
+      "type": "answer",
+      "site": "stackoverflow",
+      "answer_id": 202,
+      "question_id": 101,
+      "body": "We use a small internal service that watches vendor changelog feeds, classifies API-impacting entries, and posts only relevant changes to our deploy channel.",
+      "tags": ["api", "changelog", "monitoring"],
+      "score": 11,
+      "is_accepted": true,
+      "link": "https://stackoverflow.com/a/202",
+      "captured_at": "2026-05-21T10:05:00+00:00"
+    }
+  ]
+}

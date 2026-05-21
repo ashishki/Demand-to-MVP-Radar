@@ -1521,7 +1521,7 @@ Owner:      codex
 Phase:      11
 Type:       rag:ingestion
 Depends-On: T41
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect Stack Exchange question and answer demand signals from configured sites and tags using fixture-first live connector behavior.
