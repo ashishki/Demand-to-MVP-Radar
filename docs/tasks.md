@@ -1552,7 +1552,7 @@ Owner:      codex
 Phase:      11
 Type:       rag:ingestion
 Depends-On: T41
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Collect configured RSS/Atom feeds as low-risk public evidence with feed-level provenance, dedupe, and freshness metadata.

@@ -35,6 +35,7 @@ from demand_mvp_radar.sources.live import (
     RateLimitState,
 )
 from demand_mvp_radar.sources.operator_notes import OperatorNotesAdapter
+from demand_mvp_radar.sources.rss import RSSFeedConnector
 from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.storage.db import connect_database
@@ -413,6 +414,19 @@ def _collect_configured_live_source(
                 for key, value in dict(source_config.get("cursor_state", {})).items()
             },
         )
+    if live_config.source_type == "rss":
+        fixture_paths = tuple(
+            _resolve_fixture_path(config_dir, path)
+            for path in source_config.get("fixture_paths", ())
+        )
+        return RSSFeedConnector(fixture_paths).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
     if live_config.source_type != "fixture_live":
         raise ValueError(f"unsupported live source: {live_config.source_type}")
 
@@ -431,6 +445,13 @@ def _collect_configured_live_source(
         rate_limit_state=RateLimitState(limited=False),
         last_success_at=datetime.now(UTC),
     )
+
+
+def _resolve_fixture_path(config_dir: Path, raw_path: object) -> Path:
+    fixture_path = Path(str(raw_path))
+    if not fixture_path.is_absolute():
+        return config_dir / fixture_path
+    return fixture_path
 
 
 def _live_evidence_from_fixture_row(

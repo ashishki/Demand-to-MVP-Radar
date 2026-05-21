@@ -95,6 +95,8 @@ class EvidenceRecord(BaseModel):
     tags: tuple[str, ...] = ()
     score: int | None = None
     accepted_answer: bool | None = None
+    feed_url: str | None = None
+    published_at: datetime | None = None
 
 
 class OpportunityCandidate(BaseModel):

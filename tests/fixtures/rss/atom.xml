@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>https://example.com/atom</id>
+  <title>Developer Tool Releases</title>
+  <link href="https://example.com/atom"/>
+  <entry>
+    <id>tag:example.com,2026:release-17</id>
+    <title>Release notes now require manual triage</title>
+    <link href="https://example.com/releases/17"/>
+    <summary>Engineering teams are asking for a way to classify release notes by affected service and risk.</summary>
+    <updated>2026-05-21T11:00:00+00:00</updated>
+  </entry>
+</feed>

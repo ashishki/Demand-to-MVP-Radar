@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Vendor API Changelog</title>
+    <link>https://vendor.example.com/changelog.xml</link>
+    <item>
+      <guid>vendor-api-2026-05-breaking-auth</guid>
+      <title>Breaking auth changes for API clients</title>
+      <link>https://vendor.example.com/changelog/breaking-auth</link>
+      <description>OAuth token refresh behavior changed and teams need to update deploy checks before June.</description>
+      <pubDate>Thu, 21 May 2026 10:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
