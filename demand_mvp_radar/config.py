@@ -42,6 +42,7 @@ def default_source_catalog() -> tuple[SourceCatalogEntry, ...]:
             freshness_window_days=30,
             access_method="credentialed_api",
             approval_required=True,
+            credential_env_vars=("PRODUCT_HUNT_TOKEN",),
         ),
         SourceCatalogEntry(
             source_type="serp",
@@ -50,6 +51,7 @@ def default_source_catalog() -> tuple[SourceCatalogEntry, ...]:
             freshness_window_days=14,
             access_method="paid_api",
             approval_required=True,
+            credential_env_vars=("SERPAPI_API_KEY",),
         ),
         SourceCatalogEntry(
             source_type="youtube",
@@ -58,6 +60,7 @@ def default_source_catalog() -> tuple[SourceCatalogEntry, ...]:
             freshness_window_days=30,
             access_method="credentialed_api",
             approval_required=True,
+            credential_env_vars=("YOUTUBE_API_KEY",),
         ),
         SourceCatalogEntry(
             source_type="app_stores",
@@ -74,6 +77,7 @@ def default_source_catalog() -> tuple[SourceCatalogEntry, ...]:
             freshness_window_days=30,
             access_method="paid_api",
             approval_required=True,
+            credential_env_vars=("G2_API_KEY",),
         ),
         SourceCatalogEntry(
             source_type="reddit",
@@ -82,6 +86,7 @@ def default_source_catalog() -> tuple[SourceCatalogEntry, ...]:
             freshness_window_days=14,
             access_method="credentialed_api",
             approval_required=True,
+            credential_env_vars=("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET"),
         ),
     )
 

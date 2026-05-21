@@ -5,10 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 
 from demand_mvp_radar.config import Settings, load_settings
+from demand_mvp_radar.credentials import CredentialRequirement, resolve_credentials
 from demand_mvp_radar.decisions import DecisionValue, record_operator_decision
 from demand_mvp_radar.pipeline import import_sources, run_weekly_pipeline
 from demand_mvp_radar.storage.db import connect_database
@@ -84,7 +86,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def build_health_payload(settings: Settings) -> dict[str, object]:
+def build_health_payload(
+    settings: Settings,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, object]:
     database_path = settings.data_dir / "radar.sqlite3"
     database_status = _database_status(database_path)
     report_dir_status = _report_dir_status(settings.report_dir)
@@ -102,8 +107,35 @@ def build_health_payload(settings: Settings) -> dict[str, object]:
         "index_age_days": database_status["index_age_days"],
         "last_scheduled_run": database_status["last_scheduled_run"],
         "configured_sources": 0,
+        "credentials": _credential_health(settings, env=env),
         "max_index_age_days": settings.max_index_age_days,
     }
+
+
+def _credential_health(
+    settings: Settings,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, dict[str, object]]:
+    health: dict[str, dict[str, object]] = {}
+    for source in settings.source_catalog:
+        if not source.credential_env_vars:
+            continue
+        resolution = resolve_credentials(
+            source_name=source.source_type,
+            requirements=tuple(
+                CredentialRequirement(env_var_name=env_var_name)
+                for env_var_name in source.credential_env_vars
+            ),
+            env=env,
+        )
+        health[source.source_type] = {
+            "status": resolution.status,
+            "env_var_names": resolution.env_var_names,
+            "missing_env_vars": resolution.missing_env_vars,
+            "invalid_env_vars": resolution.invalid_env_vars,
+        }
+    return health
 
 
 def main(argv: list[str] | None = None) -> int:

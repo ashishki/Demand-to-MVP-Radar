@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 SourcePriority = Literal["P0", "P1", "P2", "P3"]
 SourceTrustLevel = Literal["high", "medium", "low"]
@@ -32,6 +32,18 @@ class SourceCatalogEntry(BaseModel):
     access_method: SourceAccessMethod
     enabled: bool = False
     approval_required: bool = False
+    credential_env_vars: tuple[str, ...] = ()
+
+    @field_validator("credential_env_vars")
+    @classmethod
+    def credential_env_vars_must_be_names(
+        cls,
+        value: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        for env_var_name in value:
+            if not env_var_name.isidentifier() or env_var_name.upper() != env_var_name:
+                raise ValueError("credential_env_vars must contain environment variable names")
+        return value
 
     @model_validator(mode="after")
     def enabled_credentialed_sources_require_approval(
@@ -56,6 +68,7 @@ class RunManifest(BaseModel):
     status: str
     source_counts: dict[str, int] = Field(default_factory=dict)
     error_counts: dict[str, int] = Field(default_factory=dict)
+    source_errors: dict[str, str] = Field(default_factory=dict)
     duplicate_count: int = Field(default=0, ge=0)
     corpus_version: str
     index_schema_version: str = "retrieval-index-v1"

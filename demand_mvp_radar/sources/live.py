@@ -7,6 +7,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from demand_mvp_radar.credentials import CredentialRequirement
 from demand_mvp_radar.models import EvidenceRecord, SourceTrustLevel
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
 
@@ -32,6 +33,7 @@ class LiveSourceConfig(BaseModel):
     raw_snapshot_policy: RawSnapshotPolicy
     rate_limit_policy: RateLimitPolicy
     approval_required: bool = False
+    credential_requirements: tuple[CredentialRequirement, ...] = ()
 
 
 class RateLimitState(BaseModel):

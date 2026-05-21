@@ -73,9 +73,17 @@ Use `demand-mvp-radar health --json` before and after weekly operation. Confirm:
 - `corpus_version` matches the latest intended run.
 - `index_age_days` is within `max_index_age_days`.
 - `configured_sources` matches the expected local source catalog.
+- `credentials` reports only source credential status and environment variable names; it must never contain API keys, tokens, cookies, or secret values.
 - `last_scheduled_run` shows the latest scheduled run timestamp and status when a `scheduled-...` run has completed.
 
 Treat stale index warnings as a review blocker. A stale index means the latest report may not reflect current evidence; import sources or run the weekly pipeline before recording build decisions.
+
+Credential recovery steps:
+
+1. Keep source configs limited to environment variable names such as `SERPAPI_API_KEY`, `YOUTUBE_API_KEY`, or `PRODUCT_HUNT_TOKEN`.
+2. Put actual secret values only in the shell environment or ignored local secrets files.
+3. If health reports `missing` or `invalid`, fix only that source's environment variable and leave unrelated sources enabled.
+4. Inspect run manifests and logs for source-scoped credential errors, but never paste secret values into logs, issues, docs, reports, or committed fixtures.
 
 ## Cost And Budget Review
 

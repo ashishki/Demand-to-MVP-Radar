@@ -1422,7 +1422,7 @@ Owner:      codex
 Phase:      11
 Type:       security
 Depends-On: T39
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add credential resolution for live connectors without storing secret values in configs, logs, manifests, exceptions, or serialized models.
