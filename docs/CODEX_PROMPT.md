@@ -1,7 +1,7 @@
 # CODEX_PROMPT.md
 
-Version: 2.29
-Date: 2026-05-20
+Version: 2.30
+Date: 2026-05-21
 Phase: 11
 
 This file is the session handoff and state authority for Codex implementation roles.
@@ -21,10 +21,10 @@ This file is the session handoff and state authority for Codex implementation ro
 ## Current State
 
 - Phase: 11
-- Baseline: 125 passing tests
+- Baseline: 128 passing tests
 - Ruff: configured; `ruff check demand_mvp_radar/ tests/ scripts/` passes locally. `ruff format --check demand_mvp_radar/ tests/ scripts/` currently reports pre-existing formatting drift in untouched code/test files and needs a separate formatting-only commit.
 - Last CI: workflow configured; remote run not yet observed
-- Last updated: 2026-05-20
+- Last updated: 2026-05-21
 - Session tokens (approx): not yet tracked
 - Cumulative phase tokens (approx): not yet tracked
 
@@ -48,7 +48,7 @@ This file is the session handoff and state authority for Codex implementation ro
 
 ## Next Task
 
-T39: Live Source Connector Protocol
+T40: Credential Resolver and Secret Redaction
 
 Before implementation, the orchestrator should hand Codex a narrow task digest inline:
 
@@ -99,6 +99,7 @@ none
 - T37: Backup and Recovery Guide — DONE on 2026-05-20. Baseline moved from 113 to 116 passing tests. Added `docs/BACKUP_RECOVERY.md` with backup targets, restore steps, verification commands, git-ignored private artifacts, and failed-run recovery checklist. Light review passed.
 - T38: Four-Run Readiness Review — DONE on 2026-05-20. Baseline moved from 116 to 119 passing tests. Added `docs/audit/PRODUCTION_READINESS_REVIEW.md` with four-run evidence checklist, readiness verdict, operational metrics, and explicit private beta/SaaS gates. Phase 10 deep review Cycle 17 passed with Stop-Ship: No.
 - Roadmap/task graph extension — DONE on 2026-05-20. Baseline moved from 122 to 125 passing tests. Added the live-source production roadmap into the authoritative task graph as T39-T57 and updated AI loop handoff docs so Phase 11 resumes with live source connector protocol work.
+- T39: Live Source Connector Protocol — DONE on 2026-05-21. Baseline moved from 125 to 128 passing tests. Added shared live connector config/result/rate-limit contracts, optional live provenance fields on evidence records, and validation that live evidence carries source name, URL/locator, captured timestamp, content hash, source fingerprint, connector version, and run ID. Deep review passed with Stop-Ship: No.
 
 ## Completed Tasks Archive
 
@@ -132,7 +133,7 @@ none
 
 Bootstrap package generated on 2026-05-19. T01 created the minimal Python package skeleton, editable install metadata, CLI help entrypoint, shared config/observability stubs, package directories including retrieval and tools namespaces, and smoke tests. T02 configured GitHub Actions, dev dependencies, and ruff checks. T03 added health JSON and default configuration smoke coverage. T04 added Pydantic settings and run manifest models. T05 added domain records plus SQLite schema/repositories for evidence and decisions. T06 added the v1 Tool-Use schema catalog, executor validation/permission boundary, audit persistence, and Tool-Use baseline evaluation. T07 added source adapter contracts and Telegram export normalization with quarantine handling. T08 added bounded source tools for mocked URL snapshots, SERP snapshots, and store metadata fixtures. T09 added text-only retrieval ingestion, chunk metadata preservation, deterministic local embeddings, SQLite index writes, and RAG ingestion evaluation. T10 added query-time retrieval, cited evidence packet assembly, metadata/freshness/source-link filtering, minimum independent source gating, and the required `insufficient_evidence` path. T11 added deterministic opportunity clustering with stable candidate IDs, normalized pain/audience/workflow/channel fields, and source evidence IDs. T12 added deterministic score components, recommendations, confidence bands, and threshold reasons. T13 added fake-provider LLM extraction with schema validation and skip-on-insufficient-evidence behavior. T14 added Markdown report rendering and atomic report writes. T15 added append-only operator decision recording and history lookup. T16 added rejected-idea suppression and revisit rationale propagation. T17 added the fixture-based weekly run command and budget guard. T19 added the personal operator workflow contract for weekly inputs/outputs, decision taxonomy, adoption failure conditions, and privacy boundaries. T20 added typed source catalog entries and disabled default source placeholders with approval requirements for paid and credentialed sources. T21 added a sanitized `telegram-research-agent` bridge that writes evidence idempotently and quarantines malformed/private rows. T22 added a redacted operator notes importer and deterministic scoring guard so notes alone cannot justify `build`. T23 added a local GitHub repository source and `read_github_repo_snapshot` tool schema/audit path with Tool-Use evaluation. T24 added the `import-sources` command that stores owned-source evidence, updates retrieval chunks, records disabled sources, and skips report generation. T25 added default query-time source trust downranking, optional source-specific freshness controls, and default trust-adjusted scoring caps so stale or low-trust-only support cannot produce `build`. T26 added sanitized live-like retrieval fixtures and extended retrieval evaluation metrics for freshness compliance and source diversity. T27 added evidence delta reporting for source imports, including redacted changed-cluster summaries. T28 added decision-grade dossier models with citation/inference validation. T29 added stable Markdown/HTML dossier renderers. T30 added deterministic missing-evidence analysis and RAG no-answer eval history. T31 added local review-command decision recording from generated dossiers, including `needs_more_evidence` gaps. T32 added human-gated MVP experiment pack validation with dossier citation and risk inheritance. T33 added run-id keyed Markdown experiment rendering and atomic artifact writes. T34 added experiment outcome recording and deterministic scoring feedback for killed and validated experiments. T35 added the operator runbook for weekly operation, failures, health checks, privacy, and backup. T36 added user-level systemd scheduling templates and scheduled-run health reporting. T37 added the backup and recovery guide. T38 added the four-run production readiness review gate. Dream Motif Interpreter is available as a RAG implementation pattern reference through `docs/IMPLEMENTATION_REFERENCE_MAP.md`. The active workflow is Codex-only and nonstop across phases: no Claude Code layer, no nested `codex exec` calls, and no pause between phases unless an explicit stop condition applies.
 
-After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the authoritative implementation queue as T39-T57 across Phase 11 through Phase 16. The next loop starts at T39 and builds toward self-collecting live sources, credential-safe connectors, public and credentialed source waves, source value reporting, local review UX, private beta onboarding, and the final hosted/SaaS decision ADR.
+After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the authoritative implementation queue as T39-T57 across Phase 11 through Phase 16. T39 added the shared live connector protocol. The next loop starts at T40 and builds credential-safe connector execution before `collect-sources` and the public connector wave.
 
 ---
 
@@ -144,7 +145,7 @@ After T38, `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` was promoted into the author
 - Open retrieval findings: none
 - Index schema version: retrieval-index-v1
 - Pending reindex actions: none
-- Retrieval-related next tasks: T39-T47 live source connector protocol, public connector wave, source health, and public-live retrieval evaluation
+- Retrieval-related next tasks: T40-T47 credential-safe live source collection, public connector wave, source health, and public-live retrieval evaluation
 - Retrieval-driven tasks: Phase 11 live source connector foundation and Phase 12 source health/evaluation
 
 ---

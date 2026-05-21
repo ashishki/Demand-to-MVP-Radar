@@ -66,6 +66,7 @@ class EvidenceRecord(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     run_id: str
+    source_name: str | None = None
     source_type: str
     source_id: str
     captured_at: datetime
@@ -75,6 +76,7 @@ class EvidenceRecord(BaseModel):
     content_hash: str
     source_fingerprint: str
     source_url: str | None = None
+    connector_version: str | None = None
 
 
 class OpportunityCandidate(BaseModel):

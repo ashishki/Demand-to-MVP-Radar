@@ -1390,7 +1390,7 @@ Owner:      codex
 Phase:      11
 Type:       rag:ingestion
 Depends-On: T38
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Define the shared connector protocol for live source collection, normalized evidence output, provenance, cursors, source health, and failure isolation.
