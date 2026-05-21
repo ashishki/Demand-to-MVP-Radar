@@ -1923,7 +1923,7 @@ Owner:      codex
 Phase:      15
 Type:       none
 Depends-On: T31, T54
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add a local review cockpit that lets the operator review dossiers, source value, missing evidence, and experiment actions without turning the product into a hosted SaaS.

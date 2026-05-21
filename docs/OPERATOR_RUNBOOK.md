@@ -54,6 +54,7 @@ demand-mvp-radar review \
 
 4. Only use `build` when the dossier has enough cited evidence, a focused one-function MVP, a plausible acquisition path, and an explicit operator reason.
 5. For human `build` or `revisit` decisions, create or inspect the MVP experiment pack and confirm that success, kill, revisit, first 10 targets, and timebox are measurable.
+6. Use the local review cockpit only on `127.0.0.1` or `localhost`; it is for local dossier, source value, missing-evidence, and experiment review, not hosted access.
 
 ## Source Failure Handling
 

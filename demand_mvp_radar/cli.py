@@ -14,6 +14,7 @@ from demand_mvp_radar.credentials import CredentialRequirement, resolve_credenti
 from demand_mvp_radar.decisions import DecisionValue, record_operator_decision
 from demand_mvp_radar.health import build_live_source_health
 from demand_mvp_radar.pipeline import collect_sources, import_sources, run_weekly_pipeline
+from demand_mvp_radar.review_cockpit import ReviewCockpitConfig
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
 from demand_mvp_radar.storage.repositories import DecisionRepository
@@ -96,6 +97,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Missing evidence gap requested by the operator; may be repeated.",
     )
+    cockpit = subparsers.add_parser(
+        "review-cockpit",
+        help="Print local review cockpit bind settings.",
+    )
+    cockpit.add_argument("--host", default="127.0.0.1")
+    cockpit.add_argument("--port", default=8765, type=int)
     return parser
 
 
@@ -193,6 +200,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result.status == "collected" else 1
     if args.command == "review":
         return _run_review_command(args)
+    if args.command == "review-cockpit":
+        config = ReviewCockpitConfig(host=args.host, port=args.port)
+        print(config.model_dump_json())
+        return 0
     return 0
 
 
