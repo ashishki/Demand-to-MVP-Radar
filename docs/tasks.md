@@ -1991,7 +1991,7 @@ Owner:      codex
 Phase:      16
 Type:       docs
 Depends-On: T56
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Write the architecture decision record that decides whether to remain local-first, support team deployment, or start hosted SaaS work.

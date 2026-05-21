@@ -7,6 +7,7 @@ BACKUP_RECOVERY = ROOT / "docs" / "BACKUP_RECOVERY.md"
 PRODUCTION_READINESS_REVIEW = ROOT / "docs" / "audit" / "PRODUCTION_READINESS_REVIEW.md"
 LIVE_SOURCE_PRODUCTION_ROADMAP = ROOT / "docs" / "LIVE_SOURCE_PRODUCTION_ROADMAP.md"
 PRIVATE_BETA_ONBOARDING = ROOT / "docs" / "PRIVATE_BETA_ONBOARDING.md"
+HOSTED_SAAS_ADR = ROOT / "docs" / "adr" / "ADR_HOSTED_SAAS_DECISION.md"
 TASKS = ROOT / "docs" / "tasks.md"
 CODEX_PROMPT = ROOT / "docs" / "CODEX_PROMPT.md"
 AI_DEVELOPMENT_PACK = ROOT / "docs" / "AI_DEVELOPMENT_PACK.md"
@@ -34,6 +35,10 @@ def _live_source_roadmap_text() -> str:
 
 def _private_beta_onboarding_text() -> str:
     return PRIVATE_BETA_ONBOARDING.read_text(encoding="utf-8")
+
+
+def _hosted_saas_adr_text() -> str:
+    return HOSTED_SAAS_ADR.read_text(encoding="utf-8")
 
 
 def _tasks_text() -> str:
@@ -337,8 +342,9 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
 
     for phrase in (
         "Phase: 16",
-        "Baseline: 181 passing tests",
+        "Baseline: 184 passing tests",
         "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
+        "Project complete: T01-T57 are complete",
         "T57: Hosted/SaaS Decision ADR",
         "T56: Private Beta Source Onboarding",
         "T55: Local Review Cockpit",
@@ -359,7 +365,7 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
         "T40: Credential Resolver and Secret Redaction",
         "T39: Live Source Connector Protocol",
         "Roadmap/task graph extension",
-        "Retrieval-related next tasks: T57 hosted/SaaS decision ADR",
+        "Retrieval-related next tasks: none queued",
     ):
         assert phrase in content
 
@@ -368,8 +374,8 @@ def test_ai_development_pack_extends_loop_through_production_decision() -> None:
     content = _ai_development_pack_text()
 
     for phrase in (
-        "T01-T56 are complete",
-        "Current verified baseline after T56 is 181 passing tests",
+        "T01-T57 are complete",
+        "Current verified baseline after T57 is 184 passing tests",
         "Sequence F - Live Source Connector Foundation",
         "Sequence K - Beta and Hosted Decision",
         "`T39: Live Source Connector Protocol`",
@@ -429,5 +435,48 @@ def test_private_beta_onboarding_defines_private_data_boundary() -> None:
         "channel IDs",
         "guild IDs",
         "unredacted source locators",
+    ):
+        assert phrase in content
+
+
+def test_hosted_saas_adr_compares_required_options() -> None:
+    content = _hosted_saas_adr_text()
+
+    for phrase in (
+        "Option A - Local-Only",
+        "Option B - Team Self-Hosted",
+        "Option C - Hosted SaaS",
+        "Remain local-first",
+        "Hosted SaaS work is blocked by default",
+    ):
+        assert phrase in content
+
+
+def test_hosted_saas_adr_requires_beta_evidence() -> None:
+    content = _hosted_saas_adr_text()
+
+    for phrase in (
+        "Personal readiness",
+        "Private beta usage",
+        "Source value",
+        "Support burden",
+        "Credential risk",
+        "Willingness-to-pay",
+        "Hosted work cannot start",
+    ):
+        assert phrase in content
+
+
+def test_hosted_saas_adr_lists_hosted_prerequisites() -> None:
+    content = _hosted_saas_adr_text()
+
+    for phrase in (
+        "authentication",
+        "tenant isolation",
+        "encrypted secrets",
+        "billing",
+        "audit logs",
+        "abuse controls",
+        "data deletion",
     ):
         assert phrase in content
