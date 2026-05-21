@@ -12,7 +12,7 @@ from pathlib import Path
 from demand_mvp_radar.config import Settings, load_settings
 from demand_mvp_radar.credentials import CredentialRequirement, resolve_credentials
 from demand_mvp_radar.decisions import DecisionValue, record_operator_decision
-from demand_mvp_radar.pipeline import import_sources, run_weekly_pipeline
+from demand_mvp_radar.pipeline import collect_sources, import_sources, run_weekly_pipeline
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
 from demand_mvp_radar.storage.repositories import DecisionRepository
@@ -59,6 +59,18 @@ def build_parser() -> argparse.ArgumentParser:
     import_sources_parser.add_argument("--run-id", help="Override the fixture run ID.")
     import_sources_parser.add_argument("--data-dir", help="Override the data directory.")
     import_sources_parser.add_argument("--report-dir", help="Override the report directory.")
+    collect_sources_parser = subparsers.add_parser(
+        "collect-sources",
+        help="Collect configured live sources without generating a weekly report.",
+    )
+    collect_sources_parser.add_argument(
+        "--config",
+        required=True,
+        help="Path to live source config.",
+    )
+    collect_sources_parser.add_argument("--run-id", help="Override the config run ID.")
+    collect_sources_parser.add_argument("--data-dir", help="Override the data directory.")
+    collect_sources_parser.add_argument("--report-dir", help="Override the report directory.")
     review = subparsers.add_parser(
         "review",
         help="Record a human operator decision for a generated dossier.",
@@ -106,6 +118,7 @@ def build_health_payload(
         "corpus_version": database_status["corpus_version"],
         "index_age_days": database_status["index_age_days"],
         "last_scheduled_run": database_status["last_scheduled_run"],
+        "last_source_errors": database_status["last_source_errors"],
         "configured_sources": 0,
         "credentials": _credential_health(settings, env=env),
         "max_index_age_days": settings.max_index_age_days,
@@ -165,6 +178,15 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(result.model_dump_json())
         return 0 if result.status == "imported" else 1
+    if args.command == "collect-sources":
+        settings = _settings_from_run_args(args)
+        result = collect_sources(
+            config=Path(args.config),
+            settings=settings,
+            run_id=args.run_id,
+        )
+        print(result.model_dump_json())
+        return 0 if result.status == "collected" else 1
     if args.command == "review":
         return _run_review_command(args)
     return 0
@@ -219,13 +241,14 @@ def _database_status(database_path: Path) -> dict[str, object]:
             "corpus_version": None,
             "index_age_days": None,
             "last_scheduled_run": None,
+            "last_source_errors": {},
         }
     try:
         connection = sqlite3.connect(database_path)
         connection.row_factory = sqlite3.Row
         row = connection.execute(
             """
-            SELECT corpus_version, ended_at
+            SELECT corpus_version, ended_at, source_errors
             FROM runs
             ORDER BY ended_at DESC
             LIMIT 1
@@ -246,6 +269,7 @@ def _database_status(database_path: Path) -> dict[str, object]:
             "corpus_version": None,
             "index_age_days": None,
             "last_scheduled_run": None,
+            "last_source_errors": {},
         }
     if row is None:
         return {
@@ -253,6 +277,7 @@ def _database_status(database_path: Path) -> dict[str, object]:
             "corpus_version": None,
             "index_age_days": None,
             "last_scheduled_run": _scheduled_run_payload(scheduled_row),
+            "last_source_errors": {},
         }
 
     index_age_days = None
@@ -264,6 +289,7 @@ def _database_status(database_path: Path) -> dict[str, object]:
         "corpus_version": row["corpus_version"],
         "index_age_days": index_age_days,
         "last_scheduled_run": _scheduled_run_payload(scheduled_row),
+        "last_source_errors": json.loads(row["source_errors"] or "{}"),
     }
 
 

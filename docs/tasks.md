@@ -1456,7 +1456,7 @@ Owner:      codex
 Phase:      11
 Type:       rag:ingestion
 Depends-On: T39, T40, T24
-Status:     [ ]
+Status:     [x]
 
 Objective: |
   Add a `collect-sources` command that runs enabled live connectors, stores normalized evidence, updates retrieval, writes collection manifests, and isolates source failures.

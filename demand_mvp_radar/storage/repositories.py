@@ -15,6 +15,10 @@ class EvidenceRepository:
         self.connection = connection
 
     def write(self, evidence: EvidenceRecord) -> int:
+        row_id, _inserted = self.write_with_status(evidence)
+        return row_id
+
+    def write_with_status(self, evidence: EvidenceRecord) -> tuple[int, bool]:
         params = {
             "run_id": evidence.run_id,
             "source_type": evidence.source_type,
@@ -28,7 +32,7 @@ class EvidenceRepository:
             "source_fingerprint": evidence.source_fingerprint,
         }
         with span("sqlite.write_evidence"):
-            self.connection.execute(
+            cursor = self.connection.execute(
                 """
                 INSERT INTO evidence (
                     run_id,
@@ -58,6 +62,7 @@ class EvidenceRepository:
                 """,
                 params,
             )
+            inserted = cursor.rowcount > 0
             row = self.connection.execute(
                 """
                 SELECT id
@@ -69,7 +74,7 @@ class EvidenceRepository:
             self.connection.commit()
         if row is None:
             raise RuntimeError("evidence write failed")
-        return int(row["id"])
+        return int(row["id"]), inserted
 
 
 class OpportunityRepository:

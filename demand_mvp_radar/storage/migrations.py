@@ -15,6 +15,7 @@ SCHEMA_STATEMENTS = [
         status TEXT NOT NULL,
         source_counts TEXT NOT NULL DEFAULT '{}',
         error_counts TEXT NOT NULL DEFAULT '{}',
+        source_errors TEXT NOT NULL DEFAULT '{}',
         duplicate_count INTEGER NOT NULL DEFAULT 0,
         corpus_version TEXT NOT NULL,
         index_schema_version TEXT NOT NULL DEFAULT 'retrieval-index-v1',
@@ -112,6 +113,7 @@ def create_schema(connection: sqlite3.Connection) -> None:
         for statement in SCHEMA_STATEMENTS:
             connection.execute(statement)
         _ensure_decision_columns(connection)
+        _ensure_run_columns(connection)
         connection.commit()
 
 
@@ -121,3 +123,11 @@ def _ensure_decision_columns(connection: sqlite3.Connection) -> None:
     }
     if "requested_evidence_gaps" not in existing_columns:
         connection.execute("ALTER TABLE decisions ADD COLUMN requested_evidence_gaps TEXT")
+
+
+def _ensure_run_columns(connection: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"] for row in connection.execute("PRAGMA table_info(runs)").fetchall()
+    }
+    if "source_errors" not in existing_columns:
+        connection.execute("ALTER TABLE runs ADD COLUMN source_errors TEXT NOT NULL DEFAULT '{}'")

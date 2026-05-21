@@ -21,13 +21,21 @@ For unattended local runs, install the user-level systemd templates from `deploy
 demand-mvp-radar import-sources --fixture tests/fixtures/source_mix --run-id import-YYYY-WW
 ```
 
-3. Run the weekly fixture or configured weekly source bundle:
+3. Collect approved live sources when a live-source config is available:
+
+```bash
+demand-mvp-radar collect-sources --config config/live-sources.json --run-id collect-YYYY-WW
+```
+
+The command stores normalized evidence, updates retrieval for new evidence only, records source failures in the run manifest and health output, and does not generate weekly reports.
+
+4. Run the weekly fixture or configured weekly source bundle:
 
 ```bash
 demand-mvp-radar run --fixture tests/fixtures/weekly_run --run-id weekly-YYYY-WW
 ```
 
-4. Keep the generated report, dossier, experiment pack, run manifest, and SQLite database under the configured local directories. Do not move raw private inputs or generated private reports into git.
+5. Keep the generated report, dossier, experiment pack, run manifest, and SQLite database under the configured local directories. Do not move raw private inputs or generated private reports into git.
 
 ## Review Steps
 
@@ -53,6 +61,7 @@ Inspect import output and run metadata for source errors before trusting generat
 
 - `runs.source_counts` shows imported and disabled source counts.
 - `runs.error_counts` shows quarantined or failed source rows.
+- `runs.source_errors` shows source-scoped live collection failures without secret values.
 - Evidence delta reports show new, duplicate, stale, quarantined, skipped, and changed evidence.
 - Source-specific quarantine files should be reviewed locally and never committed.
 
@@ -74,6 +83,7 @@ Use `demand-mvp-radar health --json` before and after weekly operation. Confirm:
 - `index_age_days` is within `max_index_age_days`.
 - `configured_sources` matches the expected local source catalog.
 - `credentials` reports only source credential status and environment variable names; it must never contain API keys, tokens, cookies, or secret values.
+- `last_source_errors` reports the latest source-scoped collection failures without aborting unrelated sources.
 - `last_scheduled_run` shows the latest scheduled run timestamp and status when a `scheduled-...` run has completed.
 
 Treat stale index warnings as a review blocker. A stale index means the latest report may not reflect current evidence; import sources or run the weekly pipeline before recording build decisions.

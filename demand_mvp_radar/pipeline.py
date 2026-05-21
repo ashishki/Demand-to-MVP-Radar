@@ -12,6 +12,10 @@ from pydantic import BaseModel, ConfigDict
 from demand_mvp_radar.briefs import OpportunityBrief, build_opportunity_brief
 from demand_mvp_radar.clustering import cluster_evidence
 from demand_mvp_radar.config import Settings
+from demand_mvp_radar.credentials import (
+    CredentialRequirement,
+    resolve_live_source_credentials,
+)
 from demand_mvp_radar.models import EvidenceRecord, OpportunityExtraction
 from demand_mvp_radar.reports.evidence_delta import (
     EvidenceDeltaReport,
@@ -23,6 +27,12 @@ from demand_mvp_radar.retrieval.query import EvidencePacket
 from demand_mvp_radar.scoring import score_opportunity
 from demand_mvp_radar.sources.base import SourceImportResult
 from demand_mvp_radar.sources.github_repo import GitHubRepoSnapshotImporter
+from demand_mvp_radar.sources.live import (
+    LiveConnectorResult,
+    LiveSourceConfig,
+    RateLimitPolicy,
+    RateLimitState,
+)
 from demand_mvp_radar.sources.operator_notes import OperatorNotesAdapter
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.storage.db import connect_database
@@ -58,6 +68,23 @@ class ImportSourcesResult(BaseModel):
     error_counts: dict[str, int]
     skipped_sources: tuple[str, ...]
     evidence_delta_report: EvidenceDeltaReport | None = None
+
+
+class CollectSourcesResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    run_id: str
+    status: str
+    database_path: Path
+    report_path: Path | None = None
+    corpus_version: str
+    evidence_count: int
+    duplicate_count: int
+    retrieval_chunk_count: int
+    source_counts: dict[str, object]
+    error_counts: dict[str, int]
+    source_errors: dict[str, str]
+    skipped_sources: tuple[str, ...]
 
 
 def run_weekly_pipeline(
@@ -192,6 +219,101 @@ def import_sources(
     )
 
 
+def collect_sources(
+    *,
+    config: Path,
+    settings: Settings,
+    run_id: str | None = None,
+) -> CollectSourcesResult:
+    payload = json.loads(config.read_text(encoding="utf-8"))
+    effective_run_id = run_id or str(payload["run_id"])
+    corpus_version = str(payload.get("corpus_version", f"{effective_run_id}-corpus"))
+    database_path = settings.data_dir / "radar.sqlite3"
+
+    connection = connect_database(database_path)
+    create_schema(connection)
+    repository = EvidenceRepository(connection)
+
+    evidence_rows: list[tuple[int, EvidenceRecord]] = []
+    source_counts: dict[str, object] = {}
+    error_counts: dict[str, int] = {}
+    source_errors: dict[str, str] = {}
+    skipped_sources: list[str] = []
+    duplicate_count = 0
+
+    for raw_source in payload.get("sources", []):
+        source_config = dict(raw_source)
+        live_config = _live_config_from_payload(source_config)
+        if not live_config.enabled:
+            skipped_sources.append(live_config.source_name)
+            continue
+
+        credential_state = resolve_live_source_credentials((live_config,))[0]
+        if credential_state.source_error is not None:
+            source_counts[live_config.source_name] = 0
+            error_counts[live_config.source_name] = 1
+            source_errors[live_config.source_name] = (
+                credential_state.source_error.to_manifest_value()
+            )
+            continue
+
+        try:
+            result_records = _collect_configured_live_source(
+                live_config,
+                source_config,
+                run_id=effective_run_id,
+            )
+        except (KeyError, TypeError, ValueError) as error:
+            source_counts[live_config.source_name] = 0
+            error_counts[live_config.source_name] = 1
+            source_errors[live_config.source_name] = f"{live_config.source_name}: {error}"
+            continue
+
+        source_counts[live_config.source_name] = len(result_records.evidence)
+        error_counts[live_config.source_name] = len(result_records.quarantined)
+        if result_records.quarantined:
+            source_errors[live_config.source_name] = "; ".join(
+                row.error_reason for row in result_records.quarantined
+            )
+
+        for evidence in result_records.evidence:
+            evidence_id, inserted = repository.write_with_status(evidence)
+            if inserted:
+                evidence_rows.append((evidence_id, evidence))
+            else:
+                duplicate_count += 1
+
+    source_counts["skipped_sources"] = tuple(skipped_sources)
+    if evidence_rows:
+        corpus_metadata = build_corpus(connection, evidence_rows, corpus_version=corpus_version)
+        retrieval_chunk_count = int(corpus_metadata["chunk_count"])
+    else:
+        retrieval_chunk_count = 0
+    _record_collect_run(
+        connection,
+        run_id=effective_run_id,
+        corpus_version=corpus_version,
+        source_counts=source_counts,
+        error_counts=error_counts,
+        source_errors=source_errors,
+        duplicate_count=duplicate_count,
+    )
+
+    return CollectSourcesResult(
+        run_id=effective_run_id,
+        status="collected",
+        database_path=database_path,
+        corpus_version=corpus_version,
+        evidence_count=len(evidence_rows),
+        duplicate_count=duplicate_count,
+        retrieval_chunk_count=retrieval_chunk_count,
+        source_counts=source_counts,
+        error_counts=error_counts,
+        source_errors=source_errors,
+        skipped_sources=tuple(skipped_sources),
+    )
+
+
 def _import_configured_source(
     source_name: str,
     source_config: dict[str, object],
@@ -228,6 +350,78 @@ def _import_configured_source(
             repository_identifier=str(source_config["repository_identifier"]),
         )
     raise ValueError(f"unsupported source: {source_name}")
+
+
+def _live_config_from_payload(source_config: dict[str, object]) -> LiveSourceConfig:
+    rate_limit_config = dict(source_config.get("rate_limit_policy", {}))
+    credential_env_vars = tuple(str(name) for name in source_config.get("credential_env_vars", ()))
+    return LiveSourceConfig(
+        source_name=str(source_config["source_name"]),
+        source_type=str(source_config["source_type"]),
+        trust_level=source_config["trust_level"],
+        freshness_window_days=int(source_config["freshness_window_days"]),
+        enabled=bool(source_config.get("enabled", False)),
+        cursor_support=bool(source_config["cursor_support"]),
+        raw_snapshot_policy=source_config["raw_snapshot_policy"],
+        rate_limit_policy=RateLimitPolicy(**rate_limit_config),
+        approval_required=bool(source_config.get("approval_required", False)),
+        credential_requirements=tuple(
+            CredentialRequirement(env_var_name=env_var_name)
+            for env_var_name in credential_env_vars
+        ),
+    )
+
+
+def _collect_configured_live_source(
+    live_config: LiveSourceConfig,
+    source_config: dict[str, object],
+    *,
+    run_id: str,
+) -> LiveConnectorResult:
+    if bool(source_config.get("fail", False)):
+        raise ValueError("fixture failure requested")
+    if live_config.source_type != "fixture_live":
+        raise ValueError(f"unsupported live source: {live_config.source_type}")
+
+    evidence = tuple(
+        _live_evidence_from_fixture_row(row, live_config=live_config, run_id=run_id)
+        for row in source_config.get("records", ())
+    )
+    return LiveConnectorResult(
+        evidence=evidence,
+        source_counts={live_config.source_name: len(evidence)},
+        error_counts={live_config.source_name: 0},
+        cursor_state={
+            str(key): str(value)
+            for key, value in dict(source_config.get("cursor_state", {})).items()
+        },
+        rate_limit_state=RateLimitState(limited=False),
+        last_success_at=datetime.now(UTC),
+    )
+
+
+def _live_evidence_from_fixture_row(
+    row: object,
+    *,
+    live_config: LiveSourceConfig,
+    run_id: str,
+) -> EvidenceRecord:
+    if not isinstance(row, dict):
+        raise TypeError("live fixture row must be an object")
+    return EvidenceRecord(
+        run_id=run_id,
+        source_name=live_config.source_name,
+        source_type=live_config.source_type,
+        source_id=str(row["source_id"]),
+        source_url=str(row["source_url"]),
+        captured_at=datetime.fromisoformat(str(row["captured_at"])),
+        title=str(row["title"]),
+        snippet=str(row["snippet"]),
+        normalized_text=str(row["normalized_text"]),
+        content_hash=str(row["content_hash"]),
+        source_fingerprint=str(row["source_fingerprint"]),
+        connector_version=str(row.get("connector_version", "fixture-live-v1")),
+    )
 
 
 def _evidence_from_fixture(item: dict[str, object], *, run_id: str) -> EvidenceRecord:
@@ -333,6 +527,69 @@ def _record_import_run(
             "corpus_version": corpus_version,
             "source_counts": json.dumps(source_counts, sort_keys=True),
             "error_counts": json.dumps(error_counts, sort_keys=True),
+            "max_weekly_llm_cost_usd": "0",
+        },
+    )
+    connection.commit()
+
+
+def _record_collect_run(
+    connection,
+    *,
+    run_id: str,
+    corpus_version: str,
+    source_counts: dict[str, object],
+    error_counts: dict[str, int],
+    source_errors: dict[str, str],
+    duplicate_count: int,
+) -> None:
+    now = datetime.now(UTC).isoformat()
+    connection.execute(
+        """
+        INSERT INTO runs (
+            run_id,
+            started_at,
+            ended_at,
+            status,
+            source_counts,
+            error_counts,
+            source_errors,
+            duplicate_count,
+            corpus_version,
+            max_weekly_llm_cost_usd
+        )
+        VALUES (
+            :run_id,
+            :started_at,
+            :ended_at,
+            :status,
+            :source_counts,
+            :error_counts,
+            :source_errors,
+            :duplicate_count,
+            :corpus_version,
+            :max_weekly_llm_cost_usd
+        )
+        ON CONFLICT(run_id) DO UPDATE SET
+            ended_at = excluded.ended_at,
+            status = excluded.status,
+            source_counts = excluded.source_counts,
+            error_counts = excluded.error_counts,
+            source_errors = excluded.source_errors,
+            duplicate_count = excluded.duplicate_count,
+            corpus_version = excluded.corpus_version,
+            max_weekly_llm_cost_usd = excluded.max_weekly_llm_cost_usd
+        """,
+        {
+            "run_id": run_id,
+            "started_at": now,
+            "ended_at": now,
+            "status": "collected",
+            "source_counts": json.dumps(source_counts, sort_keys=True),
+            "error_counts": json.dumps(error_counts, sort_keys=True),
+            "source_errors": json.dumps(source_errors, sort_keys=True),
+            "duplicate_count": duplicate_count,
+            "corpus_version": corpus_version,
             "max_weekly_llm_cost_usd": "0",
         },
     )

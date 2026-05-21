@@ -16,14 +16,14 @@ The next work should not broaden the product into a SaaS. It should first produc
 
 ## Current Baseline
 
-- T01-T40 are complete.
+- T01-T41 are complete.
 - The system has a CLI, SQLite storage, source fixtures, retrieval, insufficient-evidence behavior, clustering, scoring, report generation, decision memory, weekly fixture run, owned-source imports, trust/freshness controls, evidence delta reports, decision dossiers, review commands, experiment packs, scheduled local operation, backup/recovery docs, and readiness review gates.
-- Current verified baseline after T40 is 131 passing tests.
+- Current verified baseline after T41 is 134 passing tests.
 - RAG is ON.
 - Tool-Use is ON.
 - Agentic and Planning profiles are OFF.
 - The product is local-first and single-operator.
-- The current implementation wave started at T39 and changes the product from manual/snapshot-first collection to live-source-first collection with exports as fallback. The next task is T41.
+- The current implementation wave started at T39 and changes the product from manual/snapshot-first collection to live-source-first collection with exports as fallback. The next task is T42.
 
 ---
 
