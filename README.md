@@ -135,5 +135,7 @@ demand-mvp-radar health --json
 - `docs/tasks.md` - implementation task graph
 - `docs/CODEX_PROMPT.md` - текущее состояние и правила выполнения
 - `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` - roadmap до версии, которая сама собирает данные из live-источников
+- `docs/SOURCE_CATALOG.md` - каталог источников, trust tiers и access strategy
+- `docs/DEMAND_SOURCE_MAP.md` - карта мест, где искать боль и спрос внутри источников
 - `docs/retrieval_eval.md` - принципы оценки RAG
 - `docs/tool_eval.md` - принципы оценки tool-use

@@ -10,7 +10,26 @@ Status: Active planning baseline
 
 This catalog ranks sources by their value for deciding what to build. A source is useful only if it helps identify pain, workarounds, active demand, competition, distribution channels, or willingness to pay.
 
+Use this document together with `docs/DEMAND_SOURCE_MAP.md`: this catalog
+defines which connectors and source types are allowed, while the demand source
+map defines the concrete surfaces inside those sources where pain and demand
+are likely to appear.
+
 Sources are not equal. First-party and operator-curated sources should outrank broad public feeds. Broad public feeds are useful for corroboration, not for replacing judgment.
+
+---
+
+## Demand Surface Overlay
+
+`@its_capitan` research suggests that the Radar should not treat every source
+record equally. The same connector can surface several different kinds of
+evidence: search intent, store demand, competitor traction, platform timing,
+manual workarounds, creator/content discovery gaps, repeated questions, or
+monetization bottlenecks.
+
+The active overlay lives in `docs/DEMAND_SOURCE_MAP.md`. Use it when choosing
+queries, deciding which missing evidence to request, and reviewing whether a
+candidate is a one-function MVP or an overbuilt platform idea.
 
 ---
 

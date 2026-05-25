@@ -46,6 +46,7 @@ Repo-local map for source-grounded market evidence, decision memory, retrieval/t
 | Retrieval eval | `docs/retrieval_eval.md`, `scripts/eval_retrieval.py` | Retrieval quality |
 | Tool eval | `docs/tool_eval.md`, `scripts/eval_tools.py` | Tool safety and schema memory |
 | Source catalog | `docs/SOURCE_CATALOG.md` | Source trust and scope |
+| Demand source map | `docs/DEMAND_SOURCE_MAP.md` | Demand surfaces and pain/source heuristics |
 | Audits | `docs/audit/`, `docs/archive/` | Findings and review history |
 
 ## Retrieval Scopes
@@ -71,4 +72,3 @@ Repo-local map for source-grounded market evidence, decision memory, retrieval/t
 |----------|------|--------|
 | Cognition index | `generated/cognition/index.json` | Optional generated artifact |
 | Context packets | `docs/context-packets/` | Commit only major review/regression packets |
-
