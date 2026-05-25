@@ -1,6 +1,6 @@
 # CODEX_PROMPT.md
 
-Version: 2.52
+Version: 2.53
 Date: 2026-05-23
 Phase: 17 complete
 
@@ -56,7 +56,7 @@ Task digest:
 - All authoritative tasks through T64 are implemented.
 - Phase 17 strategy review, deep review, archive, doc update, and phase report are complete.
 - Current operating work is evidence collection and small local experiment testing.
-- Lead SLA open-data technical test is complete; continue searching for license-clear row-level sales lead data or run a labeled synthetic benchmark simulation.
+- Demand source map search test is complete; next public-data experiment candidate is Telegram Channel SEO Site Generator.
 
 ---
 
@@ -170,6 +170,8 @@ Phase 17 completed the solo evidence operating loop. T58 repaired formatting dri
 Post-completion operation: Run 2 deep research backfill added `reports/research/solo_evidence_run_2_deep_research.md`, updated the solo evidence ledger, and enriched the Lead Response SLA handoff. It counts as one public backfilled evidence run but records 0 human-owned decisions. Lead Response SLA is the strongest experiment candidate; next required input is anonymized/operator-owned lead-response data or a representative CSV schema.
 
 On 2026-05-25, the Lead SLA open-data technical test added a local `lead-sla-report` CLI, public/proxy fixture, and report renderer. The command completed against `tests/fixtures/lead_sla/open_proxy_leads.csv`, wrote `reports/private/lead_sla_open_proxy_report.md`, and surfaced 10 valid rows, 7 SLA misses, and 2 invalid rows. Full local checks pass at 190 tests. This verifies the calculation/redaction workflow but does not count as market evidence because row-level public sales lead data is still missing.
+
+After pulling `docs/DEMAND_SOURCE_MAP.md`, the 2026-05-25 source-map search test added `reports/research/demand_source_map_search_test.md` and updated the solo evidence ledger. Run 3 counts as a public backfilled evidence run. The search compared YouTube-to-podcast, Telegram-to-SEO, hotkey dictation, and offline page saver opportunities; Telegram Channel SEO Site Generator is now the best public-data experiment candidate because it matches search intent, competitor traction, repeated questions, and creator/content discovery gaps without needing private CRM data.
 
 ---
 

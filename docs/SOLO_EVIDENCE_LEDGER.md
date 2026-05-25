@@ -31,7 +31,7 @@ work still require explicit human approval.
 |---|---|---|---|---|---|---|---|---|---|
 | Run 1 | backfilled-real | T62-showcase / 2026-05-23 | public B2B sales ops, AI workplace adoption, workflow/team operations, AI automation operators, backend/API operators, trader workflow | `reports/showcase/portfolio_opportunity_showcase.md` | 5 | 0 human-recorded; report suggests 3 `revisit` and 2 `needs_more_evidence` | buyer proof, competitor scans, operator-owned lead data, compliance review for trading | Public-safe showcase drafted; not yet an operator-reviewed weekly run | no - showcase backfill only |
 | Run 2 | backfilled-real | R2-deep-research / 2026-05-23 | public B2B sales ops, CRM operator workflow, lead routing competitors, email response analytics, automation operators, developer platform docs, developer tooling alternatives, AI workplace adoption | `reports/research/solo_evidence_run_2_deep_research.md`, `docs/handoffs/lead_response_sla_gap_radar_handoff.md` | 4 | 0 human-recorded; research recommends Lead Response SLA `revisit` / experiment-ready, Human Approval Map `needs_more_evidence`, API Drift Watch `revisit`, AI Rollout Tracker `reject for now` | operator-owned lead data, CRM-native report examples, first 10 target feedback, API buyer proof | Public-safe deep research completed; Lead Response SLA remains best first experiment, but no build approval | yes |
-| Run 3 | pending | pending | pending | pending | pending | pending | pending | pending | no |
+| Run 3 | backfilled-real | DSM-search-test / 2026-05-25 | search intent, store/category demand, competitor traction, repeated questions, manual workarounds, creator/content discovery gaps | `reports/research/demand_source_map_search_test.md` | 4 | 0 human-recorded; research promotes Telegram Channel SEO Site Generator to next public-data experiment candidate | willingness-to-pay proof, channel-owner feedback, public-channel terms/access review, competitor pricing/use proof | Source-map search found a better public-data test than Lead Response SLA; Lead SLA remains technical/proxy-tested only | yes |
 | Run 4 | pending | pending | pending | pending | pending | pending | pending | pending | no |
 
 ## Per-Run Detail Template
@@ -153,6 +153,45 @@ Run verdict:
 - Operator review time: pending.
 - Gate status: counts as one public backfilled evidence run; human-decision and private-beta gates remain blocked.
 
+### Run 3 - Demand Source Map Search Test
+
+| Field | Value |
+|---|---|
+| Run type | `backfilled-real` |
+| Counts toward gate | yes - public source register and reviewed opportunities are present |
+| Run ID | DSM-search-test |
+| Run date | 2026-05-25 |
+| Data window | Public sources captured on 2026-05-25 |
+| Source families | search intent; store/category demand; competitor traction; repeated questions; manual workarounds; creator/content discovery gaps |
+| Source register path | `reports/research/demand_source_map_search_test.md#source-register` |
+| Weekly report path | `reports/research/demand_source_map_search_test.md` |
+| Dossier paths | `reports/research/demand_source_map_search_test.md` |
+| Source value report path | n/a - manual public research artifact |
+| Evidence delta report path | n/a - manual public research artifact |
+| Retrieval corpus version | n/a - manual public research artifact |
+| Index age at review | n/a |
+| Estimated cost / budget ceiling | USD 0 / n/a |
+| Backup verification | not run |
+| Privacy check | public URLs only; no private exports, credentials, raw notes, CRM data, or private reports |
+
+Reviewed opportunities:
+
+| Opportunity | Portfolio fit | Decision | Evidence basis | Missing evidence | Outcome note |
+|---|---|---|---|---|---|
+| Telegram Channel SEO Site Generator | `workflow_discovery` | `revisit` / experiment-ready | Telagon, Teleblog, Telegram SEO article, Reddit builder question | channel-owner feedback; competitor pricing/use proof; public-channel terms/access review | best next public-data experiment |
+| YouTube-to-Podcast Feed for Niche Channels | `workflow_discovery` | `revisit` | Blubrry Vid2Pod, YouCaster, Listenbox, Reddit listener question | YouTube policy/terms review; creator/listener feedback; conversion risk | promising but terms-sensitive |
+| Hotkey Dictation Into Any Text Field | `workflow_discovery` | `needs_more_evidence` | multiple product pages and recent Reddit launch/question threads | differentiated segment; distribution wedge | too crowded for first build |
+| Offline Page Saver for Broken Docs/PDF Workflows | `workflow_discovery` | `needs_more_evidence` | SingleFile category evidence, Stack Overflow question, recent Chrome extension discussion | sharper missing workflow proof | existing incumbents are strong |
+
+Run verdict:
+
+- Useful decisions: 0 human-recorded; 4 research-level recommendations.
+- Source families that helped: competitor traction, repeated questions, creator/content discovery gaps, manual workaround threads.
+- Source families to keep/demote/disable: keep demand-source-map query seeds; demote broad trend searches unless tied to one-function MVPs.
+- Follow-up evidence to collect: public Telegram channel sample, owner feedback, competitor pricing and use proof, access/terms boundary for channel mirroring.
+- Operator review time: pending.
+- Gate status: counts as one public backfilled evidence run; human-decision and private-beta gates remain blocked.
+
 ## Fixture / Demo Run Register
 
 Use this section for runs that are useful for testing but must not be counted as
@@ -166,8 +205,8 @@ real operating evidence.
 
 | Gate | Current status | Evidence |
 |---|---|---|
-| Four real/backfilled runs complete | not complete | 1/4 counting run complete: Run 2. Run 1 is showcase-only and does not count. |
-| At least 20 opportunities reviewed | not complete | 4 gate-counting opportunities reviewed in Run 2; 5 additional showcase-only opportunities in Run 1. |
+| Four real/backfilled runs complete | not complete | 2/4 counting runs complete: Runs 2 and 3. Run 1 is showcase-only and does not count. |
+| At least 20 opportunities reviewed | not complete | 8 gate-counting opportunities reviewed across Runs 2-3; 5 additional showcase-only opportunities in Run 1. |
 | At least three useful operator decisions | not complete | 0 human-recorded decisions; Run 2 has research-level recommendations only. |
 | One selected opportunity has a 7-14 day MVP experiment pack | partial | Lead Response SLA has a 7-10 day local CSV report experiment candidate and handoff, but no executed experiment yet. |
 | One cross-project handoff pack ready | complete | `docs/handoffs/lead_response_sla_gap_radar_handoff.md` updated by Run 2. |

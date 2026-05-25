@@ -21,6 +21,19 @@ Status: append-only retrieval surface. This file records durable handoff context
 
 ---
 
+## 2026-05-25 - Demand Source Map Search Test
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `reports/research/demand_source_map_search_test.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`
+- Tests: manual public research run using `docs/DEMAND_SOURCE_MAP.md`; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 190 passed.
+- Baseline before: 190 passing tests
+- Baseline after: 190 passing tests
+- Decisions/evidence updated: `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`
+- Notes for next agent: The source-map search promotes Telegram Channel SEO Site Generator above Lead Response SLA for the next public-data experiment because it can be tested on public Telegram channels and matches more demand surfaces.
+
+---
+
 ## 2026-05-25 - Lead SLA Open-Data Technical Test
 
 - Agent: Codex
