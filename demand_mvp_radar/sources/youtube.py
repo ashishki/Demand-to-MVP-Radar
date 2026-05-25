@@ -185,9 +185,7 @@ class YouTubeConnector:
                 if not isinstance(item, dict):
                     continue
                 video_id = (
-                    item.get("id", {}).get("videoId")
-                    if isinstance(item.get("id"), dict)
-                    else None
+                    item.get("id", {}).get("videoId") if isinstance(item.get("id"), dict) else None
                 )
                 snippet = item.get("snippet", {}) if isinstance(item.get("snippet"), dict) else {}
                 title = str(snippet.get("title") or "").strip()

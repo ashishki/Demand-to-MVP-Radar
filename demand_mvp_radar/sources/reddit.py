@@ -155,9 +155,7 @@ class RedditConnector:
         assert self.client_id is not None
         assert self.client_secret is not None
         assert self.user_agent is not None
-        auth = b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode(
-            "ascii"
-        )
+        auth = b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode("ascii")
         data = urlencode({"grant_type": "client_credentials"}).encode("utf-8")
         request = Request(
             "https://www.reddit.com/api/v1/access_token",

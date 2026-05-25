@@ -342,7 +342,7 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
 
     for phrase in (
         "Phase: 17",
-        "Baseline: 190 passing tests",
+        "Baseline: 193 passing tests",
         "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
         "T58: Formatting Baseline Repair",
         "docs/open_source_research_protocol.md",

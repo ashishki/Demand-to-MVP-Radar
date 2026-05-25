@@ -76,7 +76,7 @@ LLM используется только ограниченно:
 
 Phase 1-17 завершены и прошли review без stop-ship findings. Planned task list complete; private beta and hosted/SaaS remain blocked until four real or properly backfilled solo evidence runs prove repeated personal value, useful human decisions, source value, backup verification, and support burden.
 
-Текущий baseline: 190 passing tests. Локально проходят:
+Текущий baseline: 193 passing tests. Локально проходят:
 
 - `ruff check demand_mvp_radar/ tests/ scripts/`
 - `ruff format --check demand_mvp_radar/ tests/ scripts/`

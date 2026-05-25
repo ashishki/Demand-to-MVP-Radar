@@ -336,15 +336,11 @@ def _rank_candidates(records: tuple[EvidenceRecord, ...]) -> list[CandidateAggre
 
     for candidate in grouped.values():
         if _external_evidence_count(candidate.evidence) == 0:
-            candidate.missing_evidence.add(
-                "non-Telegram public evidence for the same pain"
-            )
+            candidate.missing_evidence.add("non-Telegram public evidence for the same pain")
         elif len(_external_source_types(candidate.evidence)) < 2:
             candidate.missing_evidence.add("second independent external source type")
         if candidate.profile_mismatch_flags:
-            candidate.missing_evidence.add(
-                "operator-fit wedge that avoids an unfamiliar stack"
-            )
+            candidate.missing_evidence.add("operator-fit wedge that avoids an unfamiliar stack")
         candidate.score = _score_candidate(candidate)
         if (
             candidate.score >= 70
@@ -554,10 +550,7 @@ def _build_synthesis_prompt(
     prompt_lines = [
         "You are writing Demand-to-MVP Radar's weekly MVP report.",
         "",
-        (
-            "This artifact is NOT a technical implementation-ideas brief for "
-            "existing repositories."
-        ),
+        ("This artifact is NOT a technical implementation-ideas brief for existing repositories."),
         (
             "Its job is to choose one interesting and potentially profitable "
             "one-function MVP experiment for this week."
@@ -635,15 +628,10 @@ def _build_synthesis_prompt(
             "operator's stack and professional identity."
         ),
         f"- Show at most {top_evidence} primary evidence bullets.",
-        (
-            "- Explain why the selected MVP is separate from existing repo "
-            "implementation upgrades."
-        ),
+        ("- Explain why the selected MVP is separate from existing repo implementation upgrades."),
         "- Use Russian language.",
     ]
-    return "\n".join(
-        prompt_lines
-    )
+    return "\n".join(prompt_lines)
 
 
 def _rank_evidence_for_prompt(records: tuple[EvidenceRecord, ...]) -> list[EvidenceRecord]:
@@ -877,19 +865,11 @@ def _external_source_types(
 
 
 def _profile_fit_flags(text: str) -> set[str]:
-    return {
-        label
-        for keyword, label in PROFILE_FIT_KEYWORDS
-        if keyword in text
-    }
+    return {label for keyword, label in PROFILE_FIT_KEYWORDS if keyword in text}
 
 
 def _profile_mismatch_flags(text: str) -> set[str]:
-    return {
-        label
-        for keyword, label in PROFILE_MISMATCH_KEYWORDS
-        if keyword in text
-    }
+    return {label for keyword, label in PROFILE_MISMATCH_KEYWORDS if keyword in text}
 
 
 def _is_existing_project(title: str) -> bool:
@@ -913,21 +893,24 @@ def _render_report(
 ) -> str:
     generated_at = datetime.now(UTC).isoformat()
     if selected is None:
-        return "\n".join(
-            [
-                "# MVP of the Week",
-                "",
-                f"Generated: {generated_at}",
-                f"Run ID: {run_id}",
-                "",
-                "No usable opportunity seeds were available this week.",
-                f"Imported evidence: {evidence_count}; quarantined rows: {quarantined_count}.",
-                "",
-                "## Source Mix",
-                "",
-                _source_mix_summary(source_counts),
-            ]
-        ) + "\n"
+        return (
+            "\n".join(
+                [
+                    "# MVP of the Week",
+                    "",
+                    f"Generated: {generated_at}",
+                    f"Run ID: {run_id}",
+                    "",
+                    "No usable opportunity seeds were available this week.",
+                    f"Imported evidence: {evidence_count}; quarantined rows: {quarantined_count}.",
+                    "",
+                    "## Source Mix",
+                    "",
+                    _source_mix_summary(source_counts),
+                ]
+            )
+            + "\n"
+        )
 
     lines = [
         f"# MVP of the Week: {selected.title}",
@@ -1042,9 +1025,7 @@ def _source_mix_summary(
     source_error_text = ""
     if isinstance(source_errors, dict) and source_errors:
         source_error_text = (
-            " Source errors: "
-            + ", ".join(f"{key}" for key in sorted(source_errors))
-            + "."
+            " Source errors: " + ", ".join(f"{key}" for key in sorted(source_errors)) + "."
         )
     return (
         f"Run evidence mix: Telegram seed evidence={telegram_count}; "

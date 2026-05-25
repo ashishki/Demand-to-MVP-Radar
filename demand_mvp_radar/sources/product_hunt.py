@@ -116,9 +116,9 @@ class ProductHuntConnector:
         """
         request = Request(
             "https://api.producthunt.com/v2/api/graphql",
-            data=json.dumps(
-                {"query": query, "variables": {"first": self.per_run_limit}}
-            ).encode("utf-8"),
+            data=json.dumps({"query": query, "variables": {"first": self.per_run_limit}}).encode(
+                "utf-8"
+            ),
             headers={
                 "Authorization": f"Bearer {self.token}",
                 "Content-Type": "application/json",
@@ -250,9 +250,7 @@ def _topics(row: dict[str, object]) -> tuple[str, ...]:
 def _live_post_to_fixture_row(row: dict[str, object]) -> dict[str, object]:
     topics = []
     topic_edges = (
-        row.get("topics", {}).get("edges", ())
-        if isinstance(row.get("topics"), dict)
-        else ()
+        row.get("topics", {}).get("edges", ()) if isinstance(row.get("topics"), dict) else ()
     )
     for edge in topic_edges:
         node = edge.get("node") if isinstance(edge, dict) else None
@@ -281,10 +279,7 @@ def _live_post_to_fixture_row(row: dict[str, object]) -> dict[str, object]:
 def _matches_queries(launch: dict[str, object], queries: tuple[str, ...]) -> bool:
     if not queries:
         return True
-    text = " ".join(
-        str(launch.get(field, ""))
-        for field in ("name", "tagline", "body")
-    ).lower()
+    text = " ".join(str(launch.get(field, "")) for field in ("name", "tagline", "body")).lower()
     return any(query in text for query in queries)
 
 

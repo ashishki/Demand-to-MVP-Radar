@@ -129,8 +129,7 @@ def provider_from_env(env: dict[str, str] | None = None) -> LLMProvider | None:
         or "claude-opus-4-7"
     )
     fallback_model = (
-        source.get("DMR_LLM_FALLBACK_MODEL_MVP_WEEKLY", "").strip()
-        or "claude-opus-4-1-20250805"
+        source.get("DMR_LLM_FALLBACK_MODEL_MVP_WEEKLY", "").strip() or "claude-opus-4-1-20250805"
     )
     return AnthropicLLMProvider(
         api_key=api_key,
