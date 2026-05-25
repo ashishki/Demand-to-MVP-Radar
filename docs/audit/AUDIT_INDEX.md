@@ -27,6 +27,7 @@ Append-only. One row per review cycle.
 | cycle-15 | Phase 8 | 2026-05-20 | Phase 8 implementation deep review after T28-T31 | No | 0 | 0 | 0 |
 | cycle-16 | Phase 9 | 2026-05-20 | Phase 9 implementation deep review after T32-T34 | No | 0 | 0 | 0 |
 | cycle-17 | Phase 10 | 2026-05-20 | Phase 10 implementation deep review after T35-T38 | No | 0 | 0 | 0 |
+| cycle-18 | Phase 17 | 2026-05-23 | Phase 17 implementation deep review after T58-T64 | No | 0 | 0 | 1 |
 
 ---
 
@@ -53,6 +54,7 @@ Append-only. One row per review cycle.
 | cycle-15 | docs/archive/PHASE8_REVIEW.md | Phase 8 | PASS |
 | cycle-16 | docs/archive/PHASE9_REVIEW.md | Phase 9 | PASS |
 | cycle-17 | docs/archive/PHASE10_REVIEW.md | Phase 10 | PASS |
+| cycle-18 | docs/archive/PHASE17_REVIEW.md | Phase 17 | PASS |
 
 ---
 

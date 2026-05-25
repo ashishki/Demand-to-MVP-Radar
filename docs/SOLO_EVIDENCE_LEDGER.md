@@ -1,0 +1,189 @@
+# Solo Evidence Ledger
+
+Status: active template
+Date: 2026-05-23
+
+This ledger records the four real weekly or backfilled weekly runs required
+before private beta or hosted work can resume. It is an operating record, not a
+demo checklist: every filled run row must point to public or operator-owned
+evidence, generated artifacts, reviewed opportunities, decisions, missing
+evidence, cost, backup, and privacy checks.
+
+Fixture/demo runs may verify code behavior, but they do not count toward the
+four-run readiness gate.
+
+## Run Type Rules
+
+| Run type | Counts toward four-run gate? | Allowed purpose | Required label |
+|---|---:|---|---|
+| Fixture/demo | no | CI, smoke checks, deterministic examples, development regressions | `fixture/demo` |
+| Backfilled real evidence | yes | Historical public/operator-owned evidence reviewed after collection | `backfilled-real` |
+| Weekly real evidence | yes | Current weekly public/operator-owned evidence collected for operator review | `weekly-real` |
+
+Real evidence means the source register points to public sources or
+operator-owned sources allowed by `docs/open_source_research_protocol.md`.
+Credentialed, paid, private community, publishing, outreach, and hosted/SaaS
+work still require explicit human approval.
+
+## Four-Run Ledger
+
+| Slot | Run type | Run ID / date | Source families | Report paths | Top opportunities reviewed | Decisions recorded | Missing evidence / gaps | Outcome notes | Counts? |
+|---|---|---|---|---|---|---|---|---|---|
+| Run 1 | backfilled-real | T62-showcase / 2026-05-23 | public B2B sales ops, AI workplace adoption, workflow/team operations, AI automation operators, backend/API operators, trader workflow | `reports/showcase/portfolio_opportunity_showcase.md` | 5 | 0 human-recorded; report suggests 3 `revisit` and 2 `needs_more_evidence` | buyer proof, competitor scans, operator-owned lead data, compliance review for trading | Public-safe showcase drafted; not yet an operator-reviewed weekly run | no - showcase backfill only |
+| Run 2 | backfilled-real | R2-deep-research / 2026-05-23 | public B2B sales ops, CRM operator workflow, lead routing competitors, email response analytics, automation operators, developer platform docs, developer tooling alternatives, AI workplace adoption | `reports/research/solo_evidence_run_2_deep_research.md`, `docs/handoffs/lead_response_sla_gap_radar_handoff.md` | 4 | 0 human-recorded; research recommends Lead Response SLA `revisit` / experiment-ready, Human Approval Map `needs_more_evidence`, API Drift Watch `revisit`, AI Rollout Tracker `reject for now` | operator-owned lead data, CRM-native report examples, first 10 target feedback, API buyer proof | Public-safe deep research completed; Lead Response SLA remains best first experiment, but no build approval | yes |
+| Run 3 | pending | pending | pending | pending | pending | pending | pending | pending | no |
+| Run 4 | pending | pending | pending | pending | pending | pending | pending | pending | no |
+
+## Per-Run Detail Template
+
+Copy this section for each filled run slot.
+
+### Run N - pending
+
+| Field | Value |
+|---|---|
+| Run type | `fixture/demo` / `backfilled-real` / `weekly-real` |
+| Counts toward gate | yes/no |
+| Run ID | pending |
+| Run date | pending |
+| Data window | pending |
+| Source families | pending |
+| Source register path | pending |
+| Weekly report path | pending |
+| Dossier paths | pending |
+| Source value report path | pending |
+| Evidence delta report path | pending |
+| Retrieval corpus version | pending |
+| Index age at review | pending |
+| Estimated cost / budget ceiling | pending |
+| Backup verification | pending |
+| Privacy check | pending |
+
+Reviewed opportunities:
+
+| Opportunity | Portfolio fit | Decision | Evidence basis | Missing evidence | Outcome note |
+|---|---|---|---|---|---|
+| pending | pending | pending | pending | pending | pending |
+
+Run verdict:
+
+- Useful decisions: pending
+- Source families that helped: pending
+- Source families to keep/demote/disable: pending
+- Follow-up evidence to collect: pending
+- Operator review time: pending
+- Gate status: pending
+
+### Run 1 - T62 Showcase Backfill
+
+| Field | Value |
+|---|---|
+| Run type | `backfilled-real` |
+| Counts toward gate | no - public showcase artifact, not a full weekly pipeline run |
+| Run ID | T62-showcase |
+| Run date | 2026-05-23 |
+| Data window | Public sources captured on 2026-05-23 |
+| Source families | public B2B sales ops; AI workplace adoption; workflow/team operations; AI automation operators; backend/API operators; trader workflow |
+| Source register path | `reports/showcase/portfolio_opportunity_showcase.md#source-register` |
+| Weekly report path | n/a |
+| Dossier paths | `reports/showcase/portfolio_opportunity_showcase.md` |
+| Source value report path | n/a |
+| Evidence delta report path | n/a |
+| Retrieval corpus version | n/a - manual public research artifact |
+| Index age at review | n/a |
+| Estimated cost / budget ceiling | USD 0 / n/a |
+| Backup verification | not run |
+| Privacy check | public URLs only; no private exports, credentials, raw notes, or private reports |
+
+Reviewed opportunities:
+
+| Opportunity | Portfolio fit | Decision | Evidence basis | Missing evidence | Outcome note |
+|---|---|---|---|---|---|
+| Lead Response SLA Gap Radar | `lead_response_sla` | `revisit` | Workato lead-response benchmark plus portfolio fit | operator-owned lead data; competitor/pricing proof | selected for 10-day MVP experiment candidate |
+| Human Approval Map for AI Automations | `workflow_discovery` | `needs_more_evidence` | public AI automation discussion | more source families; buyer proof | likely Workflow-to-Agent Studio feature |
+| Third-Party API Drift Watch | `workflow_discovery` | `revisit` | public backend/API discussion plus GitHub API docs | repeated demand; competitor scan | possible workflow discovery handoff |
+| AI Rollout Training Gap Tracker | `ai_rollout_training` | `revisit` | Microsoft/LinkedIn and Asana/Anthropic AI adoption reports | manager pain; willingness-to-pay proof | useful but crowded |
+| Trader Research Review Digest | `trading_research_reports` | `needs_more_evidence` | public trader journaling discussions | compliance review; non-Reddit sources | keep secondary/off-risk until validated |
+
+Run verdict:
+
+- Useful decisions: 0 human-recorded; 5 report-level provisional decisions.
+- Source families that helped: B2B sales ops, AI adoption reports, Reddit operator discussions, official API docs.
+- Source families to keep/demote/disable: keep public research reports and official docs; demote Reddit-only opportunities until corroborated.
+- Follow-up evidence to collect: operator-owned lead-response data, competitor scans, first 10 target feedback, compliance review for trading workflow.
+- Operator review time: pending.
+- Gate status: partial showcase artifact; does not count toward the four-run readiness gate yet.
+
+### Run 2 - Deep Research Backfill
+
+| Field | Value |
+|---|---|
+| Run type | `backfilled-real` |
+| Counts toward gate | yes - public source register, privacy check, and reviewed opportunities are present |
+| Run ID | R2-deep-research |
+| Run date | 2026-05-23 |
+| Data window | Public sources captured on 2026-05-23 |
+| Source families | public B2B sales ops; CRM operator workflow; lead routing competitors; email response analytics; automation operators; developer platform docs; developer tooling alternatives; AI workplace adoption |
+| Source register path | `reports/research/solo_evidence_run_2_deep_research.md#source-register` |
+| Weekly report path | `reports/research/solo_evidence_run_2_deep_research.md` |
+| Dossier paths | `reports/research/solo_evidence_run_2_deep_research.md` |
+| Source value report path | n/a - manual public research artifact |
+| Evidence delta report path | n/a - manual public research artifact |
+| Retrieval corpus version | n/a - manual public research artifact |
+| Index age at review | n/a |
+| Estimated cost / budget ceiling | USD 0 / n/a |
+| Backup verification | not run |
+| Privacy check | public URLs only; no private exports, credentials, raw notes, CRM data, or private reports |
+
+Reviewed opportunities:
+
+| Opportunity | Portfolio fit | Decision | Evidence basis | Missing evidence | Outcome note |
+|---|---|---|---|---|---|
+| Lead Response SLA Gap Radar | `lead_response_sla` | `revisit` / experiment-ready | Workato benchmark, HubSpot community operator questions, lead-routing competitors, response-time analytics competitor | operator-owned sample CSV; CRM-native report examples; first 10 target feedback | strongest first experiment; keep scope local CSV-to-Markdown report |
+| Human Approval Map for AI Automations | `workflow_discovery` | `needs_more_evidence` | n8n approval workflow discussions plus Zapier approval automation positioning | real workflow examples; proof standalone artifact changes behavior | likely feature discovery for Workflow-to-Agent Studio |
+| Third-Party API Drift Watch | `workflow_discovery` | `revisit` | GitHub breaking-change docs/changelog, OpenAPI diff alternative, integration monitoring content | repeated buyer pain; target project API list; competitor/pricing scan | plausible but crowded; test with weekly drift digest |
+| AI Rollout Training Gap Tracker | `ai_rollout_training` | `reject` for now | Microsoft/LinkedIn and Asana/Anthropic adoption reports | specific buyer/workflow pain; willingness-to-pay proof | too broad and crowded for current portfolio |
+
+Run verdict:
+
+- Useful decisions: 0 human-recorded; 4 research-level recommendations.
+- Source families that helped: CRM operator workflow, lead-routing competitors, public benchmark articles, official changelogs/docs.
+- Source families to keep/demote/disable: keep CRM/community operator workflow and competitor pages; demote broad AI workplace reports unless tied to direct buyer pain.
+- Follow-up evidence to collect: anonymized lead-response CSV schema, first 10 target feedback, examples of existing CRM SLA reports, and two proof points that a diagnostic report changes operator behavior.
+- Operator review time: pending.
+- Gate status: counts as one public backfilled evidence run; human-decision and private-beta gates remain blocked.
+
+## Fixture / Demo Run Register
+
+Use this section for runs that are useful for testing but must not be counted as
+real operating evidence.
+
+| Run ID / date | Fixture or demo input | Purpose | Result | Why it does not count |
+|---|---|---|---|---|
+| lead-sla-open-proxy / 2026-05-25 | `tests/fixtures/lead_sla/open_proxy_leads.csv` | Test Lead Response SLA CSV analysis, PII redaction, invalid-row quarantine, and Markdown report output with public/proxy support-ticket schema. | `reports/private/lead_sla_open_proxy_report.md`; 10 valid rows, 7 SLA misses, 2 invalid rows; command completed. | Uses a small proxy fixture based on public support-ticket/CRM schemas, not row-level sales lead evidence. |
+
+## Readiness Rollup
+
+| Gate | Current status | Evidence |
+|---|---|---|
+| Four real/backfilled runs complete | not complete | 1/4 counting run complete: Run 2. Run 1 is showcase-only and does not count. |
+| At least 20 opportunities reviewed | not complete | 4 gate-counting opportunities reviewed in Run 2; 5 additional showcase-only opportunities in Run 1. |
+| At least three useful operator decisions | not complete | 0 human-recorded decisions; Run 2 has research-level recommendations only. |
+| One selected opportunity has a 7-14 day MVP experiment pack | partial | Lead Response SLA has a 7-10 day local CSV report experiment candidate and handoff, but no executed experiment yet. |
+| One cross-project handoff pack ready | complete | `docs/handoffs/lead_response_sla_gap_radar_handoff.md` updated by Run 2. |
+| Private beta gate | blocked | Needs 4 counting runs, useful human decisions, backup verification, support-burden proof, and operator-owned evidence. |
+
+## Update Procedure
+
+1. Run or backfill the weekly evidence loop with public/operator-owned sources.
+2. Record source families and source register paths before reviewing decisions.
+3. Add report, dossier, evidence delta, source value, and experiment artifact
+   paths after generation.
+4. Record every reviewed opportunity with a human-owned decision:
+   `build`, `reject`, `revisit`, or `needs_more_evidence`.
+5. Keep unsupported claims marked as `insufficient_evidence` and list missing
+   source families.
+6. Mark `Counts?` as `yes` only when the run uses real public or
+   operator-owned evidence and passes privacy checks.
+7. Update `docs/audit/PRODUCTION_READINESS_REVIEW.md` only after all four run
+   slots and the readiness rollup are backed by artifacts.

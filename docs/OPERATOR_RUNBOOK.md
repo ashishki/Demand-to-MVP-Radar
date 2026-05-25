@@ -50,12 +50,14 @@ demand-mvp-radar run --fixture tests/fixtures/weekly_run --run-id weekly-YYYY-WW
 ```
 
 6. Keep the generated report, dossier, experiment pack, run manifest, and SQLite database under the configured local directories. Do not move raw private inputs or generated private reports into git.
+7. For solo evidence cycles, update `docs/SOLO_EVIDENCE_LEDGER.md` after each real weekly or backfilled run. Mark fixture/demo runs separately; they are useful for testing but do not count toward the four-run readiness gate.
 
 ## Review Steps
 
 1. Read the top opportunities first, then inspect dossier evidence rows for citations, captured dates, source references, and inference markers.
 2. Reject or revisit any opportunity with stale evidence, weak source diversity, missing competitor proof, unclear acquisition angle, or a weak willingness-to-pay signal.
-3. Record exactly one human-owned decision per reviewed opportunity:
+3. When the dossier lacks enough evidence for a decision, follow `docs/open_source_research_protocol.md` before stopping or guessing. Collect only allowed public/operator-owned sources, add a source register, and mark unsupported claims as `insufficient_evidence`.
+4. Record exactly one human-owned decision per reviewed opportunity:
 
 ```bash
 demand-mvp-radar review \
@@ -66,9 +68,9 @@ demand-mvp-radar review \
   --evidence-gap weak_competitor_proof
 ```
 
-4. Only use `build` when the dossier has enough cited evidence, a focused one-function MVP, a plausible acquisition path, and an explicit operator reason.
-5. For human `build` or `revisit` decisions, create or inspect the MVP experiment pack and confirm that success, kill, revisit, first 10 targets, and timebox are measurable.
-6. Use the local review cockpit only on `127.0.0.1` or `localhost`; it is for local dossier, source value, missing-evidence, and experiment review, not hosted access.
+5. Only use `build` when the dossier has enough cited evidence, a focused one-function MVP, a plausible acquisition path, and an explicit operator reason.
+6. For human `build` or `revisit` decisions, create or inspect the MVP experiment pack and confirm that success, kill, revisit, first 10 targets, and timebox are measurable.
+7. Use the local review cockpit only on `127.0.0.1` or `localhost`; it is for local dossier, source value, missing-evidence, and experiment review, not hosted access.
 
 ## Source Failure Handling
 
@@ -138,6 +140,7 @@ Check these local artifacts after a successful weekly loop:
 - MVP experiment packs
 - evidence delta report
 - source value report showing which sources produced cited, decision-changing evidence and which should be kept, demoted, or disabled
+- solo evidence ledger entry in `docs/SOLO_EVIDENCE_LEDGER.md` for real weekly or backfilled runs
 - SQLite `runs`, `evidence`, `decisions`, and retrieval chunk rows
 - audit/evaluation docs when a task changes retrieval, tools, scoring, or governance
 

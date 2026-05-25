@@ -1,7 +1,7 @@
 # Architecture - Demand-to-MVP Radar
 
 Version: 1.0
-Last updated: 2026-05-20
+Last updated: 2026-05-23
 Status: Draft
 
 ---
@@ -281,6 +281,9 @@ No destructive external tools are in v1. The following actions are treated as un
 | LLM extraction | `demand_mvp_radar/llm/extraction.py` | Produce structured extraction from messy text using bounded schemas. |
 | Brief synthesis | `demand_mvp_radar/briefs.py` | Generate source-grounded opportunity briefs and recommendations. |
 | Reporting | `demand_mvp_radar/reports/` | Write Markdown/HTML reports and machine-readable run outputs. |
+| Public-safe showcase artifacts | `reports/showcase/` | Store sanitized portfolio opportunity dossiers, source registers, missing-evidence notes, and experiment candidates produced from public/operator-owned evidence. |
+| Operating readiness artifacts | `docs/open_source_research_protocol.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/audit/` | Define solo research rules, track four-run evidence readiness, and preserve readiness/audit decisions. |
+| Cross-project handoffs | `docs/handoffs/` | Package selected opportunities for adjacent projects without approving outreach, hosted deployment, or external side effects. |
 | Observability | `demand_mvp_radar/observability.py` | Provide shared tracing, metrics hooks, and run audit logging. |
 | Evaluation | `scripts/eval_retrieval.py`, `scripts/eval_tools.py` | Run retrieval and tool-use evaluations and update eval artifacts. |
 
@@ -422,10 +425,18 @@ Demand-to-MVP-Radar/
     DECISION_LOG.md
     IMPLEMENTATION_JOURNAL.md
     EVIDENCE_INDEX.md
+    open_source_research_protocol.md
+    SOLO_EVIDENCE_LEDGER.md
     retrieval_eval.md
     tool_eval.md
     audit/
+      SOLO_EVIDENCE_READINESS_REVIEW.md
     prompts/
+    handoffs/
+      lead_response_sla_gap_radar_handoff.md
+  reports/
+    showcase/
+      portfolio_opportunity_showcase.md
   .github/workflows/ci.yml
   pyproject.toml
   requirements.txt

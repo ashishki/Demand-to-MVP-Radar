@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from demand_mvp_radar.decisions import get_decision_history, record_operator_decision
+import pytest
+from demand_mvp_radar.decisions import (
+    decision_guidance_for_portfolio_fit,
+    get_decision_history,
+    record_operator_decision,
+)
+from demand_mvp_radar.models import PortfolioFit
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
 from demand_mvp_radar.storage.repositories import DecisionRepository, OpportunityRepository
@@ -84,6 +90,31 @@ def test_decision_history_returns_current_and_full_history(tmp_path) -> None:
     assert history.current_decision.decision == "build"
     assert history.current_decision.reason == "New evidence supports a focused MVP."
     assert [decision.decision for decision in history.prior_decisions] == ["revisit", "build"]
+
+
+def test_portfolio_fit_labels_drive_conservative_review_guidance() -> None:
+    primary_fit = PortfolioFit(
+        category="lead_response_sla",
+        reason="Matches the current lead response showcase.",
+        showcase_priority="primary",
+    )
+    off_strategy = PortfolioFit(
+        category="out_of_scope",
+        reason="Interesting, but not part of the current showcase portfolio.",
+        showcase_priority="off_strategy",
+    )
+
+    assert decision_guidance_for_portfolio_fit(primary_fit) == "revisit"
+    assert decision_guidance_for_portfolio_fit(off_strategy) == "reject"
+
+
+def test_out_of_scope_portfolio_fit_cannot_be_marked_primary() -> None:
+    with pytest.raises(ValueError, match="out_of_scope portfolio fit"):
+        PortfolioFit(
+            category="out_of_scope",
+            reason="Attractive but outside the portfolio.",
+            showcase_priority="primary",
+        )
 
 
 def make_repository(tmp_path) -> tuple[DecisionRepository, int]:

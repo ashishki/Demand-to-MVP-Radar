@@ -80,6 +80,29 @@ Only the human operator records the final decision. The system may recommend a d
 
 ---
 
+## Portfolio Fit Guidance
+
+Every decision-grade dossier in the solo evidence loop should include a
+portfolio fit label and a short reason. The label keeps the weekly showcase
+focused on the operator's current portfolio instead of letting attractive but
+off-strategy ideas crowd out near-term work.
+
+| Portfolio fit category | Use when | Showcase priority |
+|------------------------|----------|-------------------|
+| `lead_response_sla` | The opportunity strengthens Lead Response SLA Agent or a related response-time workflow. | primary |
+| `workflow_discovery` | The opportunity strengthens Workflow-to-Agent Studio or workflow discovery/automation mapping. | primary |
+| `ai_rollout_training` | The opportunity supports AI rollout training, adoption enablement, or team workflow education. | secondary |
+| `trading_research_reports` | The opportunity supports trading research report workflows without changing the risk boundary. | secondary |
+| `cross_project` | The opportunity can become a handoff pack for more than one current portfolio project. | primary or secondary |
+| `out_of_scope` | The opportunity may be attractive but does not fit the current showcase, ICP, distribution path, or approval boundary. | off_strategy |
+
+Review rule: an `out_of_scope` opportunity should be rejected for the current
+showcase unless the operator deliberately changes the portfolio strategy. A
+primary-fit label does not automatically justify `build`; it only means the
+opportunity is allowed to compete for deeper evidence review.
+
+---
+
 ## Adoption Failure Conditions
 
 A weekly report is not worth reading when any of these conditions dominate:
@@ -94,6 +117,7 @@ A weekly report is not worth reading when any of these conditions dominate:
 - it cannot explain why an opportunity was ranked above another
 - it omits competitor shape, distribution risk, or "why this may be wrong" for top opportunities
 - it fails to preserve the operator's prior decision and rationale
+- it lets off-strategy ideas displace current portfolio opportunities without a recorded portfolio-fit reason
 
 If these conditions appear repeatedly, the next implementation work should improve source quality, retrieval gates, scoring reasons, or report structure before adding more automation.
 

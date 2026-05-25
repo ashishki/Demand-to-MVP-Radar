@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from demand_mvp_radar.models import DecisionRecord
+from demand_mvp_radar.models import DecisionRecord, PortfolioFit
 from demand_mvp_radar.storage.repositories import DecisionRepository
 
 DecisionValue = Literal[
@@ -24,6 +24,11 @@ EXPERIMENT_OUTCOME_DECISIONS: dict[str, DecisionValue] = {
     "validated": "build",
     "killed": "reject",
     "inconclusive": "revisit",
+}
+PORTFOLIO_FIT_GUIDANCE: dict[str, DecisionValue] = {
+    "primary": "revisit",
+    "secondary": "needs_more_evidence",
+    "off_strategy": "reject",
 }
 
 
@@ -107,6 +112,11 @@ def decision_for_experiment_outcome(outcome: str) -> DecisionValue:
         return EXPERIMENT_OUTCOME_DECISIONS[outcome]
     except KeyError as exc:
         raise ValueError(f"unsupported experiment outcome: {outcome}") from exc
+
+
+def decision_guidance_for_portfolio_fit(portfolio_fit: PortfolioFit) -> DecisionValue:
+    """Return the conservative review decision implied by portfolio fit alone."""
+    return PORTFOLIO_FIT_GUIDANCE[portfolio_fit.showcase_priority]
 
 
 def _row_to_decision(row) -> RecordedDecision:

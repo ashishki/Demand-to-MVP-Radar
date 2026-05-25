@@ -11,7 +11,7 @@ _Date: 2026-05-23 · Scope: Phase 17 (T58-T64)_
 - T61 added deterministic portfolio-fit labels and conservative portfolio review guidance.
 - T62-T63 produced a public-safe showcase report and Lead Response SLA handoff pack.
 - T64 correctly keeps private beta and hosted/SaaS blocked; the project should continue another personal evidence cycle.
-- No code/security issues were found. One P2 documentation patch was identified and closed by updating `docs/ARCHITECTURE.md` to list the new Phase 17 artifacts.
+- No code/security issues were found. One P2 documentation patch is needed so `docs/ARCHITECTURE.md` lists the new Phase 17 artifacts.
 
 ## P0 Issues
 

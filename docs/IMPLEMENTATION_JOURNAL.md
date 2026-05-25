@@ -21,6 +21,122 @@ Status: append-only retrieval surface. This file records durable handoff context
 
 ---
 
+## 2026-05-25 - Lead SLA Open-Data Technical Test
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/lead_sla.py`, `demand_mvp_radar/reports/lead_sla.py`, `demand_mvp_radar/cli.py`, `tests/test_lead_sla.py`, `tests/fixtures/lead_sla/open_proxy_leads.csv`, `reports/research/lead_sla_open_data_test.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`
+- Tests: `.venv/bin/python -m pytest tests/test_lead_sla.py -q` -> 4 passed; `.venv/bin/demand-mvp-radar lead-sla-report --input tests/fixtures/lead_sla/open_proxy_leads.csv --output reports/private/lead_sla_open_proxy_report.md --sla-minutes 5 --hash-lead-id --dataset-label "Open support-ticket proxy fixture" --public-source-url "https://www.kaggle.com/datasets/suraj520/customer-support-ticket-dataset"` -> completed, 10 valid rows, 7 SLA misses, 2 invalid rows; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 190 passed.
+- Baseline before: 186 passing tests
+- Baseline after: 190 passing tests
+- Decisions/evidence updated: `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`, `MEMORY.md`
+- Notes for next agent: The CLI works on a public/proxy support-ticket fixture and redacts private columns, but this is not market proof. Continue searching for license-clear row-level sales lead data, or run a clearly labeled synthetic benchmark simulation.
+
+---
+
+## 2026-05-23 - Solo Evidence Run 2 Deep Research
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `reports/research/solo_evidence_run_2_deep_research.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/handoffs/lead_response_sla_gap_radar_handoff.md`, `docs/EVIDENCE_INDEX.md`
+- Tests: `.venv/bin/python -m pytest tests/ -q` -> 186 passed
+- Baseline before: 186 passing tests
+- Baseline after: 186 passing tests
+- Decisions/evidence updated: `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`, `MEMORY.md`, `/tmp/orchestrator_checkpoint.md`
+- Notes for next agent: Run 2 counts as a public backfilled evidence run but records 0 human-owned decisions. Lead Response SLA is now experiment-ready pending anonymized/operator-owned lead-response data; private beta and hosted/SaaS remain blocked.
+
+---
+
+## 2026-05-23 - Phase 17 Boundary Review and Project Completion
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/audit/STRATEGY_NOTE.md`, `docs/audit/META_ANALYSIS.md`, `docs/audit/ARCH_REPORT.md`, `docs/audit/REVIEW_REPORT.md`, `docs/archive/PHASE17_REVIEW.md`, `docs/audit/AUDIT_INDEX.md`, `docs/ARCHITECTURE.md`, `README.md`, `docs/audit/PHASE_REPORT_LATEST.md`, `docs/audit/PROJECT_COMPLETE.md`
+- Tests: `.venv/bin/python -m pytest tests/ -q` -> 186 passed
+- Baseline before: 186 passing tests
+- Baseline after: 186 passing tests
+- Decisions/evidence updated: `docs/CODEX_PROMPT.md`, `docs/EVIDENCE_INDEX.md`, `MEMORY.md`, `/tmp/orchestrator_checkpoint.md`
+- Notes for next agent: The authoritative task queue is complete through T64. Cycle 18 deep review had Stop-Ship: No, P0: 0, P1: 0, P2: 1 closed. Private beta and hosted/SaaS remain blocked; the useful next work is operating the solo evidence cycle, not adding hosted features.
+
+---
+
+## 2026-05-23 - T58: Formatting Baseline Repair
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/credentials.py`, `demand_mvp_radar/health.py`, `demand_mvp_radar/models.py`, `demand_mvp_radar/pipeline.py`, `demand_mvp_radar/scoring.py`, `demand_mvp_radar/sources/live.py`, and formatter-only updates across scoped tests.
+- Tests: `.venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 184 passed.
+- Baseline before: 184 passing tests
+- Baseline after: 184 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Formatting drift is repaired. T59 can update the open-source research protocol docs without carrying a known formatter baseline issue.
+
+## 2026-05-23 - T59: Solo Open-Source Research Protocol
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/open_source_research_protocol.md`, `docs/OPERATOR_RUNBOOK.md`
+- Tests: manual doc verification for AC-1 and AC-2; `.venv/bin/python -m pytest tests/ -q` -> 184 passed.
+- Baseline before: 184 passing tests
+- Baseline after: 184 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Missing evidence in solo evidence tasks should trigger the protocol's public/operator-owned research path, source register, and claim labels instead of stopping at data gaps.
+
+## 2026-05-23 - T60: Four-Run Solo Evidence Ledger
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/OPERATOR_RUNBOOK.md`
+- Tests: manual doc verification for AC-1 and AC-2; `.venv/bin/python -m pytest tests/ -q` -> 184 passed.
+- Baseline before: 184 passing tests
+- Baseline after: 184 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: The ledger is a template only; no run results were invented. Real/backfilled runs must be filled from public/operator-owned evidence and fixture/demo runs must stay separate.
+
+## 2026-05-23 - T61: Portfolio Opportunity Taxonomy
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/models.py`, `demand_mvp_radar/decisions.py`, `tests/test_decisions.py`, `docs/OPERATOR_WORKFLOW.md`
+- Tests: `.venv/bin/python -m pytest tests/test_decisions.py -q` -> 5 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 186 passed.
+- Baseline before: 184 passing tests
+- Baseline after: 186 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Dossiers can carry optional `PortfolioFit` labels. `out_of_scope` labels must use `off_strategy`, and portfolio-fit guidance maps `off_strategy` to a conservative `reject` recommendation for the current showcase.
+
+## 2026-05-23 - T62: Showcase Opportunity Dossiers
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `reports/showcase/portfolio_opportunity_showcase.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`, `tests/test_docs_contracts.py`
+- Tests: manual artifact verification for AC-1 and AC-2; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 186 passed.
+- Baseline before: 186 passing tests
+- Baseline after: 186 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `docs/EVIDENCE_INDEX.md`
+- Notes for next agent: The report uses public sources only and does not record a human `build` decision. Lead Response SLA Gap Radar is selected as a 10-day experiment candidate for T63 handoff work.
+
+## 2026-05-23 - T63: Cross-Project Handoff Pack
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/handoffs/lead_response_sla_gap_radar_handoff.md`, `docs/EVIDENCE_INDEX.md`
+- Tests: manual artifact verification for AC-1 and AC-2; `.venv/bin/python -m pytest tests/ -q` -> 186 passed.
+- Baseline before: 186 passing tests
+- Baseline after: 186 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `docs/EVIDENCE_INDEX.md`
+- Notes for next agent: The handoff is for Lead Response SLA Agent and is intentionally constrained to local reporting. It includes no approval for outreach, CRM mutation, hosted access, or a build decision.
+
+## 2026-05-23 - T64: Solo Evidence Readiness Review
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/audit/SOLO_EVIDENCE_READINESS_REVIEW.md`, `docs/EVIDENCE_INDEX.md`
+- Tests: manual audit verification for AC-1 and AC-2; `.venv/bin/python -m pytest tests/ -q` -> 186 passed.
+- Baseline before: 186 passing tests
+- Baseline after: 186 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `docs/EVIDENCE_INDEX.md`
+- Notes for next agent: Verdict is continue personal evidence cycle. Private beta and hosted/SaaS are blocked until four real/backfilled runs, useful human decisions, source value proof, backup verification, and support-burden proof exist.
+
 ## 2026-05-19 - Bootstrap Package
 
 - Agent: Codex

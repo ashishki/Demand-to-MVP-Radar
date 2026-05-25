@@ -341,10 +341,11 @@ def test_codex_prompt_points_to_live_source_next_task() -> None:
     content = _codex_prompt_text()
 
     for phrase in (
-        "Phase: 16",
-        "Baseline: 184 passing tests",
+        "Phase: 17",
+        "Baseline: 190 passing tests",
         "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
-        "Project complete: T01-T57 are complete",
+        "T58: Formatting Baseline Repair",
+        "docs/open_source_research_protocol.md",
         "T57: Hosted/SaaS Decision ADR",
         "T56: Private Beta Source Onboarding",
         "T55: Local Review Cockpit",

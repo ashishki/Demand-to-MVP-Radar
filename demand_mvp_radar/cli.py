@@ -13,8 +13,11 @@ from demand_mvp_radar.config import Settings, load_settings
 from demand_mvp_radar.credentials import CredentialRequirement, resolve_credentials
 from demand_mvp_radar.decisions import DecisionValue, record_operator_decision
 from demand_mvp_radar.health import build_live_source_health
+from demand_mvp_radar.lead_sla import analyze_lead_sla_csv
 from demand_mvp_radar.mvp_weekly import run_mvp_of_week
 from demand_mvp_radar.pipeline import collect_sources, import_sources, run_weekly_pipeline
+from demand_mvp_radar.reports.lead_sla import render_lead_sla_report
+from demand_mvp_radar.reports.markdown import write_markdown_report
 from demand_mvp_radar.review_cockpit import ReviewCockpitConfig
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
@@ -121,6 +124,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     cockpit.add_argument("--host", default="127.0.0.1")
     cockpit.add_argument("--port", default=8765, type=int)
+    lead_sla = subparsers.add_parser(
+        "lead-sla-report",
+        help="Analyze a lead/support first-response CSV and write a local SLA report.",
+    )
+    lead_sla.add_argument("--input", required=True, help="Path to input CSV.")
+    lead_sla.add_argument("--output", required=True, help="Path to output Markdown report.")
+    lead_sla.add_argument("--sla-minutes", default=5, type=float)
+    lead_sla.add_argument("--top-n", default=20, type=int)
+    lead_sla.add_argument("--dataset-label", default="")
+    lead_sla.add_argument("--public-source-url")
+    lead_sla.add_argument(
+        "--hash-lead-id",
+        action="store_true",
+        help="Hash lead/ticket IDs in report output.",
+    )
     return parser
 
 
@@ -233,6 +251,38 @@ def main(argv: list[str] | None = None) -> int:
         config = ReviewCockpitConfig(host=args.host, port=args.port)
         print(config.model_dump_json())
         return 0
+    if args.command == "lead-sla-report":
+        return _run_lead_sla_report_command(args)
+    return 0
+
+
+def _run_lead_sla_report_command(args: argparse.Namespace) -> int:
+    try:
+        analysis = analyze_lead_sla_csv(
+            Path(args.input),
+            sla_minutes=args.sla_minutes,
+            hash_lead_id=args.hash_lead_id,
+            dataset_label=args.dataset_label,
+            public_source_url=args.public_source_url,
+        )
+    except (OSError, ValueError) as exc:
+        print(json.dumps({"status": "error", "error": str(exc)}))
+        return 1
+
+    report = render_lead_sla_report(analysis, top_n=args.top_n)
+    write_markdown_report(Path(args.output), report)
+    print(
+        json.dumps(
+            {
+                "status": "completed",
+                "output": args.output,
+                "total_leads": analysis.total_leads,
+                "sla_misses": analysis.total_sla_miss_count,
+                "invalid_rows": len(analysis.invalid_rows),
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 

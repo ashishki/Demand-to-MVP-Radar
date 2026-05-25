@@ -1,43 +1,55 @@
-# META_ANALYSIS — Cycle 17
-_Date: 2026-05-20 · Type: full_
+# META_ANALYSIS - Cycle 18
+_Date: 2026-05-23 · Type: full_
 
 ## Project State
 
-Phase 10 (T35-T38) complete. Planned task list complete.
-Baseline: 119 pass, 0 skip.
+Phase 17 (T58-T64) is complete. Next: no queued implementation task; Phase 17
+boundary review/archive/doc update/final report are pending.
+
+Baseline: 186 pass, 0 skip.
 
 ## Open Findings
 
 | ID | Sev | Description | Files | Status |
 |----|-----|-------------|-------|--------|
-| none | n/a | No open findings in `docs/CODEX_PROMPT.md` or the prior review report. | n/a | n/a |
+| none | n/a | No open P0/P1/P2 findings in `docs/CODEX_PROMPT.md` or previous `docs/audit/REVIEW_REPORT.md`. | n/a | n/a |
 
 ## PROMPT_1 Scope (architecture)
 
-- Operator runbook: weekly operation, review, source failure handling, health checks, budget review, generated artifacts, privacy, backup, and recovery are documented.
-- Scheduled run support: user-level systemd service/timer templates run the weekly command using environment-based local paths and write logs under the configured data directory.
-- Health status: `health --json` reports the latest `scheduled-...` run when available.
-- Backup and recovery: local backup targets, restore steps, verification commands, git-ignored private artifacts, and failed-run recovery are documented.
-- Production readiness: four-run checklist and readiness verdict gate private beta and SaaS/hosted work until personal weekly value is proven.
-- Governance: Phase 10 preserved local-first operation, no hosted service, no external publication, no outreach, and no autonomous product decisions.
+- Phase 17 solo evidence operating loop: public research protocol, solo evidence
+  ledger, showcase report, handoff pack, and readiness review.
+- Portfolio taxonomy: optional dossier-level `PortfolioFit` labels and
+  conservative review guidance for current portfolio priorities.
+- Hosted/SaaS gate: T64 verdict keeps private beta and hosted/SaaS blocked in
+  line with `docs/adr/ADR_HOSTED_SAAS_DECISION.md`.
 
 ## PROMPT_2 Scope (code, priority order)
 
-1. `docs/OPERATOR_RUNBOOK.md`
-2. `deploy/demand-mvp-radar.service`
-3. `deploy/demand-mvp-radar.timer`
-4. `demand_mvp_radar/cli.py`
-5. `docs/BACKUP_RECOVERY.md`
-6. `docs/audit/PRODUCTION_READINESS_REVIEW.md`
-7. `tests/test_docs_contracts.py`
-8. `tests/test_scheduled_run.py`
-9. `docs/CODEX_PROMPT.md`
-10. `docs/tasks.md`
+1. `demand_mvp_radar/models.py` (changed) - `PortfolioFit` model and
+   `OpportunityDossier.portfolio_fit`.
+2. `demand_mvp_radar/decisions.py` (changed) - portfolio-fit decision guidance.
+3. `tests/test_decisions.py` (changed) - portfolio-fit model/guidance coverage.
+4. `tests/test_docs_contracts.py` (changed) - baseline state assertion.
+5. `docs/open_source_research_protocol.md` (new) - public research rules.
+6. `docs/SOLO_EVIDENCE_LEDGER.md` (new) - run ledger/gate status.
+7. `reports/showcase/portfolio_opportunity_showcase.md` (new artifact) -
+   public source register and opportunity report.
+8. `docs/handoffs/lead_response_sla_gap_radar_handoff.md` (new) - handoff pack.
+9. `docs/audit/SOLO_EVIDENCE_READINESS_REVIEW.md` (new) - readiness verdict.
+10. Formatter-only files from T58: `demand_mvp_radar/credentials.py`,
+    `demand_mvp_radar/health.py`, `demand_mvp_radar/pipeline.py`,
+    `demand_mvp_radar/scoring.py`, `demand_mvp_radar/sources/live.py`, and
+    corresponding formatted tests.
 
 ## Cycle Type
 
-Full — Phase 10 is complete and closes the planned local production-readiness task list.
+Full - Phase 17 is complete and no Phase 17 archive entry exists.
 
 ## Notes for PROMPT_3
 
-Focus consolidation on whether Phase 10 makes weekly local operation repeatable, recoverable, auditable, and explicitly gated before private beta or SaaS expansion.
+Consolidation should preserve the conservative readiness verdict: Phase 17
+produced useful artifacts, but private beta and hosted/SaaS remain blocked. Pay
+attention to whether the public showcase and handoff accidentally imply a build
+approval; they should not.
+
+META_ANALYSIS.md written. Run PROMPT_1_ARCH.md.

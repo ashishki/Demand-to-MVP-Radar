@@ -74,9 +74,9 @@ LLM используется только ограниченно:
 
 ## Текущий статус
 
-Phase 1-10 завершены и прошли review без stop-ship findings. Planned task list complete; production readiness remains `NOT READY` until four real weekly local runs prove repeated personal value.
+Phase 1-17 завершены и прошли review без stop-ship findings. Planned task list complete; private beta and hosted/SaaS remain blocked until four real or properly backfilled solo evidence runs prove repeated personal value, useful human decisions, source value, backup verification, and support burden.
 
-Текущий baseline: 119 passing tests. Локально проходят:
+Текущий baseline: 190 passing tests. Локально проходят:
 
 - `ruff check demand_mvp_radar/ tests/ scripts/`
 - `ruff format --check demand_mvp_radar/ tests/ scripts/`
@@ -110,6 +110,12 @@ Phase 1-10 завершены и прошли review без stop-ship findings. 
 - MVP experiment pack model, Markdown renderer, and deterministic outcome feedback
 - operator runbook, local systemd scheduled-run templates, and scheduled-run health reporting
 - backup/recovery guide and four-run production readiness review gate
+- fixture-first public, credentialed, and community live source connectors with source health output
+- source value reporting and local-only review cockpit helpers
+- private beta onboarding guide and hosted/SaaS decision ADR
+- solo open-source research protocol and four-run evidence ledger
+- portfolio-fit taxonomy, public-safe showcase opportunity report, and Lead Response SLA handoff pack
+- solo evidence readiness review that keeps private beta and hosted/SaaS blocked
 - GitHub Actions workflow for install, ruff check, format check, and pytest
 
 Пример локального запуска:
@@ -120,6 +126,7 @@ demand-mvp-radar import-sources --fixture tests/fixtures/source_mix
 demand-mvp-radar mvp-of-week \
   --telegram-export ../telegram-research-agent/data/output/opportunity_seeds/2026-W22.json \
   --source-config config/mvp_weekly_sources.json
+demand-mvp-radar lead-sla-report --input tests/fixtures/lead_sla/open_proxy_leads.csv --output reports/private/lead_sla_open_proxy_report.md --sla-minutes 5 --hash-lead-id
 demand-mvp-radar health --json
 ```
 

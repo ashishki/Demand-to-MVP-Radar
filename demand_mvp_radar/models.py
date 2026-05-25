@@ -10,6 +10,15 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 SourcePriority = Literal["P0", "P1", "P2", "P3"]
 SourceTrustLevel = Literal["high", "medium", "low"]
+PortfolioFitCategory = Literal[
+    "lead_response_sla",
+    "workflow_discovery",
+    "ai_rollout_training",
+    "trading_research_reports",
+    "cross_project",
+    "out_of_scope",
+]
+ShowcasePriority = Literal["primary", "secondary", "off_strategy"]
 SourceAccessMethod = Literal[
     "local_file",
     "local_repo",
@@ -195,6 +204,20 @@ class DossierPriorDecision(BaseModel):
     decided_at: datetime | None = None
 
 
+class PortfolioFit(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    category: PortfolioFitCategory
+    reason: str = Field(min_length=1)
+    showcase_priority: ShowcasePriority
+
+    @model_validator(mode="after")
+    def out_of_scope_items_stay_off_strategy(self) -> PortfolioFit:
+        if self.category == "out_of_scope" and self.showcase_priority != "off_strategy":
+            raise ValueError("out_of_scope portfolio fit must use off_strategy priority")
+        return self
+
+
 class OpportunityDossier(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -212,6 +235,7 @@ class OpportunityDossier(BaseModel):
     score_components: dict[str, ScoreComponent]
     recommendation: Literal["build", "reject", "revisit", "insufficient_evidence"]
     prior_decisions: tuple[DossierPriorDecision, ...] = ()
+    portfolio_fit: PortfolioFit | None = None
     confidence: str = Field(min_length=1)
     why_this_may_be_wrong: tuple[str, ...]
 
@@ -222,8 +246,7 @@ class OpportunityDossier(BaseModel):
             unknown_citations = set(claim.citation_numbers) - available_citations
             if unknown_citations:
                 raise ValueError(
-                    "dossier claim references unknown citation number: "
-                    f"{min(unknown_citations)}"
+                    f"dossier claim references unknown citation number: {min(unknown_citations)}"
                 )
         return self
 

@@ -2014,3 +2014,229 @@ Files:
 Context-Refs:
   - docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md#p9---hostedsaas-decision-gate
   - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-10---external-product-decision
+
+---
+
+## Phase 17 - Solo Evidence Operating Loop
+
+Business goal: use the product as the operator's weekly demand radar and as the
+first step in the wider portfolio showcase. The product should produce
+decision-grade opportunities and handoff packs for Workflow-to-Agent Studio and
+Lead Response SLA Agent before any private beta or hosted work resumes.
+
+Boundary:
+
+- personal weekly evidence and public open-source research are allowed;
+- external publishing, outreach automation, paid sources, hosted SaaS, and
+  private community collection still require human approval;
+- if a task lacks enough evidence, the agent must follow
+  `docs/open_source_research_protocol.md` and collect public sources instead of
+  stopping at "data missing".
+
+Exit criteria:
+
+- four real weekly or backfilled weekly runs are recorded with non-fixture
+  source evidence;
+- at least 20 opportunities are reviewed with `build`, `reject`, `revisit`, or
+  `needs_more_evidence`;
+- at least three decisions are useful to the operator and cite source evidence;
+- one selected opportunity has a 7-14 day MVP experiment pack;
+- one handoff pack is ready for Workflow-to-Agent Studio or Lead Response SLA
+  Agent.
+
+## T58: Formatting Baseline Repair
+
+Owner:      codex
+Phase:      17
+Type:       hygiene
+Depends-On: T57
+Status:     [x]
+
+Objective: |
+  Repair the known formatting drift so verification is reproducible before
+  new solo evidence work begins.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`ruff format --check demand_mvp_radar/ tests/ scripts/` passes without drift."
+    test: ".venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/"
+  - id: AC-2
+    description: "`pytest tests/ -q` still passes after formatting-only changes."
+    test: ".venv/bin/python -m pytest tests/ -q"
+
+Files:
+  - demand_mvp_radar/
+  - tests/
+  - scripts/
+
+Context-Refs:
+  - docs/CODEX_PROMPT.md#current-state
+
+## T59: Solo Open-Source Research Protocol
+
+Owner:      codex
+Phase:      17
+Type:       docs research
+Depends-On: T58
+Status:     [x]
+
+Objective: |
+  Make the public-research fallback explicit for future agents so missing
+  source data triggers deep open-source research with citations, not a stop.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/open_source_research_protocol.md` defines allowed sources, forbidden sources, required source register fields, and claim rules."
+    test: "manual doc review"
+  - id: AC-2
+    description: "`docs/OPERATOR_RUNBOOK.md` points weekly operators to the research protocol when evidence is insufficient."
+    test: "manual doc review"
+
+Files:
+  - docs/open_source_research_protocol.md
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/SOURCE_CATALOG.md
+  - docs/IMPLEMENTATION_CONTRACT.md#deterministic-ownership-of-scores
+
+## T60: Four-Run Solo Evidence Ledger
+
+Owner:      codex
+Phase:      17
+Type:       evidence ops
+Depends-On: T59
+Status:     [x]
+
+Objective: |
+  Create the ledger used to record four real weekly or backfilled weekly runs,
+  including source mix, generated reports, reviewed opportunities, decisions,
+  and missing evidence.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "`docs/SOLO_EVIDENCE_LEDGER.md` contains four run slots with source families, report paths, top opportunities, decisions, and outcome notes."
+    test: "manual doc review"
+  - id: AC-2
+    description: "The ledger distinguishes fixture/demo runs from real public or operator-owned evidence runs."
+    test: "manual doc review"
+
+Files:
+  - docs/SOLO_EVIDENCE_LEDGER.md
+  - docs/OPERATOR_RUNBOOK.md
+
+Context-Refs:
+  - docs/audit/PRODUCTION_READINESS_REVIEW.md
+  - docs/PRIVATE_BETA_ONBOARDING.md
+
+## T61: Portfolio Opportunity Taxonomy
+
+Owner:      codex
+Phase:      17
+Type:       product strategy
+Depends-On: T60
+Status:     [x]
+
+Objective: |
+  Add tags and review guidance that connect opportunity dossiers to the current
+  portfolio: lead response, workflow discovery, AI rollout training, trading
+  research reports, and rejected out-of-scope ideas.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Dossiers can be labeled with a portfolio fit category and a reason."
+    test: "manual or focused unit test"
+  - id: AC-2
+    description: "The review guidance prevents attractive but off-strategy ideas from crowding out the current showcase."
+    test: "manual doc review"
+
+Files:
+  - demand_mvp_radar/models.py
+  - demand_mvp_radar/decisions.py
+  - docs/OPERATOR_WORKFLOW.md
+  - tests/test_decisions.py
+
+Context-Refs:
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#north-star
+
+## T62: Showcase Opportunity Dossiers
+
+Owner:      codex
+Phase:      17
+Type:       report artifact
+Depends-On: T60, T61
+Status:     [x]
+
+Objective: |
+  Produce a public-safe showcase report with the top portfolio-relevant
+  opportunities, source registers, missing evidence, and decision status.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The showcase report includes at least five opportunities and marks every claim as cited, inference, or insufficient_evidence."
+    test: "manual artifact review"
+  - id: AC-2
+    description: "At least one opportunity is selected for a 7-14 day MVP experiment pack."
+    test: "manual artifact review"
+
+Files:
+  - reports/
+  - docs/SOLO_EVIDENCE_LEDGER.md
+
+Context-Refs:
+  - docs/open_source_research_protocol.md
+  - docs/PERSONAL_TO_PRODUCTION_PLAN.md#phase-6---mvp-experiment-pack
+
+## T63: Cross-Project Handoff Pack
+
+Owner:      codex
+Phase:      17
+Type:       portfolio handoff
+Depends-On: T62
+Status:     [x]
+
+Objective: |
+  Turn one selected opportunity into a concise handoff pack for
+  Workflow-to-Agent Studio or Lead Response SLA Agent.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The handoff pack includes problem, ICP, public evidence, workflow assumptions, MVP scope, risks, and missing data requests."
+    test: "manual artifact review"
+  - id: AC-2
+    description: "The handoff pack includes enough cited public evidence for the receiving project to start without re-reading the entire Radar report."
+    test: "manual artifact review"
+
+Files:
+  - docs/handoffs/
+
+Context-Refs:
+  - docs/open_source_research_protocol.md
+
+## T64: Solo Evidence Readiness Review
+
+Owner:      human + codex
+Phase:      17
+Type:       audit decision
+Depends-On: T60, T62, T63
+Status:     [x]
+
+Objective: |
+  Decide whether Demand-to-MVP Radar remains an internal operator tool, moves
+  to private beta, or continues another personal evidence cycle.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "The review cites four run records, useful decisions, source value, support burden, and one handoff pack."
+    test: "manual audit review"
+  - id: AC-2
+    description: "The review does not approve hosted/SaaS work without private beta evidence."
+    test: "manual audit review"
+
+Files:
+  - docs/audit/SOLO_EVIDENCE_READINESS_REVIEW.md
+  - docs/CODEX_PROMPT.md
+
+Context-Refs:
+  - docs/adr/ADR_HOSTED_SAAS_DECISION.md
+  - docs/PRIVATE_BETA_ONBOARDING.md

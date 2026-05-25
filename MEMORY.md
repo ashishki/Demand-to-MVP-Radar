@@ -2,9 +2,9 @@
 
 ## Demand-to-MVP Radar
 
-- Last completed: T57 - Hosted/SaaS Decision ADR at 2026-05-21
-- Baseline: 184 pass / 0 skip
-- Next task: none - T01-T57 complete
-- Phase: Phase 16 - Beta and Hosted Decision
-- Review tier next: deep
+- Last completed: Lead SLA open-data technical test at 2026-05-25
+- Baseline: 190 pass / 0 skip
+- Next task: find license-clear row-level sales lead data or run a labeled synthetic benchmark simulation
+- Phase: Phase 17 - Solo Evidence Operating Loop complete
+- Review tier next: n/a
 - Any blockers: none

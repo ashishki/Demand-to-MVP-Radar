@@ -1,0 +1,13 @@
+lead_id,created_at,first_response_at,source,owner,status,email,company_name
+L001,2026-05-18T09:00:00,2026-05-18T09:03:00,demo_form,owner_a,responded,lead1@example.com,Example One
+L002,2026-05-18T09:10:00,2026-05-18T09:40:00,demo_form,owner_a,responded,lead2@example.com,Example Two
+L003,2026-05-18T09:20:00,,demo_form,owner_b,no_response,lead3@example.com,Example Three
+L004,2026-05-18T10:00:00,2026-05-18T10:06:00,contact_form,owner_b,responded,lead4@example.com,Example Four
+L005,2026-05-18T10:15:00,2026-05-18T13:15:00,contact_form,owner_b,responded,lead5@example.com,Example Five
+L006,2026-05-18T11:00:00,2026-05-18T11:02:00,chat,owner_c,responded,lead6@example.com,Example Six
+L007,2026-05-18T11:20:00,2026-05-18T11:50:00,chat,owner_c,responded,lead7@example.com,Example Seven
+L008,2026-05-18T12:00:00,,pricing_form,owner_a,no_response,lead8@example.com,Example Eight
+L009,2026-05-18T12:15:00,2026-05-18T12:17:00,pricing_form,owner_a,responded,lead9@example.com,Example Nine
+L010,2026-05-18T12:45:00,2026-05-18T13:55:00,webinar,owner_d,responded,lead10@example.com,Example Ten
+L011,2026-05-18T13:00:00,2026-05-18T12:55:00,webinar,owner_d,invalid,lead11@example.com,Example Eleven
+L012,not-a-date,2026-05-18T14:00:00,demo_form,owner_b,invalid,lead12@example.com,Example Twelve
