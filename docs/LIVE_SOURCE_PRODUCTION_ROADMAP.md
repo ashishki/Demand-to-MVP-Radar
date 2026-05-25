@@ -36,6 +36,32 @@ The production gap is the source collection layer:
 - connector health reporting;
 - source value evaluation.
 
+## Current MVP Weekly Status
+
+As of 2026-05-25, the weekly MVP path has moved beyond snapshot-only
+collection for the main decision surfaces:
+
+- `rss` collects live RSS/HN feed URLs without credentials.
+- `github_public` can call GitHub public search live, using `GITHUB_TOKEN`
+  only for higher quota.
+- `stack_exchange` can call Stack Exchange search live, using
+  `STACK_EXCHANGE_KEY` only when quota requires it.
+- `serp` can call SerpApi live behind `SERPAPI_API_KEY` and per-run budget
+  limits.
+- `youtube` can call YouTube Data API search behind `YOUTUBE_API_KEY` and quota
+  limits.
+- `product_hunt` can call Product Hunt GraphQL behind `PRODUCT_HUNT_TOKEN`.
+- `reddit` can call Reddit's official API behind
+  `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, and `REDDIT_USER_AGENT`.
+
+The active weekly config is `config/mvp_weekly_sources.json`; the operator
+contract is `docs/MVP_WEEKLY_LIVE_SOURCES.md`.
+
+Missing credentials are source-scoped errors, not hidden skips. A weekly MVP
+artifact can still be generated with partial sources, but confident
+`focused_experiment` recommendations remain gated by candidate-level external
+evidence and operator fit.
+
 ## Production Architecture
 
 ```text

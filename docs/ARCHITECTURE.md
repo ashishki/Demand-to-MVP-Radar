@@ -448,9 +448,14 @@ Demand-to-MVP-Radar/
 | `DMR_LLM_FALLBACK_MODEL_MVP_WEEKLY` | Fallback model if the primary alias is unavailable. | `claude-opus-4-1-20250805` |
 | `DMR_EMBEDDING_PROVIDER` | Embedding provider key. | `openai` |
 | `DMR_EMBEDDING_API_KEY` | API key for embedding provider if external. | `env-secret` |
-| `DMR_SERP_API_KEY` | Optional search provider key. | `env-secret` |
-| `DMR_REDDIT_CLIENT_ID` | Optional Reddit API client ID. | `env-secret` |
-| `DMR_REDDIT_CLIENT_SECRET` | Optional Reddit API secret. | `env-secret` |
+| `SERPAPI_API_KEY` | SerpApi key for weekly search-intent collection. | `env-secret` |
+| `GITHUB_TOKEN` | Optional GitHub token for higher public search quota. | `env-secret` |
+| `YOUTUBE_API_KEY` | YouTube Data API key for tutorial/creator demand collection. | `env-secret` |
+| `PRODUCT_HUNT_TOKEN` | Product Hunt API token for launch/competitor collection. | `env-secret` |
+| `REDDIT_CLIENT_ID` | Reddit API client ID. | `env-secret` |
+| `REDDIT_CLIENT_SECRET` | Reddit API secret. | `env-secret` |
+| `REDDIT_USER_AGENT` | Reddit API user agent identifying this private client. | `Demand-to-MVP-Radar/0.1 by user` |
+| `STACK_EXCHANGE_KEY` | Optional Stack Exchange API key for higher quota. | `env-secret` |
 | `DMR_MAX_WEEKLY_LLM_COST_USD` | Budget ceiling for a weekly run. | `5.00` |
 | `DMR_FETCH_TIMEOUT_SECONDS` | HTTP timeout for source fetches. | `20` |
 | `DMR_MAX_INDEX_AGE_DAYS` | Retrieval index freshness limit. | `7` |

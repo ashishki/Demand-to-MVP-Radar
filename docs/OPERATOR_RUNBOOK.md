@@ -24,18 +24,32 @@ demand-mvp-radar import-sources --fixture tests/fixtures/source_mix --run-id imp
 3. Collect approved live sources when a live-source config is available:
 
 ```bash
-demand-mvp-radar collect-sources --config config/live-sources.json --run-id collect-YYYY-WW
+demand-mvp-radar collect-sources --config config/mvp_weekly_sources.json --run-id collect-YYYY-WW
 ```
 
 The command stores normalized evidence, updates retrieval for new evidence only, records source failures in the run manifest and health output, and does not generate weekly reports.
 
-4. Run the weekly fixture or configured weekly source bundle:
+4. Run the weekly MVP source bundle when Telegram Research Agent has exported opportunity seeds:
+
+```bash
+.venv/bin/python -m demand_mvp_radar.cli mvp-of-week \
+  --telegram-export ../telegram-research-agent/data/output/opportunity_seeds/YYYY-WW.json \
+  --source-config config/mvp_weekly_sources.json \
+  --run-id mvp-weekly-YYYY-WW
+```
+
+This is the production weekly opportunity artifact. Telegram seeds are treated
+as hypotheses; RSS/HN, GitHub public search, Stack Exchange, SERP, YouTube,
+Product Hunt, and Reddit provide external corroboration where configured
+credentials allow collection.
+
+5. Run the older fixture pipeline only for regression/debug work:
 
 ```bash
 demand-mvp-radar run --fixture tests/fixtures/weekly_run --run-id weekly-YYYY-WW
 ```
 
-5. Keep the generated report, dossier, experiment pack, run manifest, and SQLite database under the configured local directories. Do not move raw private inputs or generated private reports into git.
+6. Keep the generated report, dossier, experiment pack, run manifest, and SQLite database under the configured local directories. Do not move raw private inputs or generated private reports into git.
 
 ## Review Steps
 
@@ -60,7 +74,7 @@ demand-mvp-radar review \
 
 Inspect import output and run metadata for source errors before trusting generated artifacts:
 
-- `runs.source_counts` shows imported and disabled source counts.
+- `runs.source_counts` shows imported, skipped, and external evidence counts.
 - `runs.error_counts` shows quarantined or failed source rows.
 - `runs.source_errors` shows source-scoped live collection failures without secret values.
 - Evidence delta reports show new, duplicate, stale, quarantined, skipped, and changed evidence.
@@ -71,7 +85,11 @@ Recovery steps:
 1. Fix the malformed local source export or remove the bad row.
 2. Re-run `import-sources` with the same run ID when the source fingerprint should remain idempotent.
 3. Re-run with a new run ID when the source bundle is intentionally changed.
-4. If source errors persist, disable that source in the local source catalog and continue with the remaining approved sources.
+4. If source errors persist because a credential is missing, fix the relevant
+   environment variable in `/etc/demand-mvp-radar.env` or accept that source as
+   temporarily missing.
+5. Disable a source only when it is intentionally out of scope. Weekly MVP
+   sources should not be silently skipped by default.
 
 ## Health Checks
 
@@ -93,10 +111,12 @@ Treat stale index warnings as a review blocker. A stale index means the latest r
 
 Credential recovery steps:
 
-1. Keep source configs limited to environment variable names such as `SERPAPI_API_KEY`, `YOUTUBE_API_KEY`, or `PRODUCT_HUNT_TOKEN`.
-2. Put actual secret values only in the shell environment or ignored local secrets files.
+1. Keep source configs limited to environment variable names such as `SERPAPI_API_KEY`, `YOUTUBE_API_KEY`, `PRODUCT_HUNT_TOKEN`, `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT`, `GITHUB_TOKEN`, and `STACK_EXCHANGE_KEY`.
+2. Put actual secret values only in the shell environment or ignored local secrets files. On the VPS the recommended file is `/etc/demand-mvp-radar.env`; use `config/live_sources.env.example` as the template.
 3. If health reports `missing` or `invalid`, fix only that source's environment variable and leave unrelated sources enabled.
 4. Inspect run manifests and logs for source-scoped credential errors, but never paste secret values into logs, issues, docs, reports, or committed fixtures.
+
+For the full weekly MVP source contract, see `docs/MVP_WEEKLY_LIVE_SOURCES.md`.
 
 ## Cost And Budget Review
 

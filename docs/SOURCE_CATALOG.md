@@ -67,6 +67,32 @@ candidate is a one-function MVP or an overbuilt platform idea.
 
 ---
 
+## Active Weekly MVP Source Bundle
+
+`config/mvp_weekly_sources.json` is the active broad-source bundle used by the
+`mvp-of-week` command. It operationalizes the surfaces in
+`docs/DEMAND_SOURCE_MAP.md`.
+
+| Source | Source type | Primary demand surface | Credential behavior |
+|--------|-------------|------------------------|---------------------|
+| RSS/HN feeds | `rss` | trend context, founder/developer discussion | no credential |
+| GitHub public search | `github_public` | dev pain, feature requests, integration friction | optional `GITHUB_TOKEN` for higher quota |
+| Stack Exchange | `stack_exchange` | repeated questions, workaround language | optional `STACK_EXCHANGE_KEY` |
+| SerpApi Google search | `serp` | search intent, alternatives, competitor pages | required `SERPAPI_API_KEY` |
+| YouTube Data API | `youtube` | how-to/tutorial intent and creator demand | required `YOUTUBE_API_KEY` |
+| Product Hunt | `product_hunt` | launches, positioning, competitor traction | required `PRODUCT_HUNT_TOKEN` |
+| Reddit official API | `reddit` | community pain and manual workarounds | required `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` |
+
+Enabled sources should either collect evidence or emit a source-scoped
+`source_errors` entry. They should not be silently skipped unless explicitly
+disabled in config. This keeps the weekly MVP report honest about which parts
+of the market were actually checked.
+
+See `docs/MVP_WEEKLY_LIVE_SOURCES.md` for the run contract and credential
+setup.
+
+---
+
 ## Source Implementation Order
 
 ### Wave 1 - Owned and Low-Risk

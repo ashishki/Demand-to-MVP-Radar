@@ -26,7 +26,10 @@ Demand-to-MVP Radar ingests demand signals from configured text sources, normali
 
 ### Description
 
-The system reads configured text evidence from Telegram-derived exports, manual URLs, saved SERP/search-query snapshots, competitor pages, store listings, Reddit/X exports, and operator notes. Every imported item receives stable provenance and a source fingerprint.
+The system reads configured text evidence from Telegram-derived exports, live
+public/credentialed sources, manual URLs, saved SERP/search-query snapshots,
+competitor pages, store listings, community exports, and operator notes. Every
+imported item receives stable provenance and a source fingerprint.
 
 ### Acceptance Criteria
 
@@ -35,6 +38,8 @@ The system reads configured text evidence from Telegram-derived exports, manual 
 3. Given a malformed source row, the ingestion command records a quarantined row with error reason and continues importing valid rows.
 4. Given a manual URL source, the fetcher uses configured timeout and records HTTP status, fetched_at timestamp, and content hash.
 5. Given a disabled source in config, the run manifest records it as skipped and no adapter call is made for that source.
+6. Given an enabled credentialed weekly source without its required environment variable, the run records a source-scoped `source_errors` entry and continues collecting unrelated sources.
+7. Given a weekly MVP run, Telegram-derived seeds alone cannot produce a confident `focused_experiment`; the selected candidate needs non-Telegram corroboration and operator-fit checks.
 
 ### Out of Scope for v1
 

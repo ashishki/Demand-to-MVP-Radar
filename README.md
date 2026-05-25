@@ -144,6 +144,8 @@ The MVP recommendation is gated by source mix and operator fit:
   weekly sources should not be silently skipped.
 - `config/live_sources.env.example` lists the optional/required live-source
   secrets for the VPS env file.
+- `docs/MVP_WEEKLY_LIVE_SOURCES.md` is the operator-facing contract for the
+  full weekly source bundle, required credentials, and source-mix gates.
 
 Runtime LLM synthesis is opt-in through env:
 
@@ -168,6 +170,7 @@ Without an enabled provider the command writes a deterministic fallback report.
 - `docs/tasks.md` - implementation task graph
 - `docs/CODEX_PROMPT.md` - текущее состояние и правила выполнения
 - `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md` - roadmap до версии, которая сама собирает данные из live-источников
+- `docs/MVP_WEEKLY_LIVE_SOURCES.md` - weekly MVP live-source contract, credentials, and gates
 - `docs/SOURCE_CATALOG.md` - каталог источников, trust tiers и access strategy
 - `docs/DEMAND_SOURCE_MAP.md` - карта мест, где искать боль и спрос внутри источников
 - `docs/retrieval_eval.md` - принципы оценки RAG
