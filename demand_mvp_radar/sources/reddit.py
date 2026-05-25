@@ -1,13 +1,15 @@
-"""Reddit fixture connector."""
+"""Reddit source connector."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import re
+from base64 import b64encode
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urlencode, urlparse
+from urllib.request import Request, urlopen
 
 from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
@@ -21,16 +23,26 @@ class RedditConnector:
 
     def __init__(
         self,
-        fixture_path: Path,
+        fixture_path: Path | None,
         *,
         allowed_subreddits: tuple[str, ...],
         queries: tuple[str, ...],
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        user_agent: str | None = None,
+        per_query_limit: int = 10,
+        timeout_seconds: int = 20,
     ) -> None:
         if not allowed_subreddits and not queries:
             raise ValueError("Reddit connector requires allowlisted subreddits or queries")
         self.fixture_path = fixture_path
         self.allowed_subreddits = {subreddit.lower() for subreddit in allowed_subreddits}
-        self.queries = set(queries)
+        self.queries = tuple(queries)
+        self.client_id = client_id.strip() if client_id else None
+        self.client_secret = client_secret.strip() if client_secret else None
+        self.user_agent = user_agent.strip() if user_agent else None
+        self.per_query_limit = max(1, min(per_query_limit, 50))
+        self.timeout_seconds = timeout_seconds
 
     def collect(
         self,
@@ -39,7 +51,11 @@ class RedditConnector:
         run_id: str,
         cursor_state: dict[str, str],
     ) -> LiveConnectorResult:
-        payload = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        payload = (
+            json.loads(self.fixture_path.read_text(encoding="utf-8"))
+            if self.fixture_path is not None
+            else self._live_payload()
+        )
         seen_fingerprints = _decode_seen_fingerprints(cursor_state)
         next_seen = set(seen_fingerprints)
         evidence: list[EvidenceRecord] = []
@@ -98,6 +114,89 @@ class RedditConnector:
         subreddit = _required_text(post, "subreddit").lower()
         query = str(post.get("query", ""))
         return subreddit in self.allowed_subreddits or query in self.queries
+
+    def _live_payload(self) -> dict[str, object]:
+        if not self.client_id or not self.client_secret or not self.user_agent:
+            raise ValueError("Reddit live collection requires client id, secret, and user agent")
+        token = self._access_token()
+        posts: list[dict[str, object]] = []
+        subreddits = tuple(sorted(self.allowed_subreddits)) or ("all",)
+        for subreddit in subreddits:
+            for query in self.queries:
+                params = urlencode(
+                    {
+                        "q": query,
+                        "restrict_sr": "1" if subreddit != "all" else "0",
+                        "sort": "new",
+                        "limit": str(self.per_query_limit),
+                        "raw_json": "1",
+                    }
+                )
+                endpoint = (
+                    f"https://oauth.reddit.com/r/{quote(subreddit)}/search?{params}"
+                    if subreddit != "all"
+                    else f"https://oauth.reddit.com/search?{params}"
+                )
+                request = Request(
+                    endpoint,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "User-Agent": self.user_agent,
+                    },
+                )
+                with urlopen(request, timeout=self.timeout_seconds) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                for child in payload.get("data", {}).get("children", ()):
+                    if isinstance(child, dict) and isinstance(child.get("data"), dict):
+                        posts.append(_live_post_to_fixture_row(child["data"], query=query))
+        return {"rate_limit": {"limited": False}, "posts": posts}
+
+    def _access_token(self) -> str:
+        assert self.client_id is not None
+        assert self.client_secret is not None
+        assert self.user_agent is not None
+        auth = b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode(
+            "ascii"
+        )
+        data = urlencode({"grant_type": "client_credentials"}).encode("utf-8")
+        request = Request(
+            "https://www.reddit.com/api/v1/access_token",
+            data=data,
+            headers={
+                "Authorization": f"Basic {auth}",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": self.user_agent,
+            },
+            method="POST",
+        )
+        with urlopen(request, timeout=self.timeout_seconds) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        token = str(payload.get("access_token", "")).strip()
+        if not token:
+            raise ValueError("Reddit access_token missing from OAuth response")
+        return token
+
+
+def _live_post_to_fixture_row(row: dict[str, object], *, query: str) -> dict[str, object]:
+    title = _required_text(row, "title")
+    body = str(row.get("selftext") or "").strip()
+    if len(body) < MIN_TEXT_LENGTH:
+        body = f"{title}\n\nReddit search match for query: {query}"
+    permalink = _required_text(row, "permalink")
+    created_at = datetime.fromtimestamp(float(row["created_utc"]), tz=UTC).isoformat()
+    return {
+        "query": query,
+        "subreddit": _required_text(row, "subreddit"),
+        "post_id": _required_text(row, "id"),
+        "url": f"https://www.reddit.com{permalink}",
+        "title": title,
+        "body": body,
+        "score": int(row.get("score", 0)),
+        "comment_count": int(row.get("num_comments", 0)),
+        "created_at": created_at,
+        "captured_at": datetime.now(UTC).isoformat(),
+        "comments": [],
+    }
 
 
 def _post_record(

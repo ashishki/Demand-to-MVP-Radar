@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -280,7 +281,7 @@ def collect_sources(
                 run_id=effective_run_id,
                 config_dir=config_dir,
             )
-        except (KeyError, TypeError, ValueError) as error:
+        except (KeyError, OSError, TimeoutError, TypeError, ValueError) as error:
             source_counts[live_config.source_name] = 0
             error_counts[live_config.source_name] = 1
             source_errors[live_config.source_name] = f"{live_config.source_name}: {error}"
@@ -467,13 +468,15 @@ def _collect_configured_live_source(
             },
         )
     if live_config.source_type == "stack_exchange":
-        fixture_path = Path(str(source_config["fixture_path"]))
-        if not fixture_path.is_absolute():
-            fixture_path = config_dir / fixture_path
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
         return StackExchangeLiveConnector(
             fixture_path,
             sites=tuple(str(site) for site in source_config.get("sites", ())),
             tags=tuple(str(tag) for tag in source_config.get("tags", ())),
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+            api_key=os.environ.get("STACK_EXCHANGE_KEY", "").strip() or None,
+            page_size=int(source_config.get("page_size", 10)),
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
         ).collect(
             live_config,
             run_id=run_id,
@@ -499,10 +502,17 @@ def _collect_configured_live_source(
             },
         )
     if live_config.source_type == "github_public":
-        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
         return GitHubPublicSearchConnector(
             fixture_path,
             queries=tuple(str(query) for query in source_config.get("queries", ())),
+            api_token=(
+                os.environ.get("GITHUB_TOKEN", "").strip()
+                or os.environ.get("GH_TOKEN", "").strip()
+                or None
+            ),
+            per_query_limit=int(source_config.get("per_query_limit", 10)),
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
         ).collect(
             live_config,
             run_id=run_id,
@@ -512,7 +522,7 @@ def _collect_configured_live_source(
             },
         )
     if live_config.source_type == "serp":
-        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
         return SERPSearchConnector(
             fixture_path,
             queries=tuple(str(query) for query in source_config.get("queries", ())),
@@ -520,6 +530,9 @@ def _collect_configured_live_source(
             daily_budget_limit=int(source_config["daily_budget_limit"]),
             per_run_budget_limit=int(source_config["per_run_budget_limit"]),
             daily_budget_used=int(source_config.get("daily_budget_used", 0)),
+            api_key=os.environ.get("SERPAPI_API_KEY", "").strip() or None,
+            results_per_query=int(source_config.get("results_per_query", 10)),
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
         ).collect(
             live_config,
             run_id=run_id,
@@ -529,13 +542,16 @@ def _collect_configured_live_source(
             },
         )
     if live_config.source_type == "youtube":
-        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
         return YouTubeConnector(
             fixture_path,
             queries=tuple(str(query) for query in source_config.get("queries", ())),
             quota_limit=int(source_config["quota_limit"]),
             per_run_quota_limit=int(source_config["per_run_quota_limit"]),
             quota_used=int(source_config.get("quota_used", 0)),
+            api_key=os.environ.get("YOUTUBE_API_KEY", "").strip() or None,
+            results_per_query=int(source_config.get("results_per_query", 10)),
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
         ).collect(
             live_config,
             run_id=run_id,
@@ -545,8 +561,14 @@ def _collect_configured_live_source(
             },
         )
     if live_config.source_type == "product_hunt":
-        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
-        return ProductHuntConnector(fixture_path).collect(
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
+        return ProductHuntConnector(
+            fixture_path,
+            token=os.environ.get("PRODUCT_HUNT_TOKEN", "").strip() or None,
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+            per_run_limit=int(source_config.get("per_run_limit", 25)),
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
+        ).collect(
             live_config,
             run_id=run_id,
             cursor_state={
@@ -555,13 +577,18 @@ def _collect_configured_live_source(
             },
         )
     if live_config.source_type == "reddit":
-        fixture_path = _resolve_fixture_path(config_dir, source_config["fixture_path"])
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
         return RedditConnector(
             fixture_path,
             allowed_subreddits=tuple(
                 str(subreddit) for subreddit in source_config.get("allowed_subreddits", ())
             ),
             queries=tuple(str(query) for query in source_config.get("queries", ())),
+            client_id=os.environ.get("REDDIT_CLIENT_ID", "").strip() or None,
+            client_secret=os.environ.get("REDDIT_CLIENT_SECRET", "").strip() or None,
+            user_agent=os.environ.get("REDDIT_USER_AGENT", "").strip() or None,
+            per_query_limit=int(source_config.get("per_query_limit", 10)),
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
         ).collect(
             live_config,
             run_id=run_id,
@@ -625,6 +652,16 @@ def _resolve_fixture_path(config_dir: Path, raw_path: object) -> Path:
     if not fixture_path.is_absolute():
         return config_dir / fixture_path
     return fixture_path
+
+
+def _optional_resolve_fixture_path(
+    config_dir: Path,
+    source_config: dict[str, object],
+) -> Path | None:
+    raw_path = source_config.get("fixture_path")
+    if raw_path is None or not str(raw_path).strip():
+        return None
+    return _resolve_fixture_path(config_dir, raw_path)
 
 
 def _live_evidence_from_fixture_row(

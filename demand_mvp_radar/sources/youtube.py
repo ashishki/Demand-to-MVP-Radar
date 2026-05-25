@@ -7,7 +7,8 @@ import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
+from urllib.request import Request, urlopen
 
 from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
@@ -21,12 +22,15 @@ class YouTubeConnector:
 
     def __init__(
         self,
-        fixture_path: Path,
+        fixture_path: Path | None,
         *,
         queries: tuple[str, ...],
         quota_limit: int,
         per_run_quota_limit: int,
         quota_used: int = 0,
+        api_key: str | None = None,
+        results_per_query: int = 10,
+        timeout_seconds: int = 20,
     ) -> None:
         if not queries:
             raise ValueError("YouTube connector requires at least one query")
@@ -37,6 +41,9 @@ class YouTubeConnector:
         self.quota_limit = quota_limit
         self.per_run_quota_limit = per_run_quota_limit
         self.quota_used = quota_used
+        self.api_key = api_key.strip() if api_key else None
+        self.results_per_query = max(1, min(results_per_query, 25))
+        self.timeout_seconds = timeout_seconds
 
     def collect(
         self,
@@ -64,7 +71,11 @@ class YouTubeConnector:
                 last_success_at=None,
             )
 
-        payload = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        payload = (
+            json.loads(self.fixture_path.read_text(encoding="utf-8"))
+            if self.fixture_path is not None
+            else self._live_payload(max_quota=remaining_quota)
+        )
         seen_fingerprints = _decode_seen_fingerprints(cursor_state)
         next_seen = set(seen_fingerprints)
         evidence: list[EvidenceRecord] = []
@@ -142,6 +153,68 @@ class YouTubeConnector:
             ),
             last_success_at=datetime.now(UTC),
         )
+
+    def _live_payload(self, *, max_quota: int) -> dict[str, object]:
+        if not self.api_key:
+            raise ValueError("YouTube live collection requires api_key")
+        searches: list[dict[str, object]] = []
+        consumed = 0
+        for query in self.queries:
+            quota_cost = 100
+            if consumed + quota_cost > max_quota:
+                break
+            consumed += quota_cost
+            params = urlencode(
+                {
+                    "part": "snippet",
+                    "type": "video",
+                    "order": "relevance",
+                    "maxResults": str(self.results_per_query),
+                    "q": query,
+                    "key": self.api_key,
+                }
+            )
+            request = Request(
+                f"https://www.googleapis.com/youtube/v3/search?{params}",
+                headers={"User-Agent": "Demand-to-MVP-Radar/0.1"},
+            )
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            videos = []
+            for item in payload.get("items", ()):
+                if not isinstance(item, dict):
+                    continue
+                video_id = (
+                    item.get("id", {}).get("videoId")
+                    if isinstance(item.get("id"), dict)
+                    else None
+                )
+                snippet = item.get("snippet", {}) if isinstance(item.get("snippet"), dict) else {}
+                title = str(snippet.get("title") or "").strip()
+                description = str(snippet.get("description") or title).strip()
+                channel_id = str(snippet.get("channelId") or "unknown-channel").strip()
+                published_at = str(snippet.get("publishedAt") or datetime.now(UTC).isoformat())
+                if video_id and title:
+                    videos.append(
+                        {
+                            "video_id": str(video_id),
+                            "title": title,
+                            "description": description,
+                            "channel_id": channel_id,
+                            "published_at": published_at.replace("Z", "+00:00"),
+                            "comments": [],
+                        }
+                    )
+            searches.append(
+                {
+                    "query": query,
+                    "quota_cost": quota_cost,
+                    "captured_at": datetime.now(UTC).isoformat(),
+                    "next_page_token": str(payload.get("nextPageToken", "")),
+                    "videos": videos,
+                }
+            )
+        return {"captured_at": datetime.now(UTC).isoformat(), "searches": searches}
 
 
 def _video_record(

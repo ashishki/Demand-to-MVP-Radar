@@ -1,4 +1,4 @@
-"""GitHub public search fixture connector."""
+"""GitHub public search connector."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
+from urllib.request import Request, urlopen
 
 from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
@@ -21,14 +22,20 @@ class GitHubPublicSearchConnector:
 
     def __init__(
         self,
-        fixture_path: Path,
+        fixture_path: Path | None,
         *,
         queries: tuple[str, ...],
+        api_token: str | None = None,
+        per_query_limit: int = 10,
+        timeout_seconds: int = 20,
     ) -> None:
         if not queries:
             raise ValueError("GitHub public connector requires at least one query")
         self.fixture_path = fixture_path
         self.queries = queries
+        self.api_token = api_token.strip() if api_token else None
+        self.per_query_limit = max(1, min(per_query_limit, 50))
+        self.timeout_seconds = timeout_seconds
 
     def collect(
         self,
@@ -37,7 +44,11 @@ class GitHubPublicSearchConnector:
         run_id: str,
         cursor_state: dict[str, str],
     ) -> LiveConnectorResult:
-        payload = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        payload = (
+            json.loads(self.fixture_path.read_text(encoding="utf-8"))
+            if self.fixture_path is not None
+            else self._live_payload()
+        )
         seen_fingerprints = _decode_seen_fingerprints(cursor_state)
         next_seen = set(seen_fingerprints)
         evidence: list[EvidenceRecord] = []
@@ -72,6 +83,60 @@ class GitHubPublicSearchConnector:
             rate_limit_state=RateLimitState(limited=False),
             last_success_at=datetime.now(UTC),
         )
+
+    def _live_payload(self) -> dict[str, object]:
+        items: list[dict[str, object]] = []
+        for query in self.queries:
+            url = (
+                "https://api.github.com/search/issues"
+                f"?q={quote(query)}&sort=updated&order=desc&per_page={self.per_query_limit}"
+            )
+            headers = {
+                "Accept": "application/vnd.github+json",
+                "User-Agent": "Demand-to-MVP-Radar/0.1",
+            }
+            if self.api_token:
+                headers["Authorization"] = f"Bearer {self.api_token}"
+            request = Request(url, headers=headers)
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            for item in payload.get("items", ()):
+                if isinstance(item, dict):
+                    items.append(_live_item_to_fixture_row(item, query=query))
+        return {"items": items}
+
+
+def _live_item_to_fixture_row(item: dict[str, object], *, query: str) -> dict[str, object]:
+    html_url = _live_required_text(item, "html_url")
+    repository_url = _live_required_text(item, "repository_url")
+    repository = repository_url.rsplit("/repos/", 1)[-1]
+    title = _live_required_text(item, "title")
+    body = str(item.get("body") or "").strip()
+    if len(body) < MIN_BODY_LENGTH:
+        body = f"{title}\n\nGitHub search match for query: {query}"
+    return {
+        "repository": repository,
+        "kind": "pull_request" if isinstance(item.get("pull_request"), dict) else "issue",
+        "number": int(item["number"]),
+        "url": html_url,
+        "title": title,
+        "body": body,
+        "labels": [
+            str(label.get("name", "")).strip()
+            for label in item.get("labels", ())
+            if isinstance(label, dict) and str(label.get("name", "")).strip()
+        ],
+        "created_at": _live_required_text(item, "created_at"),
+        "updated_at": _live_required_text(item, "updated_at"),
+        "captured_at": datetime.now(UTC).isoformat(),
+    }
+
+
+def _live_required_text(row: dict[str, object], field: str) -> str:
+    value = row[field]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"GitHub live field {field} is required")
+    return value.strip()
 
 
 def _record_from_item(

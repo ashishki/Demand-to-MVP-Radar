@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -59,6 +60,64 @@ EXISTING_PROJECT_TITLES = {
 GENERIC_CANDIDATE_TITLES = {
     "creator content discovery gap report",
 }
+EXTERNAL_DEMAND_SOURCE_TYPES = {
+    "serp",
+    "github_public",
+    "stack_exchange",
+    "reddit",
+    "product_hunt",
+    "youtube",
+    "rss",
+    "hacker_news",
+    "store",
+    "reviews",
+    "forum",
+    "news",
+}
+OPERATOR_PROFILE_ENV = "DMR_OPERATOR_PROFILE_PATH"
+PROFILE_FIT_KEYWORDS = (
+    ("llm", "LLM orchestration"),
+    ("agent", "agentic workflows"),
+    ("workflow", "workflow automation"),
+    ("automation", "workflow automation"),
+    ("eval", "evaluation-first delivery"),
+    ("guardrail", "guardrails and safety"),
+    ("observability", "LLMOps observability"),
+    ("telegram", "Telegram-native research"),
+    ("obsidian", "knowledge memory"),
+    ("knowledge", "knowledge memory"),
+    ("research", "research tooling"),
+    ("decision", "decision support"),
+    ("training", "education and rollout"),
+    ("rollout", "education and rollout"),
+    ("document", "document/data pipeline"),
+    ("pdf", "document/data pipeline"),
+    ("fastapi", "Python backend fit"),
+    ("python", "Python backend fit"),
+    ("n8n", "workflow automation"),
+)
+PROFILE_MISMATCH_KEYWORDS = (
+    ("java", "JVM-heavy implementation"),
+    ("kotlin", "JVM/mobile-heavy implementation"),
+    ("swift", "mobile-native implementation"),
+    ("android", "mobile-native implementation"),
+    ("ios", "mobile-native implementation"),
+    ("wordpress", "CMS-specific implementation"),
+    ("shopify", "platform-plugin implementation"),
+    ("solidity", "smart-contract implementation"),
+    ("trading bot", "live trading automation"),
+    ("game engine", "game-engine domain mismatch"),
+)
+PROFILE_STACK_FIT_FLAGS = {
+    "Python backend fit",
+    "LLM orchestration",
+    "evaluation-first delivery",
+    "guardrails and safety",
+    "knowledge memory",
+    "research tooling",
+    "document/data pipeline",
+}
+RECOMMENDATION_GATED = {"focused_experiment", "build"}
 LOGGER = logging.getLogger(__name__)
 
 
@@ -104,6 +163,8 @@ class CandidateAggregate:
     risk_flags: set[str] = field(default_factory=set)
     mvp_scopes: list[str] = field(default_factory=list)
     anti_complexity_notes: list[str] = field(default_factory=list)
+    profile_fit_flags: set[str] = field(default_factory=set)
+    profile_mismatch_flags: set[str] = field(default_factory=set)
     score: int = 0
     recommendation: str = "needs_more_evidence"
 
@@ -165,6 +226,7 @@ def run_mvp_of_week(
     candidates = _rank_candidates(evidence_records)
     selected = candidates[0] if candidates else None
     llm_provider = llm_provider if llm_provider is not None else provider_from_env()
+    source_counts = _source_counts(evidence_records, collect_result=collect_result)
     (
         synthesis_markdown,
         selected_title,
@@ -180,7 +242,7 @@ def run_mvp_of_week(
         evidence_count=len(evidence_records),
         quarantined_count=len(import_result.quarantined),
         top_evidence=top_evidence,
-        source_counts=_source_counts(evidence_records, collect_result=collect_result),
+        source_counts=source_counts,
     )
     markdown = (
         _render_report(
@@ -190,13 +252,13 @@ def run_mvp_of_week(
             evidence_count=len(evidence_records),
             quarantined_count=len(import_result.quarantined),
             top_evidence=top_evidence,
+            source_counts=source_counts,
         )
         if synthesis_markdown is None
         else synthesis_markdown
     )
     write_markdown_report(report_path, markdown)
 
-    source_counts = _source_counts(evidence_records, collect_result=collect_result)
     source_errors = collect_result.source_errors if collect_result is not None else {}
     result = MvpOfWeekResult(
         run_id=effective_run_id,
@@ -269,10 +331,27 @@ def _rank_candidates(records: tuple[EvidenceRecord, ...]) -> list[CandidateAggre
         for term in RISK_TERMS:
             if term in text:
                 candidate.risk_flags.add(term)
+        candidate.profile_fit_flags.update(_profile_fit_flags(text))
+        candidate.profile_mismatch_flags.update(_profile_mismatch_flags(text))
 
     for candidate in grouped.values():
+        if _external_evidence_count(candidate.evidence) == 0:
+            candidate.missing_evidence.add(
+                "non-Telegram public evidence for the same pain"
+            )
+        elif len(_external_source_types(candidate.evidence)) < 2:
+            candidate.missing_evidence.add("second independent external source type")
+        if candidate.profile_mismatch_flags:
+            candidate.missing_evidence.add(
+                "operator-fit wedge that avoids an unfamiliar stack"
+            )
         candidate.score = _score_candidate(candidate)
-        if candidate.score >= 70 and not _has_blocking_gap(candidate):
+        if (
+            candidate.score >= 70
+            and not _has_blocking_gap(candidate)
+            and _has_decision_grade_external_evidence(candidate)
+            and not _has_profile_blocking_mismatch(candidate)
+        ):
             candidate.recommendation = "focused_experiment"
         elif candidate.score >= 50:
             candidate.recommendation = "revisit_with_evidence_gap"
@@ -363,9 +442,16 @@ def _source_counts(
     counts: dict[str, object] = {}
     for record in records:
         counts[record.source_type] = int(counts.get(record.source_type, 0)) + 1
+    counts["external_evidence_count"] = _external_evidence_count(records)
+    counts["external_source_types"] = tuple(sorted(_external_source_types(records)))
+    counts["telegram_seed_evidence_count"] = sum(
+        1 for record in records if record.source_type == "telegram_research_agent"
+    )
     if collect_result is not None:
         counts["configured_sources"] = collect_result.source_counts
         counts["skipped_sources"] = collect_result.skipped_sources
+        if collect_result.source_errors:
+            counts["source_errors"] = collect_result.source_errors
     return counts
 
 
@@ -404,14 +490,27 @@ def _synthesize_or_render(
         )
         return None, None, None, None, "fallback_deterministic"
 
+    selected_title = _optional_non_empty(synthesis.selected_title)
+    recommendation = _optional_non_empty(synthesis.recommendation)
+    score = synthesis.score
+    gate_candidate = _candidate_for_title(selected_title, candidates) or selected
+    recommendation, score, gate_notes = _apply_synthesis_gates(
+        candidate=gate_candidate,
+        recommendation=recommendation,
+        score=score,
+        source_counts=source_counts,
+    )
+
     markdown = synthesis.markdown.strip()
     if not markdown.startswith("#"):
-        markdown = f"# MVP of the Week: {synthesis.selected_title or selected.title}\n\n{markdown}"
+        markdown = f"# MVP of the Week: {selected_title or selected.title}\n\n{markdown}"
+    if gate_notes:
+        markdown = _append_gate_notes(markdown, gate_notes)
     return (
         markdown.rstrip() + "\n",
-        _optional_non_empty(synthesis.selected_title),
-        _optional_non_empty(synthesis.recommendation),
-        synthesis.score,
+        selected_title,
+        recommendation,
+        score,
         "llm_synthesized",
     )
 
@@ -428,11 +527,15 @@ def _build_synthesis_prompt(
 ) -> str:
     candidate_lines = []
     for index, candidate in enumerate(candidates, start=1):
+        external_types = ", ".join(_external_source_types(candidate.evidence)) or "none"
         candidate_lines.append(
             f"{index}. {candidate.title} | score={candidate.score} | "
             f"recommendation={candidate.recommendation} | "
             f"surfaces={', '.join(sorted(candidate.surfaces)) or 'unknown'} | "
             f"evidence_count={len(candidate.evidence)} | "
+            f"external_source_types={external_types} | "
+            f"profile_fit={', '.join(sorted(candidate.profile_fit_flags)) or 'weak'} | "
+            f"profile_mismatch={', '.join(sorted(candidate.profile_mismatch_flags)) or 'none'} | "
             f"risks={', '.join(sorted(candidate.risk_flags)) or 'none'}"
         )
     evidence_lines = []
@@ -465,8 +568,21 @@ def _build_synthesis_prompt(
             "and search-intent evidence as stronger validation."
         ),
         (
+            "A focused_experiment recommendation requires at least two non-Telegram "
+            "evidence packets from at least two independent external source types "
+            "for the selected MVP. If that gate is not met, use "
+            "revisit_with_evidence_gap or needs_more_evidence."
+        ),
+        (
             "If evidence is thin, choose revisit_with_evidence_gap instead of "
             "pretending build confidence."
+        ),
+        (
+            "The idea must fit the operator: Python/FastAPI/Telegram/LLM workflows, "
+            "evaluation, guardrails, knowledge systems, decision support, education "
+            "and rollout are strong fits. Java/JVM, mobile-native, CMS-plugin, or "
+            "unfamiliar domain-heavy ideas should be downgraded unless the MVP can "
+            "be tested as a thin Python/API workflow."
         ),
         (
             "Do not recommend building a broad platform. Keep the MVP to one "
@@ -481,6 +597,9 @@ def _build_synthesis_prompt(
         f"Evidence count: {evidence_count}",
         f"Quarantined seed rows: {quarantined_count}",
         f"Source counts: {json.dumps(source_counts, ensure_ascii=False, sort_keys=True)}",
+        "",
+        "Operator fit profile:",
+        _load_operator_profile(),
         "",
         "Deterministic candidate shortlist:",
         *(candidate_lines or ["No deterministic candidates."]),
@@ -501,10 +620,20 @@ def _build_synthesis_prompt(
         "",
         "Markdown requirements:",
         (
-            "- Include sections: Why This Week, One-Function MVP, Evidence, "
-            "Missing Evidence, Risks, This Week Experiment, Anti-Complexity Guardrail."
+            "- Include sections: Why This Week, Source Mix, Operator Fit, "
+            "One-Function MVP, Evidence, Missing Evidence, Risks, This Week "
+            "Experiment, Anti-Complexity Guardrail."
         ),
         "- Evidence section must cite only provided evidence IDs like [E1].",
+        (
+            "- Source Mix must explicitly say whether the selected idea is supported "
+            "by Telegram only or by external sources such as SERP, Reddit, GitHub, "
+            "HN/RSS, Product Hunt, YouTube, stores, or forums."
+        ),
+        (
+            "- Operator Fit must say why this MVP matches or mismatches the "
+            "operator's stack and professional identity."
+        ),
         f"- Show at most {top_evidence} primary evidence bullets.",
         (
             "- Explain why the selected MVP is separate from existing repo "
@@ -572,6 +701,88 @@ def _optional_non_empty(value: str | None) -> str | None:
     return value or None
 
 
+def _candidate_for_title(
+    title: str | None,
+    candidates: list[CandidateAggregate],
+) -> CandidateAggregate | None:
+    if not title:
+        return None
+    normalized = _normalize_key(title)
+    for candidate in candidates:
+        if candidate.key == normalized or _normalize_key(candidate.title) == normalized:
+            return candidate
+    return None
+
+
+def _apply_synthesis_gates(
+    *,
+    candidate: CandidateAggregate,
+    recommendation: str | None,
+    score: int | None,
+    source_counts: dict[str, object],
+) -> tuple[str | None, int | None, list[str]]:
+    notes: list[str] = []
+    normalized_recommendation = (recommendation or "").strip().lower()
+    gated_recommendation = recommendation
+    gated_score = score
+
+    if normalized_recommendation in RECOMMENDATION_GATED:
+        if not _has_decision_grade_external_evidence(candidate):
+            gated_recommendation = "revisit_with_evidence_gap"
+            gated_score = min(gated_score if gated_score is not None else candidate.score, 64)
+            notes.append(
+                "Downgraded from focused_experiment because the selected candidate "
+                "does not yet have two independent non-Telegram evidence sources."
+            )
+        if _has_profile_blocking_mismatch(candidate):
+            gated_recommendation = "needs_more_evidence"
+            gated_score = min(gated_score if gated_score is not None else candidate.score, 49)
+            notes.append(
+                "Downgraded because the selected candidate currently mismatches the "
+                "operator profile and needs a closer Python/LLM workflow wedge."
+            )
+
+    if not _source_mix_has_any_external(source_counts):
+        notes.append(
+            "Run-level source mix warning: this report is dominated by Telegram "
+            "seeds; SERP/Reddit/GitHub/store evidence was not available in this run."
+        )
+    return gated_recommendation, gated_score, notes
+
+
+def _append_gate_notes(markdown: str, gate_notes: list[str]) -> str:
+    lines = [markdown.rstrip(), "", "## Source Mix Gate", ""]
+    lines.extend(f"- {note}" for note in gate_notes)
+    return "\n".join(lines)
+
+
+def _source_mix_has_any_external(source_counts: dict[str, object]) -> bool:
+    count = source_counts.get("external_evidence_count")
+    try:
+        return int(count) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _load_operator_profile() -> str:
+    env_path = os.environ.get(OPERATOR_PROFILE_ENV, "").strip()
+    profile_path = (
+        Path(env_path) if env_path else _repo_root() / "config" / "operator_fit_profile.md"
+    )
+    if not profile_path.is_absolute():
+        profile_path = Path.cwd() / profile_path
+    if not profile_path.exists():
+        return (
+            "No operator profile file found. Prefer Python/LLM workflow, research, "
+            "evaluation, guardrail, knowledge, automation, and education-adoption MVPs."
+        )
+    return profile_path.read_text(encoding="utf-8").strip()
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
 def _truncate(value: str, limit: int) -> str:
     value = re.sub(r"\s+", " ", value).strip()
     if len(value) <= limit:
@@ -598,13 +809,21 @@ def _score_candidate(candidate: CandidateAggregate) -> int:
     score += min(len(candidate.channels) * 4, 12)
     score += min(sum(SURFACE_WEIGHTS.get(surface, 6) for surface in candidate.surfaces), 28)
     score += min(_bucket_bonus(candidate.evidence), 18)
+    score += min(_external_evidence_count(candidate.evidence) * 6, 18)
+    score += min(len(_external_source_types(candidate.evidence)) * 6, 18)
+    score += min(len(candidate.profile_fit_flags) * 5, 15)
     if candidate.mvp_scopes:
         score += 8
     if any(record.source_url for record in candidate.evidence):
         score += 6
     score -= min(len(candidate.risk_flags) * 8, 24)
+    score -= min(len(candidate.profile_mismatch_flags) * 12, 36)
+    if _external_evidence_count(candidate.evidence) == 0:
+        score -= 14
     if _has_blocking_gap(candidate):
         score -= 12
+    if _has_profile_blocking_mismatch(candidate):
+        score -= 16
     return max(min(score, 100), 0)
 
 
@@ -626,6 +845,53 @@ def _has_blocking_gap(candidate: CandidateAggregate) -> bool:
     return "copyright" in joined or "private data" in joined or "terms" in joined
 
 
+def _has_decision_grade_external_evidence(candidate: CandidateAggregate) -> bool:
+    return (
+        _external_evidence_count(candidate.evidence) >= 2
+        and len(_external_source_types(candidate.evidence)) >= 2
+    )
+
+
+def _has_profile_blocking_mismatch(candidate: CandidateAggregate) -> bool:
+    return bool(candidate.profile_mismatch_flags) and not (
+        candidate.profile_fit_flags & PROFILE_STACK_FIT_FLAGS
+    )
+
+
+def _external_evidence_count(records: tuple[EvidenceRecord, ...] | list[EvidenceRecord]) -> int:
+    return sum(1 for record in records if record.source_type in EXTERNAL_DEMAND_SOURCE_TYPES)
+
+
+def _external_source_types(
+    records: tuple[EvidenceRecord, ...] | list[EvidenceRecord],
+) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            {
+                record.source_type
+                for record in records
+                if record.source_type in EXTERNAL_DEMAND_SOURCE_TYPES
+            }
+        )
+    )
+
+
+def _profile_fit_flags(text: str) -> set[str]:
+    return {
+        label
+        for keyword, label in PROFILE_FIT_KEYWORDS
+        if keyword in text
+    }
+
+
+def _profile_mismatch_flags(text: str) -> set[str]:
+    return {
+        label
+        for keyword, label in PROFILE_MISMATCH_KEYWORDS
+        if keyword in text
+    }
+
+
 def _is_existing_project(title: str) -> bool:
     return title.strip().lower() in EXISTING_PROJECT_TITLES
 
@@ -643,6 +909,7 @@ def _render_report(
     evidence_count: int,
     quarantined_count: int,
     top_evidence: int,
+    source_counts: dict[str, object],
 ) -> str:
     generated_at = datetime.now(UTC).isoformat()
     if selected is None:
@@ -655,6 +922,10 @@ def _render_report(
                 "",
                 "No usable opportunity seeds were available this week.",
                 f"Imported evidence: {evidence_count}; quarantined rows: {quarantined_count}.",
+                "",
+                "## Source Mix",
+                "",
+                _source_mix_summary(source_counts),
             ]
         ) + "\n"
 
@@ -670,6 +941,14 @@ def _render_report(
         "## Why This Week",
         "",
         _why_this_week(selected),
+        "",
+        "## Source Mix",
+        "",
+        _source_mix_summary(source_counts, selected=selected),
+        "",
+        "## Operator Fit",
+        "",
+        _operator_fit_summary(selected),
         "",
         "## One-Function MVP",
         "",
@@ -737,6 +1016,55 @@ def _why_this_week(candidate: CandidateAggregate) -> str:
         f"from {channels}. Demand surfaces: {surfaces}. The scope is small enough "
         "to validate through a one-week public-data experiment."
     )
+
+
+def _source_mix_summary(
+    source_counts: dict[str, object],
+    *,
+    selected: CandidateAggregate | None = None,
+) -> str:
+    external_types = source_counts.get("external_source_types", ())
+    if isinstance(external_types, str):
+        external_text = external_types
+    else:
+        external_text = ", ".join(str(value) for value in external_types) or "none"
+    external_count = source_counts.get("external_evidence_count", 0)
+    telegram_count = source_counts.get("telegram_seed_evidence_count", 0)
+    selected_external = (
+        ", ".join(_external_source_types(selected.evidence)) if selected is not None else "none"
+    ) or "none"
+    gate = (
+        "decision-grade external evidence present"
+        if selected is not None and _has_decision_grade_external_evidence(selected)
+        else "external evidence gap remains"
+    )
+    source_errors = source_counts.get("source_errors") or {}
+    source_error_text = ""
+    if isinstance(source_errors, dict) and source_errors:
+        source_error_text = (
+            " Source errors: "
+            + ", ".join(f"{key}" for key in sorted(source_errors))
+            + "."
+        )
+    return (
+        f"Run evidence mix: Telegram seed evidence={telegram_count}; "
+        f"external evidence={external_count}; external source types={external_text}. "
+        f"Selected-candidate external source types={selected_external}. Gate: {gate}."
+        f"{source_error_text}"
+    )
+
+
+def _operator_fit_summary(candidate: CandidateAggregate) -> str:
+    fit = ", ".join(sorted(candidate.profile_fit_flags)) or "weak explicit fit signal"
+    mismatch = ", ".join(sorted(candidate.profile_mismatch_flags)) or "none"
+    if _has_profile_blocking_mismatch(candidate):
+        verdict = (
+            "This should not be a build candidate until it is reframed as a "
+            "Python/LLM workflow close to the operator profile."
+        )
+    else:
+        verdict = "The candidate is acceptable only if the MVP stays narrow and close to this fit."
+    return f"Fit signals: {fit}. Mismatch signals: {mismatch}. {verdict}"
 
 
 def _render_evidence_line(index: int, record: EvidenceRecord) -> str:
@@ -837,6 +1165,9 @@ def _candidate_json(candidate: CandidateAggregate) -> dict[str, object]:
         "evidence_count": len(candidate.evidence),
         "surfaces": sorted(candidate.surfaces),
         "channels": sorted(candidate.channels),
+        "external_source_types": list(_external_source_types(candidate.evidence)),
+        "profile_fit_flags": sorted(candidate.profile_fit_flags),
+        "profile_mismatch_flags": sorted(candidate.profile_mismatch_flags),
         "missing_evidence": sorted(candidate.missing_evidence),
         "risk_flags": sorted(candidate.risk_flags),
     }

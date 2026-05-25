@@ -7,7 +7,8 @@ import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
+from urllib.request import Request, urlopen
 
 from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
@@ -21,13 +22,16 @@ class SERPSearchConnector:
 
     def __init__(
         self,
-        fixture_path: Path,
+        fixture_path: Path | None,
         *,
         queries: tuple[str, ...],
         provider: str,
         daily_budget_limit: int,
         per_run_budget_limit: int,
         daily_budget_used: int = 0,
+        api_key: str | None = None,
+        results_per_query: int = 10,
+        timeout_seconds: int = 20,
     ) -> None:
         if not queries:
             raise ValueError("SERP connector requires at least one query")
@@ -39,6 +43,9 @@ class SERPSearchConnector:
         self.daily_budget_limit = daily_budget_limit
         self.per_run_budget_limit = per_run_budget_limit
         self.daily_budget_used = daily_budget_used
+        self.api_key = api_key.strip() if api_key else None
+        self.results_per_query = max(1, min(results_per_query, 20))
+        self.timeout_seconds = timeout_seconds
 
     def collect(
         self,
@@ -66,7 +73,11 @@ class SERPSearchConnector:
                 last_success_at=None,
             )
 
-        payload = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        payload = (
+            json.loads(self.fixture_path.read_text(encoding="utf-8"))
+            if self.fixture_path is not None
+            else self._live_payload(max_queries=remaining_budget)
+        )
         provider = str(payload.get("provider", self.provider)).strip() or self.provider
         seen_fingerprints = _decode_seen_fingerprints(cursor_state)
         next_seen = set(seen_fingerprints)
@@ -129,6 +140,58 @@ class SERPSearchConnector:
             ),
             last_success_at=datetime.now(UTC),
         )
+
+    def _live_payload(self, *, max_queries: int) -> dict[str, object]:
+        if not self.api_key:
+            raise ValueError("SERP live collection requires api_key")
+        searches: list[dict[str, object]] = []
+        for query in self.queries[:max_queries]:
+            params = urlencode(
+                {
+                    "engine": "google",
+                    "q": query,
+                    "api_key": self.api_key,
+                    "num": str(self.results_per_query),
+                    "output": "json",
+                }
+            )
+            request = Request(
+                f"https://serpapi.com/search.json?{params}",
+                headers={"User-Agent": "Demand-to-MVP-Radar/0.1"},
+            )
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            results = []
+            for index, item in enumerate(payload.get("organic_results", ()), start=1):
+                if not isinstance(item, dict):
+                    continue
+                title = str(item.get("title") or "").strip()
+                link = str(item.get("link") or "").strip()
+                snippet = str(item.get("snippet") or item.get("displayed_link") or "").strip()
+                if title and link and snippet:
+                    results.append(
+                        {
+                            "rank": int(item.get("position") or index),
+                            "title": title,
+                            "url": link,
+                            "snippet": snippet,
+                        }
+                    )
+            searches.append(
+                {
+                    "query": query,
+                    "captured_at": datetime.now(UTC).isoformat(),
+                    "provider_metadata": {
+                        "engine": str(payload.get("search_parameters", {}).get("engine", "google")),
+                    },
+                    "results": results,
+                }
+            )
+        return {
+            "provider": self.provider,
+            "captured_at": datetime.now(UTC).isoformat(),
+            "searches": searches,
+        }
 
 
 def _record_from_result(

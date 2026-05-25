@@ -2,7 +2,7 @@
   "run_id": "mvp-weekly-live-sources",
   "sources": [
     {
-      "source_name": "hacker_news_rss_ai_workflow",
+      "source_name": "rss_hn_indie_ai_feeds",
       "source_type": "rss",
       "trust_level": "medium",
       "freshness_window_days": 14,
@@ -10,42 +10,75 @@
       "cursor_support": true,
       "raw_snapshot_policy": "metadata_only",
       "rate_limit_policy": {
-        "requests_per_minute": 6,
+        "requests_per_minute": 8,
         "burst_limit": 2
       },
       "feed_urls": [
         "https://hnrss.org/newest?q=AI%20workflow%20automation",
-        "https://hnrss.org/newest?q=Telegram%20SEO",
+        "https://hnrss.org/newest?q=LLM%20evaluation",
+        "https://hnrss.org/newest?q=agent%20workflow",
+        "https://hnrss.org/newest?q=Telegram%20search",
         "https://hnrss.org/newest?q=developer%20tool%20automation",
-        "https://hnrss.org/newest?q=LLM%20evaluation"
+        "https://hnrss.org/newest?q=Obsidian%20AI"
       ],
-      "timeout_seconds": 15
+      "timeout_seconds": 20
     },
     {
-      "source_name": "github_public_demand_snapshot",
+      "source_name": "github_public_demand_live",
       "source_type": "github_public",
       "trust_level": "medium",
       "freshness_window_days": 30,
-      "enabled": false,
+      "enabled": true,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "credential_env_vars": ["GITHUB_TOKEN"],
+      "rate_limit_policy": {
+        "requests_per_minute": 8,
+        "burst_limit": 2
+      },
+      "queries": [
+        "\"how do I\" \"LLM\" \"workflow\"",
+        "\"AI workflow\" \"manual\" \"issue\"",
+        "\"LLM evaluation\" \"pain\"",
+        "\"guardrails\" \"LLM\" \"production\"",
+        "\"Telegram\" \"search\" \"SEO\"",
+        "\"Obsidian\" \"AI\" \"workflow\"",
+        "\"document processing\" \"LLM\" \"validation\"",
+        "\"lead response\" \"automation\""
+      ],
+      "per_query_limit": 8,
+      "timeout_seconds": 20
+    },
+    {
+      "source_name": "stack_exchange_repeated_questions_live",
+      "source_type": "stack_exchange",
+      "trust_level": "medium",
+      "freshness_window_days": 30,
+      "enabled": true,
       "cursor_support": true,
       "raw_snapshot_policy": "metadata_only",
       "rate_limit_policy": {
-        "requests_per_minute": 10,
-        "burst_limit": 2
+        "requests_per_minute": 6,
+        "burst_limit": 1
       },
-      "fixture_path": "snapshots/github_public_mvp_weekly.json",
+      "sites": ["stackoverflow", "superuser", "webapps"],
+      "tags": ["python", "api", "telegram", "google-sheets", "pdf", "docker"],
       "queries": [
-        "\"how do I\" \"AI workflow\"",
-        "\"Telegram\" \"search\" \"SEO\"",
-        "\"lead response\" \"automation\""
-      ]
+        "LLM evaluation workflow",
+        "telegram channel search",
+        "automate google sheets workflow",
+        "parse PDF to structured data",
+        "webhook human approval"
+      ],
+      "page_size": 6,
+      "timeout_seconds": 20
     },
     {
-      "source_name": "serp_paid_search_intent_snapshot",
+      "source_name": "serp_search_intent_live",
       "source_type": "serp",
       "trust_level": "medium",
       "freshness_window_days": 14,
-      "enabled": false,
+      "enabled": true,
       "cursor_support": true,
       "raw_snapshot_policy": "metadata_only",
       "approval_required": true,
@@ -54,16 +87,116 @@
         "requests_per_minute": 4,
         "burst_limit": 1
       },
-      "fixture_path": "snapshots/serp_mvp_weekly.json",
       "queries": [
-        "telegram channel SEO site generator",
-        "AI workflow automation consultant tool",
-        "lead response SLA automation"
+        "how to automate AI workflow approvals",
+        "LLM evaluation tool for production",
+        "LLM guardrails cost monitoring tool",
+        "Telegram channel searchable website",
+        "Obsidian AI knowledge base workflow",
+        "PDF OCR structured data validation tool",
+        "lead response SLA automation",
+        "AI rollout training checklist for teams"
       ],
       "provider": "serpapi",
-      "daily_budget_limit": 10,
-      "per_run_budget_limit": 3,
-      "daily_budget_used": 0
+      "daily_budget_limit": 20,
+      "per_run_budget_limit": 8,
+      "daily_budget_used": 0,
+      "results_per_query": 8,
+      "timeout_seconds": 20
+    },
+    {
+      "source_name": "youtube_creator_tutorial_demand_live",
+      "source_type": "youtube",
+      "trust_level": "medium",
+      "freshness_window_days": 30,
+      "enabled": true,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "approval_required": true,
+      "credential_env_vars": ["YOUTUBE_API_KEY"],
+      "rate_limit_policy": {
+        "requests_per_minute": 4,
+        "burst_limit": 1
+      },
+      "queries": [
+        "AI workflow automation tutorial",
+        "LLM evaluation production",
+        "Telegram channel SEO",
+        "Obsidian AI knowledge management",
+        "PDF OCR automation workflow",
+        "AI agents business process automation"
+      ],
+      "quota_limit": 10000,
+      "per_run_quota_limit": 600,
+      "quota_used": 0,
+      "results_per_query": 6,
+      "timeout_seconds": 20
+    },
+    {
+      "source_name": "product_hunt_competitor_live",
+      "source_type": "product_hunt",
+      "trust_level": "medium",
+      "freshness_window_days": 30,
+      "enabled": true,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "approval_required": true,
+      "credential_env_vars": ["PRODUCT_HUNT_TOKEN"],
+      "rate_limit_policy": {
+        "requests_per_minute": 4,
+        "burst_limit": 1
+      },
+      "queries": [
+        "ai",
+        "workflow",
+        "automation",
+        "llm",
+        "knowledge",
+        "telegram",
+        "document"
+      ],
+      "per_run_limit": 30,
+      "timeout_seconds": 20
+    },
+    {
+      "source_name": "reddit_demand_live",
+      "source_type": "reddit",
+      "trust_level": "medium",
+      "freshness_window_days": 14,
+      "enabled": true,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "approval_required": true,
+      "credential_env_vars": [
+        "REDDIT_CLIENT_ID",
+        "REDDIT_CLIENT_SECRET",
+        "REDDIT_USER_AGENT"
+      ],
+      "rate_limit_policy": {
+        "requests_per_minute": 4,
+        "burst_limit": 1
+      },
+      "allowed_subreddits": [
+        "SaaS",
+        "entrepreneur",
+        "smallbusiness",
+        "productivity",
+        "LocalLLaMA",
+        "OpenAI",
+        "n8n",
+        "ObsidianMD"
+      ],
+      "queries": [
+        "AI workflow automation pain",
+        "LLM evaluation tool",
+        "manual process automation",
+        "AI agent business workflow",
+        "Obsidian AI workflow",
+        "Telegram channel search",
+        "PDF OCR automation"
+      ],
+      "per_query_limit": 5,
+      "timeout_seconds": 20
     }
   ]
 }

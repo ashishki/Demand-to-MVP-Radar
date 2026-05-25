@@ -8,6 +8,7 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
@@ -19,8 +20,20 @@ MIN_BODY_LENGTH = 20
 class ProductHuntConnector:
     connector_version = "product-hunt-v1"
 
-    def __init__(self, fixture_path: Path) -> None:
+    def __init__(
+        self,
+        fixture_path: Path | None,
+        *,
+        token: str | None = None,
+        queries: tuple[str, ...] = (),
+        per_run_limit: int = 25,
+        timeout_seconds: int = 20,
+    ) -> None:
         self.fixture_path = fixture_path
+        self.token = token.strip() if token else None
+        self.queries = tuple(query.lower() for query in queries if query.strip())
+        self.per_run_limit = max(1, min(per_run_limit, 50))
+        self.timeout_seconds = timeout_seconds
 
     def collect(
         self,
@@ -29,7 +42,11 @@ class ProductHuntConnector:
         run_id: str,
         cursor_state: dict[str, str],
     ) -> LiveConnectorResult:
-        payload = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        payload = (
+            json.loads(self.fixture_path.read_text(encoding="utf-8"))
+            if self.fixture_path is not None
+            else self._live_payload()
+        )
         seen_fingerprints = _decode_seen_fingerprints(cursor_state)
         next_seen = set(seen_fingerprints)
         evidence: list[EvidenceRecord] = []
@@ -74,6 +91,51 @@ class ProductHuntConnector:
             rate_limit_state=RateLimitState(limited=False),
             last_success_at=datetime.now(UTC),
         )
+
+    def _live_payload(self) -> dict[str, object]:
+        if not self.token:
+            raise ValueError("Product Hunt live collection requires token")
+        query = """
+        query RadarPosts($first: Int!) {
+          posts(first: $first, order: NEWEST) {
+            edges {
+              node {
+                id
+                name
+                tagline
+                description
+                url
+                votesCount
+                commentsCount
+                createdAt
+                topics { edges { node { name } } }
+              }
+            }
+          }
+        }
+        """
+        request = Request(
+            "https://api.producthunt.com/v2/api/graphql",
+            data=json.dumps(
+                {"query": query, "variables": {"first": self.per_run_limit}}
+            ).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self.token}",
+                "Content-Type": "application/json",
+                "User-Agent": "Demand-to-MVP-Radar/0.1",
+            },
+            method="POST",
+        )
+        with urlopen(request, timeout=self.timeout_seconds) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        launches = []
+        for edge in payload.get("data", {}).get("posts", {}).get("edges", ()):
+            node = edge.get("node") if isinstance(edge, dict) else None
+            if isinstance(node, dict):
+                launch = _live_post_to_fixture_row(node)
+                if _matches_queries(launch, self.queries):
+                    launches.append(launch)
+        return {"launches": launches}
 
 
 def _launch_record(
@@ -183,6 +245,47 @@ def _topics(row: dict[str, object]) -> tuple[str, ...]:
     if not isinstance(topics, list):
         raise ValueError("Product Hunt topics must be a list")
     return tuple(str(topic).strip() for topic in topics if str(topic).strip())
+
+
+def _live_post_to_fixture_row(row: dict[str, object]) -> dict[str, object]:
+    topics = []
+    topic_edges = (
+        row.get("topics", {}).get("edges", ())
+        if isinstance(row.get("topics"), dict)
+        else ()
+    )
+    for edge in topic_edges:
+        node = edge.get("node") if isinstance(edge, dict) else None
+        if isinstance(node, dict) and str(node.get("name", "")).strip():
+            topics.append(str(node["name"]).strip())
+    name = str(row.get("name") or "").strip()
+    tagline = str(row.get("tagline") or "").strip()
+    body = str(row.get("description") or tagline or name).strip()
+    return {
+        "product_id": str(row.get("id") or name).strip(),
+        "name": name,
+        "url": str(row.get("url") or "").strip(),
+        "tagline": tagline or body,
+        "body": body,
+        "topics": topics,
+        "launch_date": str(row.get("createdAt") or datetime.now(UTC).isoformat()).replace(
+            "Z", "+00:00"
+        ),
+        "captured_at": datetime.now(UTC).isoformat(),
+        "votes_count": int(row.get("votesCount") or 0),
+        "comments_count": int(row.get("commentsCount") or 0),
+        "comments": [],
+    }
+
+
+def _matches_queries(launch: dict[str, object], queries: tuple[str, ...]) -> bool:
+    if not queries:
+        return True
+    text = " ".join(
+        str(launch.get(field, ""))
+        for field in ("name", "tagline", "body")
+    ).lower()
+    return any(query in text for query in queries)
 
 
 def _non_negative_int(row: dict[str, object], field: str) -> int:

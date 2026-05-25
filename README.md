@@ -128,6 +128,23 @@ the configured source collection before synthesis. The weekly report is a
 separate MVP opportunity artifact, not a technical upgrade brief for existing
 repos.
 
+The MVP recommendation is gated by source mix and operator fit:
+
+- Telegram-only ideas cannot become `focused_experiment`; they stay
+  `revisit_with_evidence_gap` / `needs_more_evidence` until public external
+  evidence confirms the same pain.
+- Strong recommendations need at least two non-Telegram evidence items from at
+  least two independent external source types.
+- `config/operator_fit_profile.md` keeps the weekly idea close to the operator's
+  Python/LLM workflow, evaluation, guardrail, knowledge-memory, research, and
+  rollout strengths.
+- `config/mvp_weekly_sources.json` is the production weekly source mix:
+  RSS/HN, GitHub public search, Stack Exchange, SERP, YouTube, Product Hunt,
+  and Reddit. Missing credentials are reported as `source_errors`; enabled
+  weekly sources should not be silently skipped.
+- `config/live_sources.env.example` lists the optional/required live-source
+  secrets for the VPS env file.
+
 Runtime LLM synthesis is opt-in through env:
 
 - `DMR_LLM_PROVIDER=anthropic`

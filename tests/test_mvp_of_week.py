@@ -4,6 +4,9 @@ import json
 import sqlite3
 
 from demand_mvp_radar.cli import main
+from demand_mvp_radar.config import Settings
+from demand_mvp_radar.llm.adapter import FakeLLMProvider
+from demand_mvp_radar.mvp_weekly import run_mvp_of_week
 
 
 def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -> None:
@@ -78,3 +81,55 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert "This Week's Experiment" in report_path.read_text()
     assert run["status"] == "mvp_of_week"
     assert json.loads(run["source_counts"])["telegram_research_agent"] == 2
+
+
+def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp_path) -> None:
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1003",
+                    "captured_at": "2026-05-20T10:00:00+00:00",
+                    "title": "Java plugin demand",
+                    "text": "A Telegram post claims teams need a Java plugin for workflow routing.",
+                    "snippet": "Teams need a Java plugin for workflow routing.",
+                    "source_url": "https://t.me/its_capitan/1003",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation"],
+                    "mvp_shape": "Java Workflow Routing Plugin",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    provider = FakeLLMProvider(
+        json.dumps(
+            {
+                "selected_title": "Java Workflow Routing Plugin",
+                "recommendation": "focused_experiment",
+                "score": 88,
+                "markdown": (
+                    "# MVP of the Week: Java Workflow Routing Plugin\n\n"
+                    "## Why This Week\nTelegram seed only.\n"
+                ),
+            }
+        )
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-gated",
+        llm_provider=provider,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+
+    assert result.recommendation == "needs_more_evidence"
+    assert result.score == 49
+    assert result.source_counts["external_evidence_count"] == 0
+    assert "Source Mix Gate" in report_text
+    assert "does not yet have two independent non-Telegram evidence sources" in report_text
+    assert "operator profile" in report_text
+    assert "Operator fit profile" in provider.calls[0][0]

@@ -8,6 +8,8 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
@@ -21,18 +23,26 @@ class StackExchangeLiveConnector:
 
     def __init__(
         self,
-        fixture_path: Path,
+        fixture_path: Path | None,
         *,
         sites: tuple[str, ...],
         tags: tuple[str, ...],
+        queries: tuple[str, ...] = (),
+        api_key: str | None = None,
+        page_size: int = 10,
+        timeout_seconds: int = 20,
     ) -> None:
         if not sites:
             raise ValueError("Stack Exchange connector requires at least one site")
-        if not tags:
-            raise ValueError("Stack Exchange connector requires at least one tag")
+        if not tags and not queries:
+            raise ValueError("Stack Exchange connector requires at least one tag or query")
         self.fixture_path = fixture_path
         self.sites = sites
         self.tags = tags
+        self.queries = queries
+        self.api_key = api_key.strip() if api_key else None
+        self.page_size = max(1, min(page_size, 50))
+        self.timeout_seconds = timeout_seconds
 
     def collect(
         self,
@@ -41,7 +51,11 @@ class StackExchangeLiveConnector:
         run_id: str,
         cursor_state: dict[str, str],
     ) -> LiveConnectorResult:
-        payload = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        payload = (
+            json.loads(self.fixture_path.read_text(encoding="utf-8"))
+            if self.fixture_path is not None
+            else self._live_payload()
+        )
         if "backoff_seconds" in payload:
             retry_after_seconds = int(payload["backoff_seconds"])
             return LiveConnectorResult(
@@ -101,6 +115,34 @@ class StackExchangeLiveConnector:
             last_success_at=datetime.now(UTC),
         )
 
+    def _live_payload(self) -> dict[str, object]:
+        items: list[dict[str, object]] = []
+        queries = self.queries or tuple(self.tags)
+        for site in self.sites:
+            for query in queries:
+                params = {
+                    "order": "desc",
+                    "sort": "activity",
+                    "site": site,
+                    "q": query,
+                    "pagesize": str(self.page_size),
+                    "filter": "withbody",
+                }
+                if self.api_key:
+                    params["key"] = self.api_key
+                request = Request(
+                    f"https://api.stackexchange.com/2.3/search/advanced?{urlencode(params)}",
+                    headers={"User-Agent": "Demand-to-MVP-Radar/0.1"},
+                )
+                with urlopen(request, timeout=self.timeout_seconds) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                if "backoff" in payload:
+                    return {"backoff_seconds": int(payload["backoff"])}
+                for item in payload.get("items", ()):
+                    if isinstance(item, dict):
+                        items.append(_live_question_to_fixture_row(item, site=site))
+        return {"items": items}
+
 
 def _evidence_from_item(
     row: object,
@@ -149,7 +191,7 @@ def _evidence_from_item(
 def _matches_config(row: object, *, sites: tuple[str, ...], tags: tuple[str, ...]) -> bool:
     if not isinstance(row, dict):
         raise TypeError("Stack Exchange item must be an object")
-    return _required_text(row, "site") in sites and bool(set(_tags(row)) & set(tags))
+    return _required_text(row, "site") in sites and (not tags or bool(set(_tags(row)) & set(tags)))
 
 
 def _item_id(row: object) -> int:
@@ -220,3 +262,19 @@ def _source_reference(row: object, index: int) -> str:
             if isinstance(row.get(field), int):
                 return f"stack_exchange:{row[field]}"
     return f"stack_exchange:row-{index}"
+
+
+def _live_question_to_fixture_row(row: dict[str, object], *, site: str) -> dict[str, object]:
+    body = str(row.get("body") or row.get("title") or "").strip()
+    return {
+        "type": "question",
+        "question_id": int(row["question_id"]),
+        "site": site,
+        "title": str(row.get("title") or f"Stack Exchange question {row['question_id']}"),
+        "body": body,
+        "tags": [str(tag) for tag in row.get("tags", ())],
+        "score": int(row.get("score", 0)),
+        "accepted_answer_id": row.get("accepted_answer_id"),
+        "link": str(row.get("link") or ""),
+        "captured_at": datetime.now(UTC).isoformat(),
+    }
