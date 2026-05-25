@@ -117,6 +117,7 @@ Phase 1-10 завершены и прошли review без stop-ship findings. 
 ```bash
 demand-mvp-radar run --fixture tests/fixtures/weekly_run
 demand-mvp-radar import-sources --fixture tests/fixtures/source_mix
+demand-mvp-radar mvp-of-week --telegram-export ../telegram-research-agent/data/output/opportunity_seeds/2026-W22.json
 demand-mvp-radar health --json
 ```
 

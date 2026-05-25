@@ -13,6 +13,7 @@ from demand_mvp_radar.config import Settings, load_settings
 from demand_mvp_radar.credentials import CredentialRequirement, resolve_credentials
 from demand_mvp_radar.decisions import DecisionValue, record_operator_decision
 from demand_mvp_radar.health import build_live_source_health
+from demand_mvp_radar.mvp_weekly import run_mvp_of_week
 from demand_mvp_radar.pipeline import collect_sources, import_sources, run_weekly_pipeline
 from demand_mvp_radar.review_cockpit import ReviewCockpitConfig
 from demand_mvp_radar.storage.db import connect_database
@@ -73,6 +74,19 @@ def build_parser() -> argparse.ArgumentParser:
     collect_sources_parser.add_argument("--run-id", help="Override the config run ID.")
     collect_sources_parser.add_argument("--data-dir", help="Override the data directory.")
     collect_sources_parser.add_argument("--report-dir", help="Override the report directory.")
+    mvp = subparsers.add_parser(
+        "mvp-of-week",
+        help="Import telegram-research-agent opportunity seeds and write the weekly MVP artifact.",
+    )
+    mvp.add_argument(
+        "--telegram-export",
+        required=True,
+        help="Path to opportunity seed export JSON.",
+    )
+    mvp.add_argument("--run-id", help="Override generated run ID.")
+    mvp.add_argument("--data-dir", help="Override the data directory.")
+    mvp.add_argument("--report-dir", help="Override the report directory.")
+    mvp.add_argument("--top-evidence", type=int, default=5)
     review = subparsers.add_parser(
         "review",
         help="Record a human operator decision for a generated dossier.",
@@ -198,6 +212,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(result.model_dump_json())
         return 0 if result.status == "collected" else 1
+    if args.command == "mvp-of-week":
+        settings = _settings_from_run_args(args)
+        result = run_mvp_of_week(
+            telegram_export=Path(args.telegram_export),
+            settings=settings,
+            run_id=args.run_id,
+            top_evidence=max(1, args.top_evidence),
+        )
+        print(result.model_dump_json())
+        return 0
     if args.command == "review":
         return _run_review_command(args)
     if args.command == "review-cockpit":

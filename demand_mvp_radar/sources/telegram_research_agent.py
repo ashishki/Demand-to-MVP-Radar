@@ -16,6 +16,22 @@ from demand_mvp_radar.storage.repositories import EvidenceRepository
 
 class TelegramResearchAgentBridge:
     source_type = "telegram_research_agent"
+    metadata_fields = (
+        "anti_complexity_note",
+        "bucket",
+        "channel_username",
+        "demand_signal_type",
+        "demand_surfaces",
+        "evidence_strength",
+        "manual_tags",
+        "mvp_shape",
+        "pain_statement",
+        "post_id",
+        "project_names",
+        "signal_score",
+        "target_user",
+        "verification_needed",
+    )
 
     def import_file(
         self,
@@ -77,6 +93,7 @@ class TelegramResearchAgentBridge:
             normalized_text=normalized_text,
             content_hash=content_hash,
             source_fingerprint=f"{self.source_type}:{upstream_id}:{content_hash}",
+            provider_metadata=_provider_metadata(row, self.metadata_fields),
         )
 
     def _write_quarantine(
@@ -122,6 +139,25 @@ def _content_hash(*parts: str) -> str:
         digest.update(part.encode("utf-8"))
         digest.update(b"\0")
     return digest.hexdigest()
+
+
+def _provider_metadata(row: dict[str, Any], fields: tuple[str, ...]) -> dict[str, str]:
+    metadata: dict[str, str] = {}
+    for field in fields:
+        if field not in row or row[field] is None:
+            continue
+        value = row[field]
+        if isinstance(value, str):
+            serialized = value.strip()
+        elif isinstance(value, (bool, int, float)):
+            serialized = str(value)
+        elif isinstance(value, (list, tuple, dict)):
+            serialized = json.dumps(value, ensure_ascii=False, sort_keys=True)
+        else:
+            raise ValueError(f"{field} must be metadata-serializable")
+        if serialized:
+            metadata[field] = serialized
+    return metadata
 
 
 def _source_reference(row: object, index: int) -> str:
