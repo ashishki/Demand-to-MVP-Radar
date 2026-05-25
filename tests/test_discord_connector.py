@@ -125,7 +125,5 @@ def _config() -> LiveSourceConfig:
         raw_snapshot_policy="metadata_only",
         rate_limit_policy=RateLimitPolicy(requests_per_minute=10),
         approval_required=False,
-        credential_requirements=(
-            CredentialRequirement(env_var_name="DISCORD_BOT_TOKEN"),
-        ),
+        credential_requirements=(CredentialRequirement(env_var_name="DISCORD_BOT_TOKEN"),),
     )

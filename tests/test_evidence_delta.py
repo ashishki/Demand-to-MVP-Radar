@@ -58,18 +58,14 @@ def test_delta_report_redacts_private_source_details(tmp_path) -> None:
         as_of=datetime(2026, 5, 20, tzinfo=UTC),
     )
     rendered_refs = " ".join(
-        source_ref
-        for cluster in report.changed_clusters
-        for source_ref in cluster.source_refs
+        source_ref for cluster in report.changed_clusters for source_ref in cluster.source_refs
     )
 
     assert "/home/" not in rendered_refs
     assert "token=" not in rendered_refs
     assert "private_signal.md" not in rendered_refs
     assert "operator_note:redacted" in rendered_refs
-    assert report.redaction_warnings == (
-        "redacted private source reference for operator_note",
-    )
+    assert report.redaction_warnings == ("redacted private source reference for operator_note",)
 
 
 def _build_delta_fixture(tmp_path):

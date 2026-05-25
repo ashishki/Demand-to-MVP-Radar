@@ -142,8 +142,7 @@ def resolve_credentials(
     secret_values = {
         requirement.env_var_name: env_source[requirement.env_var_name]
         for requirement in requirements_tuple
-        if requirement.env_var_name in env_source
-        and requirement.env_var_name not in invalid
+        if requirement.env_var_name in env_source and requirement.env_var_name not in invalid
     }
 
     if invalid:

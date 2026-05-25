@@ -79,18 +79,17 @@ def test_collect_sources_isolates_source_failures(tmp_path, capsys) -> None:
         "SELECT error_counts, source_errors FROM runs WHERE run_id = ?",
         ("collect-run-001",),
     ).fetchone()
-    health = build_health_payload(
-        Settings(data_dir=data_dir, report_dir=tmp_path / "reports")
-    )
+    health = build_health_payload(Settings(data_dir=data_dir, report_dir=tmp_path / "reports"))
 
     assert exit_code == 0
     assert output["evidence_count"] == 1
     assert output["error_counts"]["fixture-failing"] == 1
     assert json.loads(run["error_counts"])["fixture-failing"] == 1
     assert "fixture failure requested" in json.loads(run["source_errors"])["fixture-failing"]
-    assert health["last_source_errors"]["fixture-failing"] == json.loads(run["source_errors"])[
-        "fixture-failing"
-    ]
+    assert (
+        health["last_source_errors"]["fixture-failing"]
+        == json.loads(run["source_errors"])["fixture-failing"]
+    )
 
 
 def test_collect_sources_is_idempotent_by_fingerprint(tmp_path, capsys) -> None:
@@ -107,15 +106,11 @@ def test_collect_sources_is_idempotent_by_fingerprint(tmp_path, capsys) -> None:
     assert main(args) == 0
     first_output = json.loads(capsys.readouterr().out)
     connection = _connect(data_dir / "radar.sqlite3")
-    first_chunk_count = connection.execute(
-        "SELECT COUNT(*) FROM retrieval_chunks"
-    ).fetchone()[0]
+    first_chunk_count = connection.execute("SELECT COUNT(*) FROM retrieval_chunks").fetchone()[0]
 
     assert main(args) == 0
     second_output = json.loads(capsys.readouterr().out)
-    second_chunk_count = connection.execute(
-        "SELECT COUNT(*) FROM retrieval_chunks"
-    ).fetchone()[0]
+    second_chunk_count = connection.execute("SELECT COUNT(*) FROM retrieval_chunks").fetchone()[0]
 
     assert first_output["evidence_count"] == 1
     assert first_output["duplicate_count"] == 0

@@ -150,7 +150,5 @@ def _dossier_payload() -> dict[str, object]:
             }
         ],
         "confidence": "medium",
-        "why_this_may_be_wrong": (
-            "Evidence may overrepresent internal operator workflows.",
-        ),
+        "why_this_may_be_wrong": ("Evidence may overrepresent internal operator workflows.",),
     }

@@ -90,9 +90,7 @@ def test_scoring_applies_source_trust_and_type_caps() -> None:
     )
 
     assert score.components["demand"].value == 42.0
-    assert "1.20 trust-adjusted supporting evidence records" in score.components[
-        "demand"
-    ].rationale
+    assert "1.20 trust-adjusted supporting evidence records" in score.components["demand"].rationale
 
 
 def test_low_trust_stale_support_cannot_trigger_build() -> None:

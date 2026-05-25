@@ -140,9 +140,7 @@ def _live_config(
     credential_env_var: str | None = None,
 ) -> LiveSourceConfig:
     requirements = (
-        (CredentialRequirement(env_var_name=credential_env_var),)
-        if credential_env_var
-        else ()
+        (CredentialRequirement(env_var_name=credential_env_var),) if credential_env_var else ()
     )
     return LiveSourceConfig(
         source_name=source_name,

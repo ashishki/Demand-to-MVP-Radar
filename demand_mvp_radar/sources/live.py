@@ -99,8 +99,7 @@ def _validate_live_evidence_record(record: EvidenceRecord) -> None:
     ]
     if missing_fields:
         raise ValueError(
-            "live evidence record missing required provenance fields: "
-            + ", ".join(missing_fields)
+            "live evidence record missing required provenance fields: " + ", ".join(missing_fields)
         )
 
 

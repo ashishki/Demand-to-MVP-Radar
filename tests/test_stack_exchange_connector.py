@@ -26,7 +26,10 @@ def test_stack_exchange_connector_maps_fixture_to_evidence() -> None:
 
     assert question.title == "How do teams monitor vendor API changelog breaking changes?"
     assert "missing breaking changes" in question.normalized_text
-    assert question.source_url == "https://stackoverflow.com/questions/101/vendor-api-changelog-monitoring"
+    assert (
+        question.source_url
+        == "https://stackoverflow.com/questions/101/vendor-api-changelog-monitoring"
+    )
     assert question.source_site == "stackoverflow"
     assert question.tags == ("api", "changelog", "monitoring")
     assert question.score == 18

@@ -14,9 +14,7 @@ def test_health_reports_live_source_status(tmp_path) -> None:
 
     assert main(["collect-sources", "--config", str(config_path), "--data-dir", str(data_dir)]) == 0
 
-    payload = build_health_payload(
-        Settings(data_dir=data_dir, report_dir=tmp_path / "reports")
-    )
+    payload = build_health_payload(Settings(data_dir=data_dir, report_dir=tmp_path / "reports"))
     source = payload["live_sources"]["fixture-live"]
 
     assert source["enabled"] is True
@@ -65,9 +63,7 @@ def test_health_distinguishes_source_failures_from_system_failure(tmp_path) -> N
 
     assert main(["collect-sources", "--config", str(config_path), "--data-dir", str(data_dir)]) == 0
 
-    payload = build_health_payload(
-        Settings(data_dir=data_dir, report_dir=tmp_path / "reports")
-    )
+    payload = build_health_payload(Settings(data_dir=data_dir, report_dir=tmp_path / "reports"))
 
     assert payload["status"] == "ok"
     assert payload["database"]["status"] == "ok"

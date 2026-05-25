@@ -356,8 +356,7 @@ def _apply_validated_experiment_bonus(
         name="confidence",
         value=round(new_confidence, 2),
         rationale=(
-            f"{current_confidence.rationale}; validated experiment: "
-            f"{outcome.evidence_summary}"
+            f"{current_confidence.rationale}; validated experiment: {outcome.evidence_summary}"
         ),
     )
     total_score = _total_with_updated_components(score, components, config)

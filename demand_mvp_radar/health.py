@@ -119,8 +119,7 @@ def _credential_status(
     resolution = resolve_credentials(
         source_name=source_name,
         requirements=tuple(
-            CredentialRequirement(env_var_name=env_var_name)
-            for env_var_name in credential_env_vars
+            CredentialRequirement(env_var_name=env_var_name) for env_var_name in credential_env_vars
         ),
         env=env,
     )

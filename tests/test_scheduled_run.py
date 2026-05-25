@@ -16,9 +16,9 @@ def test_scheduled_run_template_contains_required_command_and_env() -> None:
     timer = _read(TIMER)
 
     assert "demand-mvp-radar run" in service
-    assert "--fixture \"$DMR_WEEKLY_FIXTURE\"" in service
-    assert "--data-dir \"$DMR_DATA_DIR\"" in service
-    assert "--report-dir \"$DMR_REPORT_DIR\"" in service
+    assert '--fixture "$DMR_WEEKLY_FIXTURE"' in service
+    assert '--data-dir "$DMR_DATA_DIR"' in service
+    assert '--report-dir "$DMR_REPORT_DIR"' in service
     assert "Environment=DMR_DATA_DIR=" in service
     assert "Environment=DMR_REPORT_DIR=" in service
     assert "Environment=DMR_WEEKLY_FIXTURE=" in service

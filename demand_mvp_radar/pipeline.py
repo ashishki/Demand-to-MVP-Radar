@@ -417,9 +417,7 @@ def _source_health_from_result(
         "credential_status": "not_required"
         if not live_config.credential_requirements
         else "available",
-        "last_success_at": result.last_success_at.isoformat()
-        if result.last_success_at
-        else None,
+        "last_success_at": result.last_success_at.isoformat() if result.last_success_at else None,
         "last_collected_at": collected_at.isoformat(),
         "last_error_class": "source_error" if result.quarantined else None,
         "cursor_state": result.cursor_state,
