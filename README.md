@@ -117,9 +117,24 @@ Phase 1-10 завершены и прошли review без stop-ship findings. 
 ```bash
 demand-mvp-radar run --fixture tests/fixtures/weekly_run
 demand-mvp-radar import-sources --fixture tests/fixtures/source_mix
-demand-mvp-radar mvp-of-week --telegram-export ../telegram-research-agent/data/output/opportunity_seeds/2026-W22.json
+demand-mvp-radar mvp-of-week \
+  --telegram-export ../telegram-research-agent/data/output/opportunity_seeds/2026-W22.json \
+  --source-config config/mvp_weekly_sources.json
 demand-mvp-radar health --json
 ```
+
+`mvp-of-week` treats Telegram exports as seed evidence, then optionally runs
+the configured source collection before synthesis. The weekly report is a
+separate MVP opportunity artifact, not a technical upgrade brief for existing
+repos.
+
+Runtime LLM synthesis is opt-in through env:
+
+- `DMR_LLM_PROVIDER=anthropic`
+- `DMR_LLM_API_KEY` or inherited `LLM_API_KEY`
+- `DMR_LLM_MODEL_MVP_WEEKLY=claude-opus-4-7`
+
+Without an enabled provider the command writes a deterministic fallback report.
 
 ## Режим разработки
 

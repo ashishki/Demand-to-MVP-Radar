@@ -442,8 +442,10 @@ Demand-to-MVP-Radar/
 | `DMR_CONFIG_PATH` | Optional config file path for source settings and thresholds. | `config/local.toml` |
 | `DMR_DATABASE_URL` | SQLite database URL. | `sqlite:////srv/openclaw-you/demand-mvp-radar/data/radar.sqlite3` |
 | `DMR_REPORT_DIR` | Directory for Markdown/HTML report outputs. | `/srv/openclaw-you/demand-mvp-radar/reports` |
-| `DMR_LLM_PROVIDER` | LLM provider key used by adapter selection. | `openai` |
+| `DMR_LLM_PROVIDER` | LLM provider key used by adapter selection. Empty disables LLM synthesis. | `anthropic` |
 | `DMR_LLM_API_KEY` | API key for selected LLM provider. | `env-secret` |
+| `DMR_LLM_MODEL_MVP_WEEKLY` | Strong reasoning model for the weekly MVP report. | `claude-opus-4-7` |
+| `DMR_LLM_FALLBACK_MODEL_MVP_WEEKLY` | Fallback model if the primary alias is unavailable. | `claude-opus-4-1-20250805` |
 | `DMR_EMBEDDING_PROVIDER` | Embedding provider key. | `openai` |
 | `DMR_EMBEDDING_API_KEY` | API key for embedding provider if external. | `env-secret` |
 | `DMR_SERP_API_KEY` | Optional search provider key. | `env-secret` |

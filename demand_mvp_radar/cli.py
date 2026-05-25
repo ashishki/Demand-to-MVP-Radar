@@ -87,6 +87,10 @@ def build_parser() -> argparse.ArgumentParser:
     mvp.add_argument("--data-dir", help="Override the data directory.")
     mvp.add_argument("--report-dir", help="Override the report directory.")
     mvp.add_argument("--top-evidence", type=int, default=5)
+    mvp.add_argument(
+        "--source-config",
+        help="Optional live/snapshot source config to collect before MVP synthesis.",
+    )
     review = subparsers.add_parser(
         "review",
         help="Record a human operator decision for a generated dossier.",
@@ -219,6 +223,7 @@ def main(argv: list[str] | None = None) -> int:
             settings=settings,
             run_id=args.run_id,
             top_evidence=max(1, args.top_evidence),
+            source_config=Path(args.source_config) if args.source_config else None,
         )
         print(result.model_dump_json())
         return 0

@@ -8,6 +8,8 @@ import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.sources.base import QuarantinedSourceRow
@@ -21,12 +23,14 @@ class RSSFeedConnector:
 
     def __init__(
         self,
-        feed_paths: tuple[Path, ...],
+        feed_paths: tuple[Path | str, ...],
         *,
         captured_at: datetime | None = None,
+        timeout_seconds: int = 20,
     ) -> None:
         self.feed_paths = feed_paths
         self.captured_at = captured_at
+        self.timeout_seconds = timeout_seconds
 
     def collect(
         self,
@@ -42,7 +46,7 @@ class RSSFeedConnector:
 
         for feed_path in self.feed_paths:
             try:
-                for entry in _parse_feed(feed_path):
+                for entry in _parse_feed(feed_path, timeout_seconds=self.timeout_seconds):
                     record = _record_from_entry(
                         entry,
                         config=config,
@@ -54,7 +58,7 @@ class RSSFeedConnector:
                     if record.source_fingerprint in seen_fingerprints:
                         continue
                     evidence.append(record)
-            except (ET.ParseError, KeyError, TypeError, ValueError) as error:
+            except (ET.ParseError, KeyError, OSError, TypeError, ValueError) as error:
                 quarantined.append(
                     QuarantinedSourceRow(
                         source_reference=str(feed_path),
@@ -92,13 +96,23 @@ class FeedEntry:
         self.published_at = published_at
 
 
-def _parse_feed(feed_path: Path) -> tuple[FeedEntry, ...]:
-    root = ET.parse(feed_path).getroot()
+def _parse_feed(feed_path: Path | str, *, timeout_seconds: int) -> tuple[FeedEntry, ...]:
+    root = _load_feed_root(feed_path, timeout_seconds=timeout_seconds)
     if root.tag == "rss":
         return _parse_rss(root)
     if root.tag == f"{ATOM_NS}feed":
         return _parse_atom(root)
     raise ValueError(f"unsupported feed root: {root.tag}")
+
+
+def _load_feed_root(feed_path: Path | str, *, timeout_seconds: int) -> ET.Element:
+    location = str(feed_path)
+    parsed = urlparse(location)
+    if parsed.scheme in {"http", "https"}:
+        request = Request(location, headers={"User-Agent": "demand-mvp-radar"})
+        with urlopen(request, timeout=timeout_seconds) as response:
+            return ET.fromstring(response.read())
+    return ET.parse(Path(location)).getroot()
 
 
 def _parse_rss(root: ET.Element) -> tuple[FeedEntry, ...]:

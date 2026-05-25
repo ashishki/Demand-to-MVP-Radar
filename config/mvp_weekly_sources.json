@@ -1,0 +1,69 @@
+{
+  "run_id": "mvp-weekly-live-sources",
+  "sources": [
+    {
+      "source_name": "hacker_news_rss_ai_workflow",
+      "source_type": "rss",
+      "trust_level": "medium",
+      "freshness_window_days": 14,
+      "enabled": true,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "rate_limit_policy": {
+        "requests_per_minute": 6,
+        "burst_limit": 2
+      },
+      "feed_urls": [
+        "https://hnrss.org/newest?q=AI%20workflow%20automation",
+        "https://hnrss.org/newest?q=Telegram%20SEO",
+        "https://hnrss.org/newest?q=developer%20tool%20automation",
+        "https://hnrss.org/newest?q=LLM%20evaluation"
+      ],
+      "timeout_seconds": 15
+    },
+    {
+      "source_name": "github_public_demand_snapshot",
+      "source_type": "github_public",
+      "trust_level": "medium",
+      "freshness_window_days": 30,
+      "enabled": false,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "rate_limit_policy": {
+        "requests_per_minute": 10,
+        "burst_limit": 2
+      },
+      "fixture_path": "snapshots/github_public_mvp_weekly.json",
+      "queries": [
+        "\"how do I\" \"AI workflow\"",
+        "\"Telegram\" \"search\" \"SEO\"",
+        "\"lead response\" \"automation\""
+      ]
+    },
+    {
+      "source_name": "serp_paid_search_intent_snapshot",
+      "source_type": "serp",
+      "trust_level": "medium",
+      "freshness_window_days": 14,
+      "enabled": false,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "approval_required": true,
+      "credential_env_vars": ["SERPAPI_API_KEY"],
+      "rate_limit_policy": {
+        "requests_per_minute": 4,
+        "burst_limit": 1
+      },
+      "fixture_path": "snapshots/serp_mvp_weekly.json",
+      "queries": [
+        "telegram channel SEO site generator",
+        "AI workflow automation consultant tool",
+        "lead response SLA automation"
+      ],
+      "provider": "serpapi",
+      "daily_budget_limit": 10,
+      "per_run_budget_limit": 3,
+      "daily_budget_used": 0
+    }
+  ]
+}

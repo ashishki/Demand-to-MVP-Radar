@@ -483,11 +483,14 @@ def _collect_configured_live_source(
             },
         )
     if live_config.source_type == "rss":
-        fixture_paths = tuple(
+        feed_locations = tuple(
             _resolve_fixture_path(config_dir, path)
             for path in source_config.get("fixture_paths", ())
-        )
-        return RSSFeedConnector(fixture_paths).collect(
+        ) + tuple(str(url) for url in source_config.get("feed_urls", ()))
+        return RSSFeedConnector(
+            feed_locations,
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
+        ).collect(
             live_config,
             run_id=run_id,
             cursor_state={
