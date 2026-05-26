@@ -37,14 +37,14 @@
         "burst_limit": 2
       },
       "queries": [
-        "\"how do I\" \"LLM\" \"workflow\"",
-        "\"AI workflow\" \"manual\" \"issue\"",
-        "\"LLM evaluation\" \"pain\"",
-        "\"guardrails\" \"LLM\" \"production\"",
-        "\"Telegram\" \"search\" \"SEO\"",
-        "\"Obsidian\" \"AI\" \"workflow\"",
-        "\"document processing\" \"LLM\" \"validation\"",
-        "\"lead response\" \"automation\""
+        "\"how do I\" \"LLM\" \"workflow\" is:issue",
+        "\"AI workflow\" \"manual\" \"issue\" is:issue",
+        "\"LLM evaluation\" \"pain\" is:issue",
+        "\"guardrails\" \"LLM\" \"production\" is:issue",
+        "\"Telegram\" \"search\" \"SEO\" is:issue",
+        "\"Obsidian\" \"AI\" \"workflow\" is:issue",
+        "\"document processing\" \"LLM\" \"validation\" is:issue",
+        "\"lead response\" \"automation\" is:issue"
       ],
       "per_query_limit": 8,
       "timeout_seconds": 20
