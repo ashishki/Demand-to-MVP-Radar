@@ -25,6 +25,7 @@ This file is the session handoff and state authority for Codex implementation ro
 - Ruff: configured; `ruff check demand_mvp_radar/ tests/ scripts/` and `ruff format --check demand_mvp_radar/ tests/ scripts/` pass locally.
 - Last CI: workflow configured; remote run not yet observed
 - Last updated: 2026-05-23
+- VPS cognition vault: `/srv/codex-entropy/repos/product-3/engineering-cognition-vault` is a downstream navigation layer; canonical evidence, evals, and decisions stay in this repo first.
 - Session tokens (approx): not yet tracked
 - Cumulative phase tokens (approx): not yet tracked
 
@@ -35,6 +36,8 @@ This file is the session handoff and state authority for Codex implementation ro
 - Decision log: `docs/DECISION_LOG.md`
 - Implementation journal: `docs/IMPLEMENTATION_JOURNAL.md`
 - Evidence index: `docs/EVIDENCE_INDEX.md`
+- Cognition manifest: `docs/COGNITION_MANIFEST.md`
+- VPS cognition vault policy: `docs/VPS_COGNITION_VAULT.md`
 - Implementation reference map: `docs/IMPLEMENTATION_REFERENCE_MAP.md`
 - Retrieval evaluation: `docs/retrieval_eval.md`
 - Tool-use evaluation: `docs/tool_eval.md`

@@ -23,6 +23,14 @@ Repo-local map for source-grounded market evidence, decision memory, retrieval/t
 - Generated indexes, Obsidian notes, and context packets are convenience surfaces only.
 - No opportunity, source trust, or production decision is authoritative unless backed by canonical evidence.
 
+## Shared VPS Cognition Vault
+
+- Vault path: `/srv/codex-entropy/repos/product-3/engineering-cognition-vault`.
+- Live checkout on this VPS: `/srv/openclaw-you/workspace/Demand-to-MVP-Radar`.
+- Repo-local docs remain the source of truth for architecture, prompts, runbooks, tasks, evals, findings, and decisions.
+- The vault is a downstream/navigation layer for cross-project discovery and context packets; do not hand-write canonical findings, evals, or decisions there.
+- Operational policy: `docs/VPS_COGNITION_VAULT.md`.
+
 ## Project Identity
 
 | Field | Value |
