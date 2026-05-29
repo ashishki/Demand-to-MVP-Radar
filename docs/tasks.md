@@ -2240,3 +2240,111 @@ Files:
 Context-Refs:
   - docs/adr/ADR_HOSTED_SAAS_DECISION.md
   - docs/PRIVATE_BETA_ONBOARDING.md
+
+---
+
+## Phase 18 - VPS Report Quality And Telegram Intelligence Bridge
+
+Business goal: turn the live VPS weekly report into a trustworthy operator
+artifact and prepare the first bridge to Telegram channel intelligence without
+overbuilding a SaaS UI.
+
+## T65: First VPS Weekly Report Review
+
+Owner: human + codex
+Phase: 18
+Type: report eval
+Depends-On: T64
+
+Objective: |
+  Review the first VPS-generated weekly report and classify every section by
+  usefulness, evidence quality, noise, and actionability.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Review records useful, noisy, missing-evidence, too-broad, and actionable sections."
+    test: "manual artifact review"
+  - id: AC-2
+    description: "Review produces at least one concrete report-quality change for the next run."
+    test: "manual artifact review"
+
+Files:
+  - docs/audit/FIRST_VPS_WEEKLY_REPORT_REVIEW.md
+  - reports/
+  - docs/CODEX_PROMPT.md
+
+Context-Refs:
+  - docs/OPERATOR_RUNBOOK.md
+  - docs/SOLO_EVIDENCE_LEDGER.md
+
+## T66: Report Quality Evaluation Artifact
+
+Owner: codex
+Phase: 18
+Type: report eval
+Depends-On: T65
+
+Objective: |
+  Add a report-quality evaluation artifact that tracks whether weekly reports
+  are becoming more useful to the operator.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "docs/report_eval.md tracks useful signal rate, evidence quality, duplicate/noise rate, source diversity, and recommendation clarity."
+    test: "manual artifact review"
+  - id: AC-2
+    description: "Each metric has an explicit scoring rule and does not imply commercial proof."
+    test: "manual artifact review"
+
+Files:
+  - docs/report_eval.md
+  - docs/EVIDENCE_INDEX.md
+
+## T67: Source Trust And Repeated Signal Scoring
+
+Owner: codex
+Phase: 18
+Type: retrieval eval
+Depends-On: T66
+
+Objective: |
+  Improve source trust scoring and repeated-signal tracking so reports separate
+  interesting noise from build-worthy opportunities.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Source records can track repeated signals, rejection reasons, and evidence density."
+    test: "tests/unit/test_source_trust.py::test_source_trust_records_repeated_signals"
+  - id: AC-2
+    description: "Report output separates interesting signals from build-worthy recommendations."
+    test: "tests/integration/test_report_quality.py::test_report_separates_interest_from_build_recommendation"
+
+Files:
+  - demand_mvp_radar/
+  - tests/unit/test_source_trust.py
+  - tests/integration/test_report_quality.py
+  - docs/report_eval.md
+
+## T68: Telegram Channel Intelligence Bridge
+
+Owner: human + codex
+Phase: 18
+Type: portfolio handoff
+Depends-On: T65, T67
+
+Objective: |
+  Define the first safe bridge from Demand Radar to Telegram channel
+  intelligence without turning the radar into a generic Telegram scraper.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Bridge document defines approved channel source policy, evidence requirements, and report fields."
+    test: "manual artifact review"
+  - id: AC-2
+    description: "Bridge explicitly distinguishes Demand Radar opportunity signals from Telegram trader/source intelligence."
+    test: "manual artifact review"
+
+Files:
+  - docs/handoffs/telegram_channel_intelligence_bridge.md
+  - docs/SOURCE_CATALOG.md
+  - docs/CODEX_PROMPT.md
