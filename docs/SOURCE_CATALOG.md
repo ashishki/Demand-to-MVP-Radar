@@ -93,6 +93,38 @@ setup.
 
 ---
 
+## Telegram Channel Intelligence Bridge Policy
+
+The first safe bridge to Telegram channel intelligence is documented in
+`docs/handoffs/telegram_channel_intelligence_bridge.md`.
+
+Demand-to-MVP Radar may use Telegram-derived records only as opportunity-signal
+evidence unless a human approves a narrower source-quality task. Telegram-only
+evidence can seed `needs_more_evidence` or `revisit_with_evidence_gap`, but it
+cannot justify build-worthy recommendations without non-Telegram corroboration.
+
+Allowed bridge inputs:
+
+- sanitized `telegram-research-agent` exports;
+- public or operator-owned Telegram channel references approved for a specific
+  data window;
+- redacted source-quality summaries with no credentials or private raw exports.
+
+Forbidden bridge uses:
+
+- generic Telegram scraping;
+- private, paid, or credentialed channel collection without explicit approval;
+- public publishing, outreach, trading, or channel/source claims from Radar
+  opportunity evidence;
+- treating Demand Radar handoffs as approval for Telegram trader/source
+  intelligence.
+
+The bridge report must preserve channel approval status, data window, evidence
+count, repeated signal count, evidence density, rejection reasons, missing
+corroboration, and privacy checks.
+
+---
+
 ## Source Implementation Order
 
 ### Wave 1 - Owned and Low-Risk

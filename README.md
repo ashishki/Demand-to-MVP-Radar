@@ -78,9 +78,9 @@ LLM используется только ограниченно:
 
 ## Текущий статус
 
-Phase 1-17 завершены и прошли review без stop-ship findings. Planned task list complete; private beta and hosted/SaaS remain blocked until four real or properly backfilled solo evidence runs prove repeated personal value, useful human decisions, source value, backup verification, and support burden.
+Phase 1-19 завершены и прошли review без stop-ship findings. Planned task list complete; private beta and hosted/SaaS remain blocked until four real or properly backfilled solo evidence runs prove repeated personal value, useful human decisions, source value, backup verification, and support burden.
 
-Текущий baseline: 193 passing tests. Локально проходят:
+Текущий baseline: 198 passing tests. Локально проходят:
 
 - `ruff check demand_mvp_radar/ tests/ scripts/`
 - `ruff format --check demand_mvp_radar/ tests/ scripts/`
@@ -120,6 +120,8 @@ Phase 1-17 завершены и прошли review без stop-ship findings. 
 - solo open-source research protocol and four-run evidence ledger
 - portfolio-fit taxonomy, public-safe showcase opportunity report, and Lead Response SLA handoff pack
 - solo evidence readiness review that keeps private beta and hosted/SaaS blocked
+- first VPS weekly artifact review, report-quality eval metrics, deterministic source-trust/repeated-signal records, and Telegram channel intelligence bridge policy
+- deterministic Telegram digest-to-Radar seed adapter and first true local `mvp-of-week` report with no-count ledger status
 - GitHub Actions workflow for install, ruff check, format check, and pytest
 
 Пример локального запуска:
@@ -130,6 +132,9 @@ demand-mvp-radar import-sources --fixture tests/fixtures/source_mix
 demand-mvp-radar mvp-of-week \
   --telegram-export ../telegram-research-agent/data/output/opportunity_seeds/2026-W22.json \
   --source-config config/mvp_weekly_sources.json
+demand-mvp-radar digest-to-seeds \
+  --digest ../telegram-research-agent/data/output/digests/2026-W14.json \
+  --output data/phase19/2026-W14-radar-seeds.json
 demand-mvp-radar lead-sla-report --input tests/fixtures/lead_sla/open_proxy_leads.csv --output reports/private/lead_sla_open_proxy_report.md --sla-minutes 5 --hash-lead-id
 demand-mvp-radar health --json
 ```
@@ -146,6 +151,9 @@ The MVP recommendation is gated by source mix and operator fit:
   evidence confirms the same pain.
 - Strong recommendations need at least two non-Telegram evidence items from at
   least two independent external source types.
+- Weekly reports expose Decision Gate, Source Trust And Repeated Signals,
+  Build-Worthy Recommendations, and Interesting Signals sections so repeated
+  source noise is visible before build-like recommendations.
 - `config/operator_fit_profile.md` keeps the weekly idea close to the operator's
   Python/LLM workflow, evaluation, guardrail, knowledge-memory, research, and
   rollout strengths.

@@ -19,6 +19,7 @@ from demand_mvp_radar.models import EvidenceRecord
 from demand_mvp_radar.pipeline import CollectSourcesResult, collect_sources
 from demand_mvp_radar.reports.markdown import write_markdown_report
 from demand_mvp_radar.retrieval.ingestion import build_corpus
+from demand_mvp_radar.source_trust import build_source_trust_records
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
@@ -443,6 +444,9 @@ def _source_counts(
     counts["telegram_seed_evidence_count"] = sum(
         1 for record in records if record.source_type == "telegram_research_agent"
     )
+    counts["source_trust_records"] = tuple(
+        record.as_dict() for record in build_source_trust_records(records)
+    )
     if collect_result is not None:
         counts["configured_sources"] = collect_result.source_counts
         counts["skipped_sources"] = collect_result.skipped_sources
@@ -502,6 +506,12 @@ def _synthesize_or_render(
         markdown = f"# MVP of the Week: {selected_title or selected.title}\n\n{markdown}"
     if gate_notes:
         markdown = _append_gate_notes(markdown, gate_notes)
+    markdown = _append_report_quality_sections(
+        markdown,
+        source_counts=source_counts,
+        selected=gate_candidate,
+        candidates=candidates,
+    )
     return (
         markdown.rstrip() + "\n",
         selected_title,
@@ -613,9 +623,10 @@ def _build_synthesis_prompt(
         "",
         "Markdown requirements:",
         (
-            "- Include sections: Why This Week, Source Mix, Operator Fit, "
-            "One-Function MVP, Evidence, Missing Evidence, Risks, This Week "
-            "Experiment, Anti-Complexity Guardrail."
+            "- Include sections: Why This Week, Source Mix, Decision Gate, "
+            "Source Trust And Repeated Signals, Build-Worthy Recommendations, "
+            "Interesting Signals, Operator Fit, One-Function MVP, Evidence, "
+            "Missing Evidence, Risks, This Week Experiment, Anti-Complexity Guardrail."
         ),
         "- Evidence section must cite only provided evidence IDs like [E1].",
         (
@@ -741,6 +752,47 @@ def _apply_synthesis_gates(
 def _append_gate_notes(markdown: str, gate_notes: list[str]) -> str:
     lines = [markdown.rstrip(), "", "## Source Mix Gate", ""]
     lines.extend(f"- {note}" for note in gate_notes)
+    return "\n".join(lines)
+
+
+def _append_report_quality_sections(
+    markdown: str,
+    *,
+    source_counts: dict[str, object],
+    selected: CandidateAggregate,
+    candidates: list[CandidateAggregate],
+) -> str:
+    existing = markdown.lower()
+    lines = [markdown.rstrip()]
+    if "## decision gate" not in existing:
+        lines.extend(
+            [
+                "",
+                "## Decision Gate",
+                "",
+                _decision_gate_summary(source_counts, selected=selected),
+            ]
+        )
+    if "## source trust and repeated signals" not in existing:
+        lines.extend(
+            [
+                "",
+                "## Source Trust And Repeated Signals",
+                "",
+                *_source_trust_lines(source_counts),
+            ]
+        )
+    if "## build-worthy recommendations" not in existing:
+        lines.extend(
+            [
+                "",
+                "## Build-Worthy Recommendations",
+                "",
+                *_build_worthy_lines(candidates),
+            ]
+        )
+    if "## interesting signals" not in existing:
+        lines.extend(["", "## Interesting Signals", "", *_interesting_signal_lines(candidates)])
     return "\n".join(lines)
 
 
@@ -929,6 +981,22 @@ def _render_report(
         "",
         _source_mix_summary(source_counts, selected=selected),
         "",
+        "## Decision Gate",
+        "",
+        _decision_gate_summary(source_counts, selected=selected),
+        "",
+        "## Source Trust And Repeated Signals",
+        "",
+        *_source_trust_lines(source_counts),
+        "",
+        "## Build-Worthy Recommendations",
+        "",
+        *_build_worthy_lines(candidates),
+        "",
+        "## Interesting Signals",
+        "",
+        *_interesting_signal_lines(candidates),
+        "",
         "## Operator Fit",
         "",
         _operator_fit_summary(selected),
@@ -1033,6 +1101,127 @@ def _source_mix_summary(
         f"Selected-candidate external source types={selected_external}. Gate: {gate}."
         f"{source_error_text}"
     )
+
+
+def _decision_gate_summary(
+    source_counts: dict[str, object],
+    *,
+    selected: CandidateAggregate,
+) -> str:
+    telegram_count = source_counts.get("telegram_seed_evidence_count", "missing")
+    external_count = source_counts.get("external_evidence_count", "missing")
+    external_types = source_counts.get("external_source_types", "missing")
+    if not isinstance(external_types, str):
+        external_types = ", ".join(str(value) for value in external_types) or "none"
+    repeated_signal_count = _selected_repeated_signal_count(source_counts, selected=selected)
+    missing_evidence = ", ".join(sorted(selected.missing_evidence)) or "none"
+    allowed = "yes" if selected.recommendation == "focused_experiment" else "no"
+    reason = _decision_gate_reason(selected, external_count=external_count)
+    return "\n".join(
+        [
+            f"- Telegram seed evidence: {telegram_count}",
+            f"- External evidence: {external_count}",
+            f"- External source types: {external_types}",
+            f"- Repeated signal count: {repeated_signal_count}",
+            f"- Missing evidence: {missing_evidence}",
+            f"- Recommendation allowed: {allowed}",
+            f"- Reason: {reason}",
+        ]
+    )
+
+
+def _selected_repeated_signal_count(
+    source_counts: dict[str, object],
+    *,
+    selected: CandidateAggregate,
+) -> int:
+    selected_source_types = {record.source_type for record in selected.evidence}
+    trust_records = source_counts.get("source_trust_records") or ()
+    if not isinstance(trust_records, tuple | list):
+        return 0
+    total = 0
+    for record in trust_records:
+        if not isinstance(record, dict) or record.get("source_type") not in selected_source_types:
+            continue
+        try:
+            total += int(record.get("repeated_signal_count", 0))
+        except (TypeError, ValueError):
+            continue
+    return total
+
+
+def _decision_gate_reason(
+    selected: CandidateAggregate,
+    *,
+    external_count: object,
+) -> str:
+    if selected.recommendation == "focused_experiment":
+        return "focused_experiment"
+    if selected.missing_evidence:
+        if "non-Telegram public evidence for the same pain" in selected.missing_evidence:
+            return "source_mix_gate"
+        return "insufficient_evidence"
+    if _has_profile_blocking_mismatch(selected):
+        return "operator_fit_gate"
+    try:
+        if int(external_count) <= 0:
+            return "source_mix_gate"
+    except (TypeError, ValueError):
+        return "missing_gate_fields"
+    return "insufficient_evidence"
+
+
+def _source_trust_lines(source_counts: dict[str, object]) -> list[str]:
+    records = source_counts.get("source_trust_records") or ()
+    if not isinstance(records, tuple | list) or not records:
+        return ["- No source trust records available."]
+    lines = []
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        reasons = record.get("rejection_reasons") or ()
+        if isinstance(reasons, str):
+            reason_text = reasons
+        else:
+            reason_text = ", ".join(str(reason) for reason in reasons) or "none"
+        lines.append(
+            "- "
+            f"{record.get('source_name', record.get('source_type', 'unknown'))}: "
+            f"evidence={record.get('evidence_count', 0)}, "
+            f"unique_signals={record.get('unique_signal_count', 0)}, "
+            f"repeated_signals={record.get('repeated_signal_count', 0)}, "
+            f"evidence_density={record.get('evidence_density', 0)}; "
+            f"rejection_reasons={reason_text}"
+        )
+    return lines or ["- No source trust records available."]
+
+
+def _build_worthy_lines(candidates: list[CandidateAggregate]) -> list[str]:
+    build_worthy = [
+        candidate for candidate in candidates if candidate.recommendation == "focused_experiment"
+    ]
+    if not build_worthy:
+        return ["- No build-worthy recommendations passed the Decision Gate."]
+    return [
+        f"- {candidate.title}: {candidate.score}/100, {len(candidate.evidence)} evidence item(s)"
+        for candidate in build_worthy
+    ]
+
+
+def _interesting_signal_lines(candidates: list[CandidateAggregate]) -> list[str]:
+    interesting = [
+        candidate for candidate in candidates if candidate.recommendation != "focused_experiment"
+    ]
+    if not interesting:
+        return ["- No downgraded interesting signals this week."]
+    lines = []
+    for candidate in interesting:
+        missing = ", ".join(sorted(candidate.missing_evidence)) or "none"
+        lines.append(
+            f"- {candidate.title}: {candidate.score}/100, {candidate.recommendation}; "
+            f"missing={missing}"
+        )
+    return lines
 
 
 def _operator_fit_summary(candidate: CandidateAggregate) -> str:

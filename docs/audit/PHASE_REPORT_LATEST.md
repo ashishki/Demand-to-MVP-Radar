@@ -1,60 +1,74 @@
-# Phase 17 Report - Solo Evidence Operating Loop
+# Phase 19 Report - True Radar Weekly Report Operating Loop
 
-Date: 2026-05-23
+Date: 2026-05-29
+Status: DONE
+Health: OK
 
-## What Was Built
+## What Changed
 
-Phase 17 is complete. T58 repaired formatter drift and restored the local check baseline.
+Phase 19 converted the Phase 18 report-quality work into a concrete operating
+loop.
 
-T59 added the solo open-source research protocol for public/operator-owned evidence collection, source registers, claim labels, and forbidden sources.
+T69 added `demand_mvp_radar/telegram_digest.py` and the `digest-to-seeds` CLI
+command. The adapter converts sanitized Telegram weekly digest JSON into the
+existing `mvp-of-week` seed export format without network access, credentials,
+or source-trust policy changes.
 
-T60 added the four-run solo evidence ledger and runbook linkage, keeping real/backfilled run records separate from fixture/demo runs.
+T70 generated the first true local Radar weekly report from
+`../telegram-research-agent/data/output/digests/2026-W14.json`. The generated
+artifact is `reports/mvp_of_week/mvp-weekly-2026-W14-radar.md`; it includes
+Decision Gate, Source Trust And Repeated Signals, Build-Worthy Recommendations,
+and Interesting Signals sections.
 
-T61 added typed portfolio-fit labels, deterministic decision guidance, and workflow rules that reject off-strategy opportunities unless strategy changes.
+T71 scored the report in `docs/report_eval.md` and updated
+`docs/SOLO_EVIDENCE_LEDGER.md`. Run 4 is useful pipeline evidence, but it does
+not count toward the four-run readiness gate because the source mix is
+Telegram-only and external evidence is 0.
 
-T62 produced the public-safe portfolio opportunity showcase report with five opportunities, source register, claim labels, missing evidence, and a selected 10-day Lead Response SLA experiment candidate.
-
-T63 produced the Lead Response SLA Gap Radar handoff pack for a receiving project, with scope limits that block outreach, CRM mutation, hosted dashboards, and paid/credentialed integrations.
-
-T64 produced the solo evidence readiness review. Verdict: `CONTINUE PERSONAL EVIDENCE CYCLE`; private beta and hosted/SaaS remain blocked.
+T72 created `docs/audit/PHASE19_OPERATING_DECISION.md`. The next operating step
+is public corroboration research for Agent Instruction Conflict Review. Private
+beta, hosted/SaaS, outreach, publishing, paid sources, credentialed collection,
+private scraping, and scoring-threshold changes remain blocked.
 
 ## Test Delta
 
-Baseline moved from 184 passing tests before Phase 17 to 186 passing tests after T64.
-
-Current local checks:
-
-- `.venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/` -> pass
-- `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
-- `.venv/bin/python -m pytest tests/ -q` -> 186 passed
+- Before Phase 19: 195 passing tests.
+- After Phase 19: 198 passing tests.
+- Ruff: `ruff check demand_mvp_radar/ tests/ scripts/` passes.
 
 ## Review Result
 
-Phase 17 deep review Cycle 18 completed with Stop-Ship: No.
+Deep review Cycle 20 passed.
 
-Findings:
+| Severity | Count |
+|---|---:|
+| P0 | 0 |
+| P1 | 0 |
+| P2 | 0 |
 
-- P0: 0
-- P1: 0
-- P2: 1 closed (`ARCH-1`, architecture docs now list the Phase 17 research/readiness artifacts)
+Stop-Ship: No.
 
-Archive:
+## Open Risk
 
-- `docs/archive/PHASE17_REVIEW.md`
-- `docs/audit/AUDIT_INDEX.md`
+The first true Radar weekly report is still Telegram-seeded only. It has no
+external source family, no public corroboration, and no human-owned useful
+decision. It proves the local report loop, not market demand.
 
-## Health Verdict
+## Next
 
-OK.
-
-The implementation remains local-first and advisory-only. The project has stronger evidence discipline and a public-safe handoff path, but not enough real operating evidence for private beta or hosted/SaaS work.
-
-## Next Task
-
-No implementation tasks are queued. The authoritative task graph is complete through T64.
-
-The next useful work is operational: run the solo evidence cycle, fill the ledger with real/backfilled public/operator-owned runs, record useful human decisions, and verify source value, backups, and support burden.
+The current task graph is complete through T72. The next task graph should start
+with public corroboration research for Agent Instruction Conflict Review or a
+source-collection improvement that adds non-Telegram public evidence before the
+next `mvp-of-week` run.
 
 ## Notification Summary
 
-Phase 17 complete. Built solo research protocol, evidence ledger, portfolio taxonomy, showcase report, Lead Response SLA handoff, and readiness review. Tests: 184->186 pass. Review: Stop-Ship No, P0 0, P1 0, P2 1 closed. Next: operate solo evidence cycle.
+```text
+Ph19 True Radar Weekly Loop DONE
+Built: digest-to-seeds, true mvp-of-week artifact, report eval, no-count ledger,
+operating decision
+Tests: 195->198 pass
+Issues: P1:0 P2:0
+Health: OK
+Next: Public corroboration research for Agent Instruction Conflict Review
+```

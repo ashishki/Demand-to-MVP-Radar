@@ -22,6 +22,7 @@ from demand_mvp_radar.review_cockpit import ReviewCockpitConfig
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
 from demand_mvp_radar.storage.repositories import DecisionRepository
+from demand_mvp_radar.telegram_digest import convert_digest_to_seed_export
 
 REVIEW_DECISIONS: tuple[DecisionValue, ...] = (
     "build",
@@ -94,6 +95,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-config",
         help="Optional live/snapshot source config to collect before MVP synthesis.",
     )
+    digest_to_seeds = subparsers.add_parser(
+        "digest-to-seeds",
+        help="Convert a Telegram weekly digest JSON into Radar opportunity seed JSON.",
+    )
+    digest_to_seeds.add_argument("--digest", required=True, help="Path to digest JSON.")
+    digest_to_seeds.add_argument("--output", required=True, help="Path to write seed JSON.")
     review = subparsers.add_parser(
         "review",
         help="Record a human operator decision for a generated dossier.",
@@ -244,6 +251,10 @@ def main(argv: list[str] | None = None) -> int:
             source_config=Path(args.source_config) if args.source_config else None,
         )
         print(result.model_dump_json())
+        return 0
+    if args.command == "digest-to-seeds":
+        result = convert_digest_to_seed_export(Path(args.digest), Path(args.output))
+        print(json.dumps(result.as_dict()))
         return 0
     if args.command == "review":
         return _run_review_command(args)

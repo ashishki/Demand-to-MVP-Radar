@@ -2255,6 +2255,7 @@ Owner: human + codex
 Phase: 18
 Type: report eval
 Depends-On: T64
+Status: [x]
 
 Objective: |
   Review the first VPS-generated weekly report and classify every section by
@@ -2283,6 +2284,7 @@ Owner: codex
 Phase: 18
 Type: report eval
 Depends-On: T65
+Status: [x]
 
 Objective: |
   Add a report-quality evaluation artifact that tracks whether weekly reports
@@ -2306,6 +2308,7 @@ Owner: codex
 Phase: 18
 Type: retrieval eval
 Depends-On: T66
+Status: [x]
 
 Objective: |
   Improve source trust scoring and repeated-signal tracking so reports separate
@@ -2331,6 +2334,7 @@ Owner: human + codex
 Phase: 18
 Type: portfolio handoff
 Depends-On: T65, T67
+Status: [x]
 
 Objective: |
   Define the first safe bridge from Demand Radar to Telegram channel
@@ -2347,4 +2351,150 @@ Acceptance-Criteria:
 Files:
   - docs/handoffs/telegram_channel_intelligence_bridge.md
   - docs/SOURCE_CATALOG.md
+  - docs/CODEX_PROMPT.md
+
+---
+
+## Phase 19 - True Radar Weekly Report Operating Loop
+
+Business goal: produce and review a real Demand-to-MVP Radar `mvp-of-week`
+artifact from available Telegram weekly intelligence, then record whether the
+report is useful enough for the solo evidence ledger without claiming market
+validation from Telegram-only inputs.
+
+Boundary:
+
+- sanitized Telegram weekly digest artifacts may be converted into Radar seed
+  exports for local testing;
+- generated reports remain local/private unless explicitly sanitized and
+  approved;
+- no private channel scraping, outreach, publishing, paid sources, hosted SaaS,
+  or source-trust threshold changes are approved by this phase;
+- if public corroboration is missing, the report must remain
+  `needs_more_evidence` or `revisit_with_evidence_gap`.
+
+Exit criteria:
+
+- one true `reports/mvp_of_week/*.md` Radar artifact exists from an inspectable
+  seed input;
+- the artifact has Decision Gate, source trust/repeated-signal, build-worthy,
+  and interesting-signal sections;
+- `docs/report_eval.md` records the report-quality row for that artifact;
+- the solo evidence ledger records whether the run counts and what evidence is
+  still missing.
+
+## T69: Telegram Digest To Radar Seed Adapter
+
+Owner: codex
+Phase: 19
+Type: source bridge
+Depends-On: T68
+Status: [x]
+
+Objective: |
+  Add a deterministic local adapter that converts sanitized Telegram weekly
+  digest JSON into the existing telegram-research-agent opportunity seed export
+  format consumed by `mvp-of-week`.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "A digest with evidence rows is converted into seed rows with upstream_id, captured_at, text, source_url, channel_username, mvp_shape, bucket, demand_surfaces, and verification_needed."
+    test: "tests/test_telegram_digest_adapter.py::test_digest_to_seed_export_maps_evidence_rows"
+  - id: AC-2
+    description: "Rows without text or without safe public/source references are skipped with a skipped-row reason, not imported as seeds."
+    test: "tests/test_telegram_digest_adapter.py::test_digest_to_seed_export_skips_unusable_rows"
+  - id: AC-3
+    description: "The CLI can write a seed export JSON from a digest without requiring network or credentials."
+    test: "tests/test_telegram_digest_adapter.py::test_digest_to_seed_export_cli_writes_json"
+
+Files:
+  - demand_mvp_radar/telegram_digest.py
+  - demand_mvp_radar/cli.py
+  - tests/test_telegram_digest_adapter.py
+
+Context-Refs:
+  - docs/handoffs/telegram_channel_intelligence_bridge.md
+  - docs/audit/FIRST_VPS_WEEKLY_REPORT_REVIEW.md
+
+## T70: First True Radar MVP Weekly Artifact
+
+Owner: codex
+Phase: 19
+Type: report artifact
+Depends-On: T69
+Status: [x]
+
+Objective: |
+  Generate the first true Radar `mvp-of-week` artifact from an inspectable seed
+  export and verify the report exposes the Phase 18 quality gates.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "A generated `reports/mvp_of_week/*.md` artifact contains Decision Gate, Source Trust And Repeated Signals, Build-Worthy Recommendations, and Interesting Signals sections."
+    test: "manual artifact review or focused integration test"
+  - id: AC-2
+    description: "Telegram-only or single-family evidence is not framed as build-worthy."
+    test: "manual artifact review or focused integration test"
+
+Files:
+  - reports/mvp_of_week/
+  - docs/report_eval.md
+  - docs/CODEX_PROMPT.md
+
+Context-Refs:
+  - docs/report_eval.md
+  - docs/MVP_WEEKLY_LIVE_SOURCES.md
+
+## T71: True Radar Report Review And Ledger Update
+
+Owner: human + codex
+Phase: 19
+Type: report eval
+Depends-On: T70
+Status: [x]
+
+Objective: |
+  Review the first true Radar weekly report with the report-quality metrics and
+  update the solo evidence ledger with count/no-count status and missing
+  evidence.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "docs/report_eval.md records a row for the generated Radar report with all five metrics."
+    test: "manual artifact review"
+  - id: AC-2
+    description: "docs/SOLO_EVIDENCE_LEDGER.md records whether the run counts, reviewed opportunities, decisions, and missing evidence."
+    test: "manual artifact review"
+
+Files:
+  - docs/report_eval.md
+  - docs/SOLO_EVIDENCE_LEDGER.md
+  - docs/EVIDENCE_INDEX.md
+
+Context-Refs:
+  - docs/SOLO_EVIDENCE_LEDGER.md
+  - docs/open_source_research_protocol.md
+
+## T72: Phase 19 Operating Decision
+
+Owner: human + codex
+Phase: 19
+Type: audit decision
+Depends-On: T71
+Status: [x]
+
+Objective: |
+  Decide whether the next operating step is another Telegram-seeded weekly run,
+  public corroboration research, or a new source-collection improvement.
+
+Acceptance-Criteria:
+  - id: AC-1
+    description: "Decision artifact names the next operating step and cites report_eval, ledger status, and missing evidence."
+    test: "manual audit review"
+  - id: AC-2
+    description: "Decision does not approve private beta, hosted SaaS, outreach, publishing, paid sources, or private scraping."
+    test: "manual audit review"
+
+Files:
+  - docs/audit/PHASE19_OPERATING_DECISION.md
   - docs/CODEX_PROMPT.md

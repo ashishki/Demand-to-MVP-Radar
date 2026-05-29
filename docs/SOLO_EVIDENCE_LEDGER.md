@@ -32,7 +32,7 @@ work still require explicit human approval.
 | Run 1 | backfilled-real | T62-showcase / 2026-05-23 | public B2B sales ops, AI workplace adoption, workflow/team operations, AI automation operators, backend/API operators, trader workflow | `reports/showcase/portfolio_opportunity_showcase.md` | 5 | 0 human-recorded; report suggests 3 `revisit` and 2 `needs_more_evidence` | buyer proof, competitor scans, operator-owned lead data, compliance review for trading | Public-safe showcase drafted; not yet an operator-reviewed weekly run | no - showcase backfill only |
 | Run 2 | backfilled-real | R2-deep-research / 2026-05-23 | public B2B sales ops, CRM operator workflow, lead routing competitors, email response analytics, automation operators, developer platform docs, developer tooling alternatives, AI workplace adoption | `reports/research/solo_evidence_run_2_deep_research.md`, `docs/handoffs/lead_response_sla_gap_radar_handoff.md` | 4 | 0 human-recorded; research recommends Lead Response SLA `revisit` / experiment-ready, Human Approval Map `needs_more_evidence`, API Drift Watch `revisit`, AI Rollout Tracker `reject for now` | operator-owned lead data, CRM-native report examples, first 10 target feedback, API buyer proof | Public-safe deep research completed; Lead Response SLA remains best first experiment, but no build approval | yes |
 | Run 3 | backfilled-real | DSM-search-test / 2026-05-25 | search intent, store/category demand, competitor traction, repeated questions, manual workarounds, creator/content discovery gaps | `reports/research/demand_source_map_search_test.md` | 4 | 0 human-recorded; research promotes Telegram Channel SEO Site Generator to next public-data experiment candidate | willingness-to-pay proof, channel-owner feedback, public-channel terms/access review, competitor pricing/use proof | Source-map search found a better public-data test than Lead Response SLA; Lead SLA remains technical/proxy-tested only | yes |
-| Run 4 | pending | pending | pending | pending | pending | pending | pending | pending | no |
+| Run 4 | weekly-real, Telegram-seeded only | mvp-weekly-2026-W14-radar / 2026-05-29 | Telegram weekly intelligence seed export | `reports/mvp_of_week/mvp-weekly-2026-W14-radar.md`, `data/phase19/2026-W14-radar-seeds.json` | 5 report-level candidates | 0 human-recorded; report recommends `revisit_with_evidence_gap` / `needs_more_evidence` only | public corroboration, competitor/workaround proof, non-Telegram evidence for same pain | True Radar report generated and reviewed; build-worthy gate stayed closed because source diversity is one family and external evidence is 0 | no - Telegram-only source mix does not count toward four-run gate |
 
 ## Per-Run Detail Template
 
@@ -73,6 +73,46 @@ Run verdict:
 - Follow-up evidence to collect: pending
 - Operator review time: pending
 - Gate status: pending
+
+### Run 4 - Telegram-Seeded Radar Weekly Report
+
+| Field | Value |
+|---|---|
+| Run type | `weekly-real`, Telegram-seeded only |
+| Counts toward gate | no - real Telegram digest input, but single-family evidence and 0 external corroboration |
+| Run ID | mvp-weekly-2026-W14-radar |
+| Run date | 2026-05-29 |
+| Data window | Telegram digest `2026-W14` from `telegram-research-agent` |
+| Source families | Telegram weekly intelligence seed export |
+| Source register path | `data/phase19/2026-W14-radar-seeds.json` |
+| Weekly report path | `reports/mvp_of_week/mvp-weekly-2026-W14-radar.md` |
+| Dossier paths | n/a |
+| Source value report path | n/a |
+| Evidence delta report path | n/a |
+| Retrieval corpus version | n/a - local seed-to-weekly-report run |
+| Index age at review | n/a |
+| Estimated cost / budget ceiling | USD 0 / LLM disabled with `DMR_LLM_PROVIDER=none` |
+| Backup verification | not run |
+| Privacy check | local generated artifact from sanitized Telegram-derived digest; no private channels, paid sources, outreach, publishing, hosted/SaaS, or raw credentialed exports approved |
+
+Reviewed opportunities:
+
+| Opportunity | Portfolio fit | Decision | Evidence basis | Missing evidence | Outcome note |
+|---|---|---|---|---|---|
+| Agent Instruction Conflict Review | `evaluation_first_delivery` | `revisit_with_evidence_gap` | 1 Telegram seed from `@llm_under_hood`; score 65; Decision Gate reason `source_mix_gate` | competitor/workaround corroboration; non-Telegram public evidence for the same pain | selected report topic but not build-worthy |
+| OpenClaw assistant setup signal | `workflow_discovery` | `revisit_with_evidence_gap` | 1 Telegram seed; score 53 | competitor/workaround corroboration; non-Telegram public evidence | interesting signal only |
+| Model comparison signal | `workflow_discovery` | `revisit_with_evidence_gap` | 1 Telegram seed; score 53 | competitor/workaround corroboration; non-Telegram public evidence | interesting signal only |
+| Course/content signal | `workflow_discovery` | `needs_more_evidence` | 1 Telegram seed; score 48 | competitor/workaround corroboration; non-Telegram public evidence | weak single-family signal |
+| AI-native company workflow signal | `workflow_discovery` | `needs_more_evidence` | 1 Telegram seed; score 48 | competitor/workaround corroboration; non-Telegram public evidence | weak single-family signal |
+
+Run verdict:
+
+- Useful decisions: 0 human-recorded; report-level recommendations only.
+- Source families that helped: Telegram weekly intelligence was useful for seed generation and topical clustering.
+- Source families to keep/demote/disable: keep Telegram seed export as an input; demote Telegram-only candidates until public corroboration exists.
+- Follow-up evidence to collect: public examples of instruction-conflict review pain, competitor/workaround pages, repeated non-Telegram questions, and one operator-owned example if available.
+- Operator review time: pending.
+- Gate status: no-count weekly real run; useful for pipeline proof, insufficient for four-run readiness.
 
 ### Run 1 - T62 Showcase Backfill
 
@@ -205,8 +245,8 @@ real operating evidence.
 
 | Gate | Current status | Evidence |
 |---|---|---|
-| Four real/backfilled runs complete | not complete | 2/4 counting runs complete: Runs 2 and 3. Run 1 is showcase-only and does not count. |
-| At least 20 opportunities reviewed | not complete | 8 gate-counting opportunities reviewed across Runs 2-3; 5 additional showcase-only opportunities in Run 1. |
+| Four real/backfilled runs complete | not complete | 2/4 counting runs complete: Runs 2 and 3. Run 1 is showcase-only and Run 4 is Telegram-only/no-count. |
+| At least 20 opportunities reviewed | not complete | 8 gate-counting opportunities reviewed across Runs 2-3; 5 showcase-only opportunities in Run 1; 5 Telegram-seeded no-count opportunities in Run 4. |
 | At least three useful operator decisions | not complete | 0 human-recorded decisions; Run 2 has research-level recommendations only. |
 | One selected opportunity has a 7-14 day MVP experiment pack | partial | Lead Response SLA has a 7-10 day local CSV report experiment candidate and handoff, but no executed experiment yet. |
 | One cross-project handoff pack ready | complete | `docs/handoffs/lead_response_sla_gap_radar_handoff.md` updated by Run 2. |

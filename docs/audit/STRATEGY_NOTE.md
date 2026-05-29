@@ -1,5 +1,5 @@
-# STRATEGY_NOTE - Phase 17 Review
-_Date: 2026-05-23 · Reviewing: Phase 17 (T58-T64)_
+# STRATEGY_NOTE - Phase 19 Review
+_Date: 2026-05-29 · Reviewing: Phase 19 (T69-T72)_
 
 ## Recommendation: Proceed
 
@@ -7,12 +7,12 @@ _Date: 2026-05-23 · Reviewing: Phase 17 (T58-T64)_
 
 | Check | Verdict | Notes |
 |-------|---------|-------|
-| Phase coherence | COHERENT | Phase 17's goal was to start the solo evidence loop, add public research fallback, create ledger/review artifacts, produce a showcase report, and keep private beta/hosted work gated. T58-T64 map to that goal. |
-| Open findings gate | CLEAR | Fix Queue is empty. No P0/P1 findings are open in `docs/CODEX_PROMPT.md`. |
-| Architectural drift | ALIGNED | Phase 17 added docs, report artifacts, one small model/guidance addition, and no hosted surfaces or autonomous agent behavior. |
-| Solution shape / governance / runtime drift | ALIGNED | Work stayed local-first and T1. No shell mutation, privileged runtime expansion, tenant/auth surface, or open-ended agent loop was introduced. |
-| ADR compliance | HONOURED | `ADR_HOSTED_SAAS_DECISION.md` remains honoured: T64 blocks private beta and hosted/SaaS until evidence gates are met. |
-| Capability Profile gate | READY | RAG and Tool-Use state blocks remain unchanged because Phase 17 did not alter retrieval semantics or tool schemas. Agentic, Planning, and Compliance remain OFF. |
+| Phase coherence | COHERENT | T69-T72 directly map to the Phase 19 goal: convert a Telegram digest into Radar seeds, generate a true `mvp-of-week` artifact, evaluate it, update the ledger, and choose the next operating step without claiming market validation. |
+| Open findings gate | CLEAR | `docs/CODEX_PROMPT.md` compact state has no Fix Queue or open P0/P1 findings. |
+| Architectural drift | ALIGNED | Work stayed local-first and advisory-only. T69 adds a deterministic local file adapter; T70-T72 add generated local artifacts and governance docs. No autonomous runtime, hosted surface, outreach, publishing, paid source, or private-scraping behavior was introduced. |
+| Solution shape / governance / runtime drift | ALIGNED | The work remains a deterministic workflow with bounded report synthesis. No shell mutation, privileged runtime action, persistent autonomous worker, scoring-threshold change, or source-trust relaxation was added. |
+| ADR compliance | HONOURED | `ADR_HOSTED_SAAS_DECISION.md` remains honoured: Phase 19 explicitly blocks private beta, hosted/SaaS, outreach, publishing, paid sources, credentialed collection, and private scraping. |
+| Capability Profile gate | RAG: READY; Tool-Use: READY; Agentic: N/A; Planning: N/A | RAG and Tool-Use profiles remain ON. Phase 19 did not change retrieval schema, tool schemas, model class, or tool permissions. The new adapter produces seed rows for an existing report path. |
 
 ## Findings / Blockers
 
@@ -20,7 +20,6 @@ None.
 
 ## Warnings
 
-- Phase 17 created a public research showcase and handoff, but T64 correctly records that no gate-counting weekly run or human-recorded useful decision exists yet.
-- `docs/audit/AUDIT_INDEX.md` still only archives through Phase 10; the deep-review archive step should append the Phase 17 cycle rather than implying Phases 11-16 were archived there.
-
-STRATEGY_NOTE.md written. Recommendation: Proceed.
+- The generated Radar report is local/ignored under `reports/mvp_of_week/`; it is intentionally not a public artifact.
+- Run 4 is useful pipeline evidence but does not count toward the four-run readiness gate because it is Telegram-only and has 0 external evidence.
+- `docs/CODEX_PROMPT.md` is compacted, so detailed historical state remains in `docs/archive/portfolio-cleanup-2026-05-29/CODEX_PROMPT_full_2026-05-29.md`.

@@ -130,6 +130,10 @@ def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp
     assert result.score == 49
     assert result.source_counts["external_evidence_count"] == 0
     assert "Source Mix Gate" in report_text
+    assert "## Decision Gate" in report_text
+    assert "## Build-Worthy Recommendations" in report_text
+    assert "- No build-worthy recommendations passed the Decision Gate." in report_text
+    assert "## Interesting Signals" in report_text
     assert "does not yet have two independent non-Telegram evidence sources" in report_text
     assert "operator profile" in report_text
     assert "Operator fit profile" in provider.calls[0][0]

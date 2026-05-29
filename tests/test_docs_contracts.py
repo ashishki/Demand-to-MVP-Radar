@@ -337,36 +337,22 @@ def test_live_source_tasks_are_in_authoritative_task_graph() -> None:
         assert phrase in content
 
 
-def test_codex_prompt_points_to_live_source_next_task() -> None:
+def test_codex_prompt_points_to_phase_19_complete_state() -> None:
     content = _codex_prompt_text()
 
     for phrase in (
-        "Phase: 17",
-        "Baseline: 193 passing tests",
-        "Live source production roadmap: `docs/LIVE_SOURCE_PRODUCTION_ROADMAP.md`",
-        "T58: Formatting Baseline Repair",
-        "docs/open_source_research_protocol.md",
-        "T57: Hosted/SaaS Decision ADR",
-        "T56: Private Beta Source Onboarding",
-        "T55: Local Review Cockpit",
-        "T54: Source Value Report",
-        "T53: Telegram Approved Channel Connector",
-        "T52: Discord Allowlisted Channel Connector",
-        "T51: Reddit Connector",
-        "T50: Product Hunt Connector",
-        "T49: YouTube Connector",
-        "T48: SERP Credentialed Connector",
-        "T47: Live Public Corpus Retrieval Eval",
-        "T46: Source Health in health --json",
-        "T45: GitHub Public Search Connector",
-        "T44: RSS Feed Connector",
-        "T43: Stack Exchange Live Connector",
-        "T42: Hacker News Live Connector",
-        "T41: collect-sources Command",
-        "T40: Credential Resolver and Secret Redaction",
-        "T39: Live Source Connector Protocol",
-        "Roadmap/task graph extension",
-        "Retrieval-related next tasks: none queued",
+        "Version: 2.1",
+        "Status: active-production-observation",
+        "Active task source: `docs/tasks.md`, Phase 19.",
+        "T65 reviewed the first inspectable VPS weekly artifact",
+        "docs/audit/FIRST_VPS_WEEKLY_REPORT_REVIEW.md",
+        "docs/report_eval.md",
+        "demand_mvp_radar/source_trust.py",
+        "demand_mvp_radar/telegram_digest.py",
+        "docs/handoffs/telegram_channel_intelligence_bridge.md",
+        "T70 generated the first true Radar weekly artifact",
+        "none - Phase 19 task graph complete.",
+        "Telegram intelligence is a bridge to Entropy/Telegram Research work",
     ):
         assert phrase in content
 

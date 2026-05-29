@@ -272,12 +272,14 @@ No destructive external tools are in v1. The following actions are treated as un
 | Domain models | `demand_mvp_radar/models.py` | Define evidence, opportunity, score, brief, decision, and run manifest schemas. |
 | Storage | `demand_mvp_radar/storage/` | Manage SQLite schema, migrations, repositories, and idempotent writes. |
 | Source adapters | `demand_mvp_radar/sources/` | Import Telegram exports, manual URLs, SERP snapshots, store listings, competitor pages, and notes. |
+| Telegram digest bridge | `demand_mvp_radar/telegram_digest.py` | Convert sanitized Telegram weekly digest JSON into local Radar seed exports without network, credentials, or source-trust policy changes. |
 | Source document contracts | `demand_mvp_radar/sources/base.py` | Define source refs, fetched source documents, normalized documents, and connector protocols before parsing or embedding. |
 | Tool layer | `demand_mvp_radar/tools/` | Define LLM-callable tool schemas, validation, permission checks, audit logging, and bounded execution. |
 | Retrieval ingestion | `demand_mvp_radar/retrieval/ingestion.py` | Normalize, chunk, embed, and index text evidence. |
 | Retrieval query | `demand_mvp_radar/retrieval/query.py` | Retrieve evidence, enforce filters, assemble evidence packets, and return `insufficient_evidence` when needed. |
 | Clustering | `demand_mvp_radar/clustering.py` | Deduplicate and cluster evidence into opportunity candidates. |
 | Scoring | `demand_mvp_radar/scoring.py` | Calculate deterministic demand, competition, freshness, acquisition, confidence, and risk scores. |
+| Source trust records | `demand_mvp_radar/source_trust.py` | Track evidence count, unique/repeated signal count, evidence density, and rejection reasons for report review. |
 | LLM extraction | `demand_mvp_radar/llm/extraction.py` | Produce structured extraction from messy text using bounded schemas. |
 | Brief synthesis | `demand_mvp_radar/briefs.py` | Generate source-grounded opportunity briefs and recommendations. |
 | Reporting | `demand_mvp_radar/reports/` | Write Markdown/HTML reports and machine-readable run outputs. |
@@ -293,15 +295,15 @@ No destructive external tools are in v1. The following actions are treated as un
 
 1. Operator runs `demand-mvp-radar run --config config/local.toml`.
 2. Configuration loads source paths, network-enabled sources, thresholds, budgets, and output directory.
-3. Source adapters read Telegram-derived evidence, operator notes, owned GitHub repository snapshots, manual URLs, saved search/store snapshots, competitor pages, and Reddit/X exports.
+3. Source adapters read Telegram-derived evidence, operator notes, owned GitHub repository snapshots, manual URLs, saved search/store snapshots, competitor pages, and Reddit/X exports. When the input is a sanitized Telegram weekly digest, `digest-to-seeds` can first convert it into the `mvp-of-week` seed export shape.
 4. Normalizers convert each source into typed evidence records with source provenance and stable fingerprints.
 5. Storage writes a run manifest, raw snapshot references, normalized evidence records, and audit events idempotently.
 6. Retrieval ingestion chunks, embeds, and indexes text evidence under the current corpus and schema version.
 7. Clustering deduplicates near-identical ideas and groups evidence by pain, workflow, audience, and acquisition channel.
-8. Scoring computes deterministic score components and confidence bands for each candidate.
+8. Scoring computes deterministic score components, source trust records, repeated-signal counts, evidence density, rejection reasons, and confidence bands for each candidate.
 9. Query-time retrieval assembles evidence packets for top candidates and returns `insufficient_evidence` for candidates below evidence thresholds.
 10. LLM extraction and synthesis produce bounded fields and final briefs only from assembled evidence packets.
-11. Report generation writes ranked Markdown/HTML output with source links, snippets, score components, risk flags, and build / reject / revisit recommendations.
+11. Report generation writes ranked Markdown/HTML output with source links, snippets, score components, Decision Gate, source trust/repeated-signal notes, risk flags, and build / reject / revisit recommendations.
 12. Operator records decisions; future runs use decision history to suppress repeats and revisit promising ideas.
 
 ---
@@ -362,6 +364,7 @@ Demand-to-MVP-Radar/
     config.py
     models.py
     observability.py
+    telegram_digest.py
     storage/
       __init__.py
       db.py

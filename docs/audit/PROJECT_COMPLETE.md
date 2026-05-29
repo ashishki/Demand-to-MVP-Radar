@@ -1,42 +1,50 @@
-# PROJECT COMPLETE - Demand-to-MVP Radar
+# PROJECT COMPLETE - Current Task Graph
 
-Date: 2026-05-23
+Date: 2026-05-29
+Scope: Tasks T01-T72
+Health: OK
 
-## Completion Verdict
+The current authoritative task graph in `docs/tasks.md` is complete through
+Phase 19.
 
-The authoritative implementation task queue is complete through T64.
+Demand-to-MVP Radar remains a local-first, advisory-only opportunity radar. It
+has implementation support for ingestion, storage, retrieval, scoring, reports,
+decision memory, experiment packs, source collection, source health, source
+value, local review, report quality evaluation, source trust/repeated-signal
+review, a safe Telegram channel intelligence bridge, and a deterministic
+Telegram digest-to-Radar seed adapter.
 
-Final baseline:
+Phase 19 produced the first true local `mvp-of-week` Radar artifact from
+available Telegram weekly intelligence and recorded it conservatively: useful
+pipeline evidence, not market validation, and not counting toward the four-run
+readiness gate.
 
-- `.venv/bin/ruff format --check demand_mvp_radar/ tests/ scripts/` -> pass
+Private beta and hosted/SaaS remain blocked. They require real operating
+evidence: four weekly or properly backfilled counting runs, useful human-owned
+decisions, source value proof, backup verification, support-burden proof, and
+explicit approval for any higher-risk source or hosted behavior.
+
+## Final Verification
+
 - `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
-- `.venv/bin/python -m pytest tests/ -q` -> 190 passed after the post-completion Lead SLA technical test
-
-Final review:
-
+- `.venv/bin/python -m pytest tests/ -q` -> 198 passed
+- Latest deep review: `docs/archive/PHASE19_REVIEW.md`
 - Stop-Ship: No
-- P0: 0
-- P1: 0
-- P2: 1 closed
 
-## Final Product State
+## Remaining Product Work
 
-Demand-to-MVP Radar is a local-first, advisory-only CLI workflow for ingesting evidence, retrieving and clustering demand signals, scoring opportunities, rendering decision-grade dossiers, recording operator decisions, and producing experiment/handoff artifacts.
-
-Phase 17 completed the solo evidence operating loop: public-safe research rules, four-run evidence ledger, portfolio-fit taxonomy, showcase dossiers, Lead Response SLA handoff, and readiness review.
-
-## Boundaries Still In Force
-
-Private beta remains blocked until the solo evidence ledger contains enough real/backfilled runs, useful human decisions, source value proof, backup verification, and support-burden proof.
-
-Hosted/SaaS remains blocked until private beta evidence and hosted-only prerequisites are satisfied.
-
-No task has approved outreach automation, public publishing, CRM mutation, repository creation, paid/credentialed integrations, or destructive external actions.
-
-## Next Operating Step
-
-Run the solo evidence cycle and update `docs/SOLO_EVIDENCE_LEDGER.md` with real or properly backfilled evidence. Use `docs/open_source_research_protocol.md` whenever source data is insufficient.
+No task-graph work remains. Useful next work requires a new task graph focused
+on public corroboration research for Agent Instruction Conflict Review or a
+source-collection improvement that adds non-Telegram evidence before the next
+weekly report run.
 
 ## Notification Summary
 
-PROJECT COMPLETE through T64. Current checks pass: ruff format, ruff check, pytest 190 after the post-completion Lead SLA technical test. Review Stop-Ship No, P0 0, P1 0, P2 1 closed. Private beta and hosted/SaaS remain blocked.
+```text
+PROJECT COMPLETE
+Built: current T01-T72 local Radar workflow and Phase 19 true weekly report loop
+Tests: 198 pass
+Issues: P1:0 P2:0
+Health: OK
+Next: New task graph for public corroboration research
+```

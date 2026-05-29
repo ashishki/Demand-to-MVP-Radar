@@ -1,55 +1,45 @@
-# META_ANALYSIS - Cycle 18
-_Date: 2026-05-23 · Type: full_
+# META_ANALYSIS - Cycle 20
+_Date: 2026-05-29 · Type: full_
 
 ## Project State
 
-Phase 17 (T58-T64) is complete. Next: no queued implementation task; Phase 17
-boundary review/archive/doc update/final report are pending.
+Phase 19 (T69-T72) complete. Next: phase-boundary deep review, archive, doc
+update, and project-complete report for the current task graph.
 
-Baseline: 186 pass, 0 skip.
+Baseline: 198 pass, 0 skip.
 
 ## Open Findings
 
 | ID | Sev | Description | Files | Status |
 |----|-----|-------------|-------|--------|
-| none | n/a | No open P0/P1/P2 findings in `docs/CODEX_PROMPT.md` or previous `docs/audit/REVIEW_REPORT.md`. | n/a | n/a |
+| none | n/a | No open findings in compact `docs/CODEX_PROMPT.md`; previous review has no open P0/P1. | n/a | clear |
 
 ## PROMPT_1 Scope (architecture)
 
-- Phase 17 solo evidence operating loop: public research protocol, solo evidence
-  ledger, showcase report, handoff pack, and readiness review.
-- Portfolio taxonomy: optional dossier-level `PortfolioFit` labels and
-  conservative review guidance for current portfolio priorities.
-- Hosted/SaaS gate: T64 verdict keeps private beta and hosted/SaaS blocked in
-  line with `docs/adr/ADR_HOSTED_SAAS_DECISION.md`.
+- Telegram digest bridge: T69 adds deterministic local seed export generation from sanitized weekly digest JSON.
+- true weekly artifact: T70 generated `reports/mvp_of_week/mvp-weekly-2026-W14-radar.md` with Phase 18 quality gates.
+- ledger/eval: T71 records report quality and no-count solo evidence ledger status.
+- operating decision: T72 selects public corroboration research and keeps all higher-risk work blocked.
+- governance/runtimes: verify no hosted/SaaS, outreach, private scraping, paid-source, credential expansion, scoring-threshold change, or autonomous behavior was introduced.
 
 ## PROMPT_2 Scope (code, priority order)
 
-1. `demand_mvp_radar/models.py` (changed) - `PortfolioFit` model and
-   `OpportunityDossier.portfolio_fit`.
-2. `demand_mvp_radar/decisions.py` (changed) - portfolio-fit decision guidance.
-3. `tests/test_decisions.py` (changed) - portfolio-fit model/guidance coverage.
-4. `tests/test_docs_contracts.py` (changed) - baseline state assertion.
-5. `docs/open_source_research_protocol.md` (new) - public research rules.
-6. `docs/SOLO_EVIDENCE_LEDGER.md` (new) - run ledger/gate status.
-7. `reports/showcase/portfolio_opportunity_showcase.md` (new artifact) -
-   public source register and opportunity report.
-8. `docs/handoffs/lead_response_sla_gap_radar_handoff.md` (new) - handoff pack.
-9. `docs/audit/SOLO_EVIDENCE_READINESS_REVIEW.md` (new) - readiness verdict.
-10. Formatter-only files from T58: `demand_mvp_radar/credentials.py`,
-    `demand_mvp_radar/health.py`, `demand_mvp_radar/pipeline.py`,
-    `demand_mvp_radar/scoring.py`, `demand_mvp_radar/sources/live.py`, and
-    corresponding formatted tests.
+1. `demand_mvp_radar/telegram_digest.py` (new)
+2. `demand_mvp_radar/cli.py` (changed)
+3. `tests/test_telegram_digest_adapter.py` (new)
+4. `reports/mvp_of_week/mvp-weekly-2026-W14-radar.md` (generated local artifact)
+5. `docs/report_eval.md` (changed)
+6. `docs/SOLO_EVIDENCE_LEDGER.md` (changed)
+7. `docs/audit/PHASE19_OPERATING_DECISION.md` (new)
+8. `docs/EVIDENCE_INDEX.md` and state docs (changed)
 
 ## Cycle Type
 
-Full - Phase 17 is complete and no Phase 17 archive entry exists.
+Full - Phase 19 complete.
 
 ## Notes for PROMPT_3
 
-Consolidation should preserve the conservative readiness verdict: Phase 17
-produced useful artifacts, but private beta and hosted/SaaS remain blocked. Pay
-attention to whether the public showcase and handoff accidentally imply a build
-approval; they should not.
-
-META_ANALYSIS.md written. Run PROMPT_1_ARCH.md.
+Focus consolidation on whether Phase 19 produced a true Radar weekly artifact
+without upgrading Telegram-only evidence into a build recommendation, preserved
+the local-first advisory boundary, and selected a next operating step that
+requires public corroboration before any build-like action.

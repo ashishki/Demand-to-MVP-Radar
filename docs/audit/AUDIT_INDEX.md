@@ -28,6 +28,8 @@ Append-only. One row per review cycle.
 | cycle-16 | Phase 9 | 2026-05-20 | Phase 9 implementation deep review after T32-T34 | No | 0 | 0 | 0 |
 | cycle-17 | Phase 10 | 2026-05-20 | Phase 10 implementation deep review after T35-T38 | No | 0 | 0 | 0 |
 | cycle-18 | Phase 17 | 2026-05-23 | Phase 17 implementation deep review after T58-T64 | No | 0 | 0 | 1 |
+| cycle-19 | Phase 18 | 2026-05-29 | Phase 18 report quality and Telegram bridge review after T65-T68 | No | 0 | 0 | 0 |
+| cycle-20 | Phase 19 | 2026-05-29 | Phase 19 true Radar weekly report operating loop after T69-T72 | No | 0 | 0 | 0 |
 
 ---
 
@@ -55,6 +57,8 @@ Append-only. One row per review cycle.
 | cycle-16 | docs/archive/PHASE9_REVIEW.md | Phase 9 | PASS |
 | cycle-17 | docs/archive/PHASE10_REVIEW.md | Phase 10 | PASS |
 | cycle-18 | docs/archive/PHASE17_REVIEW.md | Phase 17 | PASS |
+| cycle-19 | docs/archive/PHASE18_REVIEW.md | Phase 18 | PASS |
+| cycle-20 | docs/archive/PHASE19_REVIEW.md | Phase 19 | PASS |
 
 ---
 

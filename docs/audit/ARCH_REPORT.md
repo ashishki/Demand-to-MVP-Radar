@@ -1,86 +1,82 @@
-# ARCH_REPORT - Cycle 18
-_Date: 2026-05-23_
+# ARCH_REPORT - Cycle 20
+_Date: 2026-05-29_
 
 ## Component Verdicts
 
 | Component | Verdict | Note |
 |-----------|---------|------|
-| Solo evidence research protocol | PASS | Public-source rules match source approval boundaries and do not add credentialed/private collection. |
-| Solo evidence ledger | PASS | Records evidence/readiness state without pretending fixture or showcase artifacts satisfy the four-run gate. |
-| Portfolio showcase report | PASS | Uses public citations and explicit `inference` / `insufficient_evidence` labels; no build approval. |
-| Lead Response SLA handoff | PASS | Keeps scope local/reporting-only and preserves human approval boundaries. |
-| Solo readiness review | PASS | Correctly blocks private beta and hosted/SaaS under existing ADR gates. |
-| Portfolio taxonomy model | PASS | Optional dossier metadata; deterministic validation only. |
+| Telegram digest bridge | PASS | `demand_mvp_radar/telegram_digest.py` is deterministic local file transformation with no network, credential, or source-trust side effects. |
+| CLI command | PASS | `digest-to-seeds` writes an inspectable seed export and does not call external services or mutate configured sources. |
+| MVP weekly artifact | PASS | `mvp-weekly-2026-W14-radar.md` exposes Decision Gate, Source Trust And Repeated Signals, Build-Worthy Recommendations, and Interesting Signals. |
+| Report eval and ledger | PASS | T71 records the report as useful pipeline evidence but no-count for the four-run gate because external evidence is 0. |
+| Operating decision | PASS | T72 selects public corroboration research and explicitly blocks build/beta/hosted/outreach/publishing/paid/private-source expansion. |
 
 ## Contract Compliance
 
 | Rule | Verdict | Note |
 |------|---------|------|
-| Source provenance is mandatory | PASS | T62/T63 artifacts include source registers/links and captured dates. |
-| Deterministic ownership of scores | PASS | Phase 17 does not alter scoring; portfolio fit guidance is deterministic and advisory. |
-| Human-owned decisions | PASS | No `build` decision is recorded; T64 explicitly blocks beta/hosted work. |
-| Local-first data hygiene | PASS | Artifacts are public-safe; no raw private exports, credentials, databases, or generated private reports were introduced. |
-| Runtime tier guardrails | PASS | No runtime mutation, privileged actions, hosted surface, or long-lived worker behavior added. |
-| RAG / Tool-Use gates | PASS | No retrieval semantics or tool schema behavior changed. |
+| SQL Safety | PASS | No new SQL in Phase 19. |
+| Multi-Tenant Systems | PASS | No multi-tenant code introduced. |
+| Async Redis | PASS | Redis not introduced. |
+| Authorization | PASS | No web routes or public endpoints introduced. |
+| PII Policy | PASS | The adapter consumes sanitized digest JSON and local generated artifacts; docs preserve no raw private Telegram exports in git. |
+| Credentials and Secrets | PASS | No secrets added; no credentials are required by `digest-to-seeds` or the generated report path. |
+| Shared Tracing Module | PASS | No new external calls requiring spans; existing report/database paths still use existing modules. |
+| CI Gate | PASS | Local verification reached 198 passing tests and ruff clean before review. |
+| Observability | PASS | Phase 19 adds local conversion/generation artifacts; no new external calls requiring observability hooks. |
+| Source Provenance Is Mandatory | PASS | Seed rows carry upstream IDs, source URLs, channel usernames, captured timestamps, snippets, and verification notes. |
+| Deterministic Ownership of Scores | PASS | Phase 19 does not change scoring weights or source-trust thresholds. |
+| Bounded LLM Output | PASS | The generated report ran with `DMR_LLM_PROVIDER=none`; existing LLM paths are unchanged. |
+| Human-Owned Decisions | PASS | No human build decision is recorded; T72 requires public corroboration before build-like actions. |
+| Local-First Data Hygiene | PASS | No databases, raw exports, credentials, or generated private reports were committed. |
 
 ## ADR Compliance
 
 | ADR | Verdict | Note |
 |-----|---------|------|
-| ADR_HOSTED_SAAS_DECISION.md | PASS | T64 honours the local-first default and keeps hosted/SaaS blocked until evidence gates are complete. |
-| docs/adr/README.md | N/A | Process guidance only. |
+| `ADR_HOSTED_SAAS_DECISION.md` | PASS | Phase 19 stays local-first and explicitly blocks hosted/SaaS work until evidence gates are met. |
 
 ## Architecture Findings
 
-### ARCH-1 [P2] - Architecture docs should mention Phase 17 public research/readiness artifacts
-Symptom: Phase 17 added durable artifacts for public research protocol, solo evidence ledger, showcase report, handoff pack, and readiness review, but `docs/ARCHITECTURE.md` does not yet mention them in component/file-layout documentation.
-
-Evidence: `docs/audit/META_ANALYSIS.md`
-
-Root cause: Phase 17 focused on operating artifacts and deferred architecture doc refresh to the phase-boundary doc update.
-
-Impact: Future agents may miss the canonical location of Phase 17 evidence-loop artifacts unless they read `docs/CODEX_PROMPT.md` or `docs/EVIDENCE_INDEX.md`.
-
-Fix: During Step 6.5 doc update, add a concise Phase 17 artifact row/notes to `docs/ARCHITECTURE.md` component/file-layout sections.
+None.
 
 ## Right-Sizing / Runtime Checks
 
 | Check | Verdict | Note |
 |-------|---------|------|
-| Solution shape still appropriate | PASS | Hybrid deterministic workflow remains appropriate; no autonomous product selection. |
-| Deterministic-owned areas remain deterministic | PASS | Portfolio fit and readiness verdicts are deterministic docs/model validation, not LLM-owned scoring. |
-| Runtime tier unchanged / justified | PASS | Still T1 local-first; no hosted, tenant, credential, or infra behavior added. |
-| Human approval boundaries still valid | PASS | Handoff and readiness review explicitly block outreach, CRM mutation, public publishing, private beta, and hosted work. |
-| Minimum viable control surface still proportionate | PASS | Added evidence-loop artifacts without expanding runtime control surface. |
+| Solution shape still appropriate | PASS | Hybrid deterministic workflow remains appropriate; T69 is deterministic input normalization for an existing report path. |
+| Deterministic-owned areas remain deterministic | PASS | Digest conversion, report gating, ledger status, and operating decision are deterministic/manual-review artifacts. |
+| Runtime tier unchanged / justified | PASS | No shell mutation, package install, privileged action, long-lived worker, or infrastructure mutation added. |
+| Human approval boundaries still valid | PASS | T72 explicitly preserves approval for private beta, hosted/SaaS, outreach, publishing, paid/credentialed sources, scraping, and threshold changes. |
+| Minimum viable control surface still proportionate | PASS | The new control is a local adapter plus report/ledger/audit artifacts, not a SaaS UI or automation expansion. |
 
 ## Retrieval Architecture Checks
 
 | Check | Verdict | Note |
 |-------|---------|------|
-| Ingestion / query-time separation | PASS | No changes this cycle. |
-| insufficient_evidence path defined | PASS | Existing architecture/spec define it; Phase 17 artifacts use the label for weak claims. |
-| Corpus isolation explicit | PASS | No multi-corpus or hosted exposure added. |
-| Evidence/citation contract defined | PASS | Existing evidence packet contract remains; Phase 17 adds public source register rows for manual research artifacts. |
-| Freshness / max-index-age policy | PASS | No retrieval policy changes. |
-| Index schema versioning | PASS | No index schema changes. |
-| Retrieval mode and modality scope explicit | PASS | Text-only remains unchanged. |
-| Multimodal justification / fallback documented | N/A | Multimodal remains out of scope. |
-| Retrieval observability expectations | PASS | No observability behavior changed. |
+| Ingestion / query-time separation | PASS | T69 writes seed exports for the existing weekly artifact path and does not change retrieval ingestion/query modules. |
+| insufficient_evidence path defined | PASS | Existing path remains unchanged; the Phase 19 report keeps missing-evidence gates visible. |
+| Corpus isolation explicit | PASS | No corpus boundary changes. |
+| Evidence/citation contract defined | PASS | Seed export and report output preserve source URL/channel provenance for the selected candidate. |
+| Freshness / max-index-age policy | PASS | No freshness policy changes. |
+| Index schema versioning | PASS | No index schema, embedding model, chunking, or modality change. |
+| Retrieval mode and modality scope explicit | PASS | Text-only mode unchanged. |
+| Multimodal justification / fallback documented | N/A | Multimodal retrieval not introduced. |
+| Retrieval observability expectations | PASS | No retrieval behavior changed; report-quality metrics are separate from retrieval eval. |
 
 ## Tool-Use Architecture Checks
 
 | Check | Verdict | Note |
 |-------|---------|------|
-| Tool Catalog complete (side effects, idempotency, permissions) | PASS | No LLM-callable tools added or changed. |
-| Unsafe-Action Policy covers all destructive tools | PASS | Phase 17 adds no destructive tools and repeats approval boundaries. |
-| Confirmation steps are distinct code paths | N/A | No destructive tool was added. |
-| Tool schemas versioned and validated at generation time | PASS | No schema change. |
-| Permission checked at each tool boundary | PASS | No tool boundary change. |
+| Tool Catalog complete (side effects, idempotency, permissions) | PASS | No new LLM-callable tools introduced; `digest-to-seeds` is a normal CLI command. |
+| Unsafe-Action Policy covers all destructive tools | PASS | No destructive tools introduced; T68 reinforces unsafe Telegram/channel actions. |
+| Confirmation steps are distinct code paths | N/A | No new destructive tool path. |
+| Tool schemas versioned and validated at generation time | PASS | Existing schemas unchanged. |
+| Permission checked at each tool boundary | PASS | Existing tool boundaries unchanged. |
 
 ## Doc Patches Needed
 
 | File | Section | Change |
 |------|---------|--------|
-| `docs/ARCHITECTURE.md` | Component Table / File Layout | Add concise references to `docs/open_source_research_protocol.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `reports/showcase/`, `docs/handoffs/`, and `docs/audit/SOLO_EVIDENCE_READINESS_REVIEW.md`. |
-
-ARCH_REPORT.md written. Run PROMPT_2_CODE.md.
+| README.md | Current status / implemented list | Refresh baseline and mention Phase 19 true weekly report loop during doc update. |
+| docs/ARCHITECTURE.md | Component table / file layout | Document the Telegram digest bridge during doc update. |

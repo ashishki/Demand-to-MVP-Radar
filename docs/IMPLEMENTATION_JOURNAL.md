@@ -21,6 +21,71 @@ Status: append-only retrieval surface. This file records durable handoff context
 
 ---
 
+## 2026-05-29 - Phase 18 Boundary Review and Project Completion
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/audit/STRATEGY_NOTE.md`, `docs/audit/META_ANALYSIS.md`, `docs/audit/ARCH_REPORT.md`, `docs/audit/REVIEW_REPORT.md`, `docs/archive/PHASE18_REVIEW.md`, `docs/audit/AUDIT_INDEX.md`, `README.md`, `docs/ARCHITECTURE.md`, `docs/audit/PHASE_REPORT_LATEST.md`, `docs/audit/PROJECT_COMPLETE.md`, `docs/EVIDENCE_INDEX.md`, `docs/CODEX_PROMPT.md`
+- Tests: `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 195 passed.
+- Baseline before: 195 passing tests
+- Baseline after: 195 passing tests
+- Decisions/evidence updated: `docs/archive/PHASE18_REVIEW.md`, `docs/audit/PHASE_REPORT_LATEST.md`, `docs/audit/PROJECT_COMPLETE.md`, `docs/EVIDENCE_INDEX.md`, `docs/CODEX_PROMPT.md`, `MEMORY.md`
+- Notes for next agent: Cycle 19 deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0. The current task graph is complete through T68. Useful continuation requires a new Phase 19 task graph and a true Radar `mvp-of-week` report artifact.
+
+---
+
+## 2026-05-29 - T68: Telegram Channel Intelligence Bridge
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/handoffs/telegram_channel_intelligence_bridge.md`, `docs/SOURCE_CATALOG.md`, `docs/CODEX_PROMPT.md`, `docs/tasks.md`, `docs/EVIDENCE_INDEX.md`, `tests/test_docs_contracts.py`
+- Tests: manual artifact verification for AC-1 and AC-2; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 195 passed.
+- Baseline before: 195 passing tests
+- Baseline after: 195 passing tests
+- Decisions/evidence updated: `docs/handoffs/telegram_channel_intelligence_bridge.md`, `docs/SOURCE_CATALOG.md`, `docs/EVIDENCE_INDEX.md`, `docs/CODEX_PROMPT.md`, `docs/tasks.md`
+- Notes for next agent: The bridge approves only a document/data-shape handoff. It explicitly forbids generic scraping, private/paid/credentialed channel collection without approval, publishing, outreach, trading, and treating Radar opportunity evidence as Telegram source intelligence proof.
+
+---
+
+## 2026-05-29 - T67: Source Trust And Repeated Signal Scoring
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/source_trust.py`, `demand_mvp_radar/mvp_weekly.py`, `tests/unit/test_source_trust.py`, `tests/integration/test_report_quality.py`, `docs/report_eval.md`, `docs/EVIDENCE_INDEX.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `tests/test_docs_contracts.py`
+- Tests: `.venv/bin/python -m pytest tests/unit/test_source_trust.py tests/integration/test_report_quality.py tests/test_mvp_of_week.py -q` -> 4 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 195 passed.
+- Baseline before: 193 passing tests
+- Baseline after: 195 passing tests
+- Decisions/evidence updated: `docs/report_eval.md`, `docs/EVIDENCE_INDEX.md`, `docs/CODEX_PROMPT.md`, `docs/tasks.md`
+- Notes for next agent: Weekly reports now expose source trust records, repeated signal counts, evidence density, rejection reasons, Decision Gate status, Build-Worthy Recommendations, and Interesting Signals. Telegram-only repeated signals stay interesting but not build-worthy until source mix and missing-evidence gates pass.
+
+---
+
+## 2026-05-29 - T66: Report Quality Evaluation Artifact
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/report_eval.md`, `docs/EVIDENCE_INDEX.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `tests/test_docs_contracts.py`
+- Tests: `.venv/bin/python -m pytest tests/ -q` -> 193 passed before edits; final verification rerun after state updates.
+- Baseline before: 193 passing tests
+- Baseline after: 193 passing tests
+- Decisions/evidence updated: `docs/report_eval.md`, `docs/EVIDENCE_INDEX.md`, `docs/CODEX_PROMPT.md`, `docs/tasks.md`
+- Notes for next agent: `docs/report_eval.md` defines useful signal rate, evidence quality, duplicate/noise rate, source diversity, and recommendation clarity. The first row is conservative and explicitly treats the 2026-W14 Telegram digest as seed input only, not market validation.
+
+---
+
+## 2026-05-29 - T65: First VPS Weekly Report Review
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/audit/FIRST_VPS_WEEKLY_REPORT_REVIEW.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `tests/test_docs_contracts.py`, `docs/EVIDENCE_INDEX.md`
+- Tests: `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass; `.venv/bin/python -m pytest tests/ -q` -> 193 passed.
+- Baseline before: 192 passing tests, 1 failing docs-contract test due stale pre-compaction `docs/CODEX_PROMPT.md` expectations.
+- Baseline after: 193 passing tests
+- Decisions/evidence updated: `docs/audit/FIRST_VPS_WEEKLY_REPORT_REVIEW.md`, `docs/EVIDENCE_INDEX.md`, `docs/CODEX_PROMPT.md`, `docs/tasks.md`
+- Notes for next agent: No committed Radar `reports/mvp_of_week/` artifact or `/srv/openclaw-you` checkout was available on this machine. T65 reviewed the nearest inspectable VPS weekly artifact, `../telegram-research-agent/data/output/digests/2026-W14.md`, as Telegram seed intelligence only. T66 should turn the Decision Gate requirement into report-quality metrics without treating Telegram-only evidence as market validation.
+
+---
+
 ## 2026-05-25 - Demand Source Map Search Test
 
 - Agent: Codex
@@ -611,3 +676,47 @@ Status: append-only retrieval surface. This file records durable handoff context
 - Baseline after: 119 passing tests
 - Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`
 - Notes for next agent: Production readiness is explicitly `NOT READY` until four weekly local runs prove repeated personal value. Private beta and SaaS/hosted work remain blocked by the readiness review.
+
+## 2026-05-29 - T69: Telegram Digest To Radar Seed Adapter
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `demand_mvp_radar/telegram_digest.py`, `demand_mvp_radar/cli.py`, `tests/test_telegram_digest_adapter.py`
+- Tests: `.venv/bin/python -m pytest tests/test_telegram_digest_adapter.py -q` -> 3 passed; `.venv/bin/ruff check demand_mvp_radar/ tests/ scripts/` -> pass
+- Baseline before: 195 passing tests
+- Baseline after: 198 passing tests
+- Decisions/evidence updated: `docs/tasks.md`, `docs/CODEX_PROMPT.md`, `docs/EVIDENCE_INDEX.md`
+- Notes for next agent: `digest-to-seeds` converts sanitized Telegram weekly digest JSON into the existing `mvp-of-week` seed export shape. Rows without text or safe public URLs are skipped with reasons.
+
+## 2026-05-29 - T70: First True Radar MVP Weekly Artifact
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/report_eval.md`, generated local `data/phase19/2026-W14-radar-seeds.json`, generated local `reports/mvp_of_week/mvp-weekly-2026-W14-radar.md`
+- Tests: `.venv/bin/python -m demand_mvp_radar.cli digest-to-seeds --digest ../telegram-research-agent/data/output/digests/2026-W14.json --output data/phase19/2026-W14-radar-seeds.json` -> 7 seeds, 0 skipped; `DMR_LLM_PROVIDER=none .venv/bin/python -m demand_mvp_radar.cli mvp-of-week --telegram-export data/phase19/2026-W14-radar-seeds.json --run-id mvp-weekly-2026-W14-radar --data-dir data/phase19 --report-dir reports` -> report generated
+- Baseline before: 195 passing tests
+- Baseline after: 198 passing tests
+- Decisions/evidence updated: `docs/report_eval.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: The report's Decision Gate blocks build-worthy framing: Telegram seed evidence is 7, external evidence is 0, external source types are none, and reason is `source_mix_gate`.
+
+## 2026-05-29 - T71: True Radar Report Review And Ledger Update
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/report_eval.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`
+- Tests: manual artifact review of `reports/mvp_of_week/mvp-weekly-2026-W14-radar.md`
+- Baseline before: 195 passing tests
+- Baseline after: 198 passing tests
+- Decisions/evidence updated: `docs/report_eval.md`, `docs/SOLO_EVIDENCE_LEDGER.md`, `docs/EVIDENCE_INDEX.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Run 4 is recorded as weekly-real Telegram-seeded pipeline evidence but does not count toward the four-run gate because it lacks public corroboration and human-owned decisions.
+
+## 2026-05-29 - T72: Phase 19 Operating Decision
+
+- Agent: Codex
+- Result: DONE
+- Files changed: `docs/audit/PHASE19_OPERATING_DECISION.md`, `docs/CODEX_PROMPT.md`
+- Tests: manual audit review
+- Baseline before: 195 passing tests
+- Baseline after: 198 passing tests
+- Decisions/evidence updated: `docs/audit/PHASE19_OPERATING_DECISION.md`, `docs/tasks.md`, `docs/CODEX_PROMPT.md`
+- Notes for next agent: Next operating step is public corroboration research for Agent Instruction Conflict Review. No private beta, hosted/SaaS, outreach, publishing, paid-source, credentialed-source, or private-scraping approval was granted.
