@@ -48,6 +48,8 @@ compresses noisy demand signals into evidence-backed MVP candidates.
 - Reuse patterns from Telegram Research Agent.
 - Add source classes for channel-derived demand signals only after evidence
   quality is acceptable.
+- Use `docs/entropy_core_gensyn_integration.md` for report receipts,
+  source-trust receipts, and bounded multi-lens review.
 
 ### P2 - Productization
 
