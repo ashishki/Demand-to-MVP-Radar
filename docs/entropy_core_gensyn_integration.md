@@ -13,6 +13,11 @@ Gensyn is only a reference for diverse analytical lenses and evaluator/referee
 review. The Radar does not adopt Gensyn runtime, training, tokens, or on-chain
 coordination.
 
+Before building custom Gensyn-shaped logic, run the Gensyn OSS reuse gate from
+`repo://AI_workflow_playbook/docs/entropy_core_and_gensyn_reference_policy.md`.
+Check official Gensyn repos first and record whether the result is dependency,
+vendored component, adapted code, pattern-only reuse, or rejection.
+
 ## Entropy Core Use
 
 Default level: receipt-compatible.
