@@ -20,7 +20,7 @@ vendored component, adapted code, pattern-only reuse, or rejection.
 
 ## Entropy Core Use
 
-Default level: receipt-compatible.
+Default level: receipt-compatible now; evidence-lookup compatible next.
 
 Planned local artifacts:
 
@@ -48,9 +48,27 @@ verifier:
   method: operator_review
   status: needs_more_evidence
 entropy_core:
-  use_level: receipt_compatible
+  use_level: evidence_lookup_compatible_candidate
   runtime_dependency: false
 ```
+
+## Proof Layer Implementation
+
+The Radar should use Entropy Core as a proof layer for reports, not as a
+runtime dependency.
+
+Implementation path:
+
+1. Emit a weekly report receipt with schema id, report artifact refs, evidence
+   refs, source trust verdicts, recommendation status, and blocked surfaces.
+2. Keep source ranking, opportunity selection, and report wording product-local.
+3. Add evidence rows that Core-style lookup can verify deterministically.
+4. Use schema compatibility before changing receipt/report schema versions.
+5. Route unsupported or weak evidence to `needs_more_evidence`, not to a
+   confident recommendation.
+
+Core value here: prevent unsupported weekly recommendations and make it obvious
+why a report cannot yet become customer-facing.
 
 ## Required Context-Refs
 
