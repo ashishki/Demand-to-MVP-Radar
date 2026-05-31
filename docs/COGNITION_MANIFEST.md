@@ -22,6 +22,7 @@ Repo-local map for source-grounded market evidence, decision memory, retrieval/t
 - Canonical repo artifacts win over this manifest.
 - Generated indexes, Obsidian notes, and context packets are convenience surfaces only.
 - No opportunity, source trust, or production decision is authoritative unless backed by canonical evidence.
+- The cognition vault is for navigation, context packets, and cross-project recall only; this repo remains authoritative.
 
 ## Shared VPS Cognition Vault
 
@@ -112,6 +113,10 @@ If an agent runs on the VPS, clone the vault next to `projects/` and pass packet
 ```
 
 Do not write canonical decisions, eval results, or findings directly into the vault. Write them into this repo first, then regenerate the vault.
+
+Use the vault when starting an agent cold, preparing a reviewer packet, comparing
+projects, or checking cross-project dependencies. Do not use it to close tasks,
+change project status, replace ADRs/evals/findings, or drive runtime behavior.
 
 ---
 
