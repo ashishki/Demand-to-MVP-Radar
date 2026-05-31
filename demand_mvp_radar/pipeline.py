@@ -18,6 +18,11 @@ from demand_mvp_radar.credentials import (
     resolve_live_source_credentials,
 )
 from demand_mvp_radar.models import EvidenceRecord, OpportunityExtraction
+from demand_mvp_radar.proof import (
+    build_weekly_report_proof_receipt,
+    proof_receipt_path_for_report,
+    write_weekly_report_proof_receipt,
+)
 from demand_mvp_radar.reports.evidence_delta import (
     EvidenceDeltaReport,
     generate_evidence_delta_report,
@@ -58,6 +63,7 @@ class WeeklyRunResult(BaseModel):
     status: str
     database_path: Path
     report_path: Path | None = None
+    proof_receipt_path: Path | None = None
     corpus_version: str | None = None
     evidence_count: int = 0
     opportunity_count: int = 0
@@ -144,6 +150,13 @@ def run_weekly_pipeline(
         generated_at=datetime.now(UTC),
     )
     write_markdown_report(report_path, report)
+    proof_receipt_path = proof_receipt_path_for_report(report_path)
+    proof_receipt = build_weekly_report_proof_receipt(
+        report_markdown=report,
+        report_path=report_path,
+        briefs=briefs,
+    )
+    write_weekly_report_proof_receipt(proof_receipt_path, proof_receipt)
     _record_completed_run(
         connection,
         run_id=effective_run_id,
@@ -156,6 +169,7 @@ def run_weekly_pipeline(
         status="completed",
         database_path=database_path,
         report_path=report_path,
+        proof_receipt_path=proof_receipt_path,
         corpus_version=str(corpus_metadata["corpus_version"]),
         evidence_count=len(evidence_records),
         opportunity_count=len(candidates),

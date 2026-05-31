@@ -96,6 +96,20 @@ def build_weekly_report_proof_receipt(
     )
 
 
+def proof_receipt_path_for_report(report_path: Path | str) -> Path:
+    path = Path(report_path)
+    return path.with_suffix(".receipt.json")
+
+
+def write_weekly_report_proof_receipt(
+    path: Path | str,
+    receipt: WeeklyReportProofReceipt,
+) -> None:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(receipt.canonical_json() + "\n", encoding="utf-8")
+
+
 def _collect_evidence_refs(briefs: Sequence[OpportunityBrief]) -> tuple[ProofEvidenceRef, ...]:
     refs: list[ProofEvidenceRef] = []
     seen: set[str] = set()

@@ -13,12 +13,25 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from demand_mvp_radar.briefs import OpportunityBrief, build_opportunity_brief
 from demand_mvp_radar.config import Settings
 from demand_mvp_radar.llm.adapter import LLMProvider, provider_from_env
-from demand_mvp_radar.models import EvidenceRecord
+from demand_mvp_radar.models import (
+    EvidenceRecord,
+    OpportunityCandidate,
+    OpportunityExtraction,
+    OpportunityScore,
+    ScoreComponent,
+)
 from demand_mvp_radar.pipeline import CollectSourcesResult, collect_sources
+from demand_mvp_radar.proof import (
+    build_weekly_report_proof_receipt,
+    proof_receipt_path_for_report,
+    write_weekly_report_proof_receipt,
+)
 from demand_mvp_radar.reports.markdown import write_markdown_report
 from demand_mvp_radar.retrieval.ingestion import build_corpus
+from demand_mvp_radar.retrieval.query import EvidencePacket
 from demand_mvp_radar.source_trust import build_source_trust_records
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
 from demand_mvp_radar.storage.db import connect_database
@@ -130,6 +143,7 @@ class MvpOfWeekResult(BaseModel):
     database_path: Path
     report_path: Path
     json_path: Path
+    proof_receipt_path: Path | None = None
     corpus_version: str
     evidence_count: int
     duplicate_count: int
@@ -259,6 +273,16 @@ def run_mvp_of_week(
         else synthesis_markdown
     )
     write_markdown_report(report_path, markdown)
+    receipt_briefs = _receipt_briefs_for_candidates(candidates[:5])
+    proof_receipt_path = None
+    if receipt_briefs:
+        proof_receipt_path = proof_receipt_path_for_report(report_path)
+        proof_receipt = build_weekly_report_proof_receipt(
+            report_markdown=markdown,
+            report_path=report_path,
+            briefs=receipt_briefs,
+        )
+        write_weekly_report_proof_receipt(proof_receipt_path, proof_receipt)
 
     source_errors = collect_result.source_errors if collect_result is not None else {}
     result = MvpOfWeekResult(
@@ -267,6 +291,7 @@ def run_mvp_of_week(
         database_path=database_path,
         report_path=report_path,
         json_path=json_path,
+        proof_receipt_path=proof_receipt_path,
         corpus_version=corpus_version,
         evidence_count=len(evidence_records),
         duplicate_count=duplicate_count + (collect_result.duplicate_count if collect_result else 0),
@@ -363,6 +388,99 @@ def _rank_candidates(records: tuple[EvidenceRecord, ...]) -> list[CandidateAggre
                 candidate.recommendation = "needs_more_specific_scope"
 
     return sorted(grouped.values(), key=lambda item: item.score, reverse=True)
+
+
+def _receipt_briefs_for_candidates(
+    candidates: list[CandidateAggregate],
+) -> tuple[OpportunityBrief, ...]:
+    evidence_ids: dict[str, int] = {}
+    briefs: list[OpportunityBrief] = []
+    for candidate in candidates:
+        packets = _receipt_evidence_packets(candidate, evidence_ids)
+        if not packets:
+            continue
+        briefs.append(
+            build_opportunity_brief(
+                candidate=OpportunityCandidate(
+                    opportunity_id=f"mvp:{candidate.key}",
+                    normalized_pain=candidate.title.lower(),
+                    target_audience="operators",
+                    workflow=", ".join(sorted(candidate.surfaces)) or "weekly opportunity review",
+                    acquisition_channel="public evidence review",
+                    source_evidence_ids=tuple(record.source_id for record in candidate.evidence),
+                    candidate_title=candidate.title,
+                ),
+                score=OpportunityScore(
+                    opportunity_id=f"mvp:{candidate.key}",
+                    recommendation=candidate.recommendation,
+                    total_score=float(candidate.score),
+                    confidence_band=_receipt_confidence_band(candidate),
+                    components={
+                        "signal_strength": ScoreComponent(
+                            name="signal_strength",
+                            value=float(candidate.score),
+                            rationale="deterministic mvp-of-week candidate score",
+                        ),
+                        "evidence_count": ScoreComponent(
+                            name="evidence_count",
+                            value=float(min(len(candidate.evidence) * 20, 100)),
+                            rationale=f"{len(candidate.evidence)} supporting evidence item(s)",
+                        ),
+                    },
+                    threshold_reasons=tuple(sorted(candidate.missing_evidence)),
+                ),
+                extraction=OpportunityExtraction(
+                    user_pain=candidate.title,
+                    target_audience="operators",
+                    current_workaround=_first_or_default(
+                        candidate.anti_complexity_notes,
+                        "Manual weekly review of scattered demand signals.",
+                    ),
+                    competitor_shape="Needs public competitor corroboration.",
+                    mvp_function=_first_or_default(
+                        candidate.mvp_scopes,
+                        f"Validate one narrow workflow around {candidate.title}.",
+                    ),
+                    acquisition_angle="Public source corroboration before build-worthy framing.",
+                    risk_flags=tuple(sorted(candidate.risk_flags)),
+                    confidence_note="Receipt adapter for the mvp-of-week product loop.",
+                ),
+                evidence_packets=packets,
+            )
+        )
+    return tuple(briefs)
+
+
+def _receipt_evidence_packets(
+    candidate: CandidateAggregate,
+    evidence_ids: dict[str, int],
+) -> tuple[EvidencePacket, ...]:
+    packets: list[EvidencePacket] = []
+    for record in candidate.evidence:
+        if not record.source_url:
+            continue
+        evidence_key = record.source_fingerprint or f"{record.source_type}:{record.source_id}"
+        if evidence_key not in evidence_ids:
+            evidence_ids[evidence_key] = len(evidence_ids) + 1
+        packets.append(
+            EvidencePacket(
+                evidence_id=evidence_ids[evidence_key],
+                source_url=record.source_url,
+                captured_at=record.captured_at,
+                snippet=record.snippet or record.normalized_text[:240],
+                relevance_score=1.0,
+                citation_number=len(packets) + 1,
+            )
+        )
+    return tuple(packets)
+
+
+def _receipt_confidence_band(candidate: CandidateAggregate) -> str:
+    if candidate.recommendation == "focused_experiment":
+        return "medium"
+    if candidate.score >= 50:
+        return "low"
+    return "insufficient"
 
 
 def _collect_configured_sources(

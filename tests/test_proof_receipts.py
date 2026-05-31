@@ -3,13 +3,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from pydantic import ValidationError
-
 from demand_mvp_radar.briefs import OpportunityBrief
 from demand_mvp_radar.proof import (
     WeeklyReportProofReceipt,
     build_weekly_report_proof_receipt,
 )
+from pydantic import ValidationError
 from tests.test_reports import make_brief
 
 

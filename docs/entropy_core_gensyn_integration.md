@@ -62,19 +62,19 @@ Implemented now:
 - `build_weekly_report_proof_receipt(...)` hashes the generated report content,
   records the report artifact ref, and maps every cited evidence packet into a
   Core-compatible evidence ref.
+- Scheduled `run` reports and `mvp-of-week` reports persist
+  `<report>.receipt.json` next to the generated Markdown artifact.
 - Receipts fail validation when a report has no cited evidence.
 - `tests/test_proof_receipts.py` covers the report hash, evidence refs,
   receipt hash, and missing-evidence rejection.
 
 Next implementation tasks:
 
-1. Wire `build_weekly_report_proof_receipt(...)` into the scheduled weekly
-   report command and persist the receipt next to the report artifact.
-2. Keep source ranking, opportunity selection, and report wording product-local.
-3. Add source-trust receipt rows that Core-style lookup can verify
+1. Keep source ranking, opportunity selection, and report wording product-local.
+2. Add source-trust receipt rows that Core-style lookup can verify
    deterministically.
-4. Use schema compatibility before changing receipt/report schema versions.
-5. Route unsupported or weak evidence to `needs_more_evidence`, not to a
+3. Use schema compatibility before changing receipt/report schema versions.
+4. Route unsupported or weak evidence to `needs_more_evidence`, not to a
    confident recommendation.
 
 Core value here: prevent unsupported weekly recommendations and make it obvious

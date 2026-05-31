@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 
 from demand_mvp_radar.cli import main
+from demand_mvp_radar.proof import WeeklyReportProofReceipt
 
 FIXTURE = Path("tests/fixtures/weekly_run")
 
@@ -24,13 +25,22 @@ def test_weekly_run_writes_expected_artifacts(tmp_path, capsys) -> None:
     output = json.loads(capsys.readouterr().out)
     database_path = tmp_path / "data" / "radar.sqlite3"
     report_path = tmp_path / "reports" / "weekly-run-001.md"
+    receipt_path = tmp_path / "reports" / "weekly-run-001.receipt.json"
 
     assert exit_code == 0
     assert output["status"] == "completed"
     assert output["corpus_version"] == "corpus-weekly-001"
+    assert output["proof_receipt_path"] == str(receipt_path)
     assert database_path.exists()
     assert report_path.exists()
+    assert receipt_path.exists()
     assert "Recommendation:" in report_path.read_text()
+    receipt = WeeklyReportProofReceipt.model_validate(
+        json.loads(receipt_path.read_text(encoding="utf-8"))
+    )
+    assert receipt.artifact_ref == str(report_path)
+    assert receipt.verifier_status == "passed"
+    assert len(receipt.evidence_refs) == 2
 
     connection = sqlite3.connect(database_path)
     connection.row_factory = sqlite3.Row

@@ -7,6 +7,7 @@ from demand_mvp_radar.cli import main
 from demand_mvp_radar.config import Settings
 from demand_mvp_radar.llm.adapter import FakeLLMProvider
 from demand_mvp_radar.mvp_weekly import run_mvp_of_week
+from demand_mvp_radar.proof import WeeklyReportProofReceipt
 
 
 def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -> None:
@@ -65,6 +66,7 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     output = json.loads(capsys.readouterr().out)
     report_path = tmp_path / "reports" / "mvp_of_week" / "mvp-weekly-test.md"
     json_path = tmp_path / "reports" / "mvp_of_week" / "mvp-weekly-test.json"
+    receipt_path = tmp_path / "reports" / "mvp_of_week" / "mvp-weekly-test.receipt.json"
     connection = sqlite3.connect(tmp_path / "data" / "radar.sqlite3")
     connection.row_factory = sqlite3.Row
     run = connection.execute(
@@ -75,10 +77,21 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert exit_code == 0
     assert output["status"] == "selected"
     assert output["selected_title"] == "Telegram Channel SEO Site Generator"
+    assert output["proof_receipt_path"] == str(receipt_path)
     assert report_path.exists()
     assert json_path.exists()
+    assert receipt_path.exists()
     assert "MVP of the Week: Telegram Channel SEO Site Generator" in report_path.read_text()
     assert "This Week's Experiment" in report_path.read_text()
+    receipt = WeeklyReportProofReceipt.model_validate(
+        json.loads(receipt_path.read_text(encoding="utf-8"))
+    )
+    assert receipt.artifact_ref == str(report_path)
+    assert receipt.verifier_status == "passed"
+    assert {ref.source_url for ref in receipt.evidence_refs} == {
+        "https://t.me/its_capitan/1001",
+        "https://t.me/example/1002",
+    }
     assert run["status"] == "mvp_of_week"
     assert json.loads(run["source_counts"])["telegram_research_agent"] == 2
 
@@ -125,9 +138,14 @@ def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp
         llm_provider=provider,
     )
     report_text = result.report_path.read_text(encoding="utf-8")
+    receipt = WeeklyReportProofReceipt.model_validate(
+        json.loads(result.proof_receipt_path.read_text(encoding="utf-8"))
+    )
 
     assert result.recommendation == "needs_more_evidence"
     assert result.score == 49
+    assert receipt.artifact_sha256
+    assert receipt.evidence_refs[0].supports == "mvp:java-workflow-routing-plugin"
     assert result.source_counts["external_evidence_count"] == 0
     assert "Source Mix Gate" in report_text
     assert "## Decision Gate" in report_text
