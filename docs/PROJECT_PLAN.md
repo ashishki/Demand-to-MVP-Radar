@@ -28,6 +28,8 @@ compresses noisy demand signals into evidence-backed MVP candidates.
 ### P0 - Report Quality Loop
 
 - Add sanitized example report.
+- Persist a `weekly_report_receipt` for every scheduled report using
+  `demand_mvp_radar/proof.py`.
 - Add `docs/report_eval.md` or extend retrieval eval for:
   - useful signal rate
   - evidence quality
@@ -42,6 +44,7 @@ compresses noisy demand signals into evidence-backed MVP candidates.
 - Track repeated signals across sources.
 - Separate "interesting" from "build-worthy".
 - Add rejection reasons.
+- Add `source_trust_receipt` after weekly report receipts are persisted.
 
 ### P1 - Telegram/Channel Integration
 
@@ -62,6 +65,7 @@ compresses noisy demand signals into evidence-backed MVP candidates.
 - Use AI for report synthesis and clustering, but keep citations mandatory.
 - Use deterministic checks for source existence and duplicate signals.
 - Require evidence links for every `build` recommendation.
+- Require a proof receipt before treating a weekly report as decision-grade.
 - Use reviewer pass for weekly report quality until stable.
 
 ## Stop Conditions

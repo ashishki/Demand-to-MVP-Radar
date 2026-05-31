@@ -1,7 +1,7 @@
 # Entropy Core And Gensyn Integration
 
-Status: planned reference integration
-Last updated: 2026-05-29
+Status: implemented local proof receipt; Core runtime not adopted
+Last updated: 2026-05-31
 
 ## Purpose
 
@@ -20,11 +20,11 @@ vendored component, adapted code, pattern-only reuse, or rejection.
 
 ## Entropy Core Use
 
-Default level: receipt-compatible now; evidence-lookup compatible next.
+Default level: evidence-lookup compatible for weekly report receipts.
 
-Planned local artifacts:
+Local artifacts:
 
-- `opportunity_report_receipt`
+- `weekly_report_receipt` implemented in `demand_mvp_radar/proof.py`
 - `source_trust_receipt`
 - `weekly_report_referee_verdict`
 - `telegram_signal_bridge_receipt`
@@ -57,12 +57,22 @@ entropy_core:
 The Radar should use Entropy Core as a proof layer for reports, not as a
 runtime dependency.
 
-Implementation path:
+Implemented now:
 
-1. Emit a weekly report receipt with schema id, report artifact refs, evidence
-   refs, source trust verdicts, recommendation status, and blocked surfaces.
+- `build_weekly_report_proof_receipt(...)` hashes the generated report content,
+  records the report artifact ref, and maps every cited evidence packet into a
+  Core-compatible evidence ref.
+- Receipts fail validation when a report has no cited evidence.
+- `tests/test_proof_receipts.py` covers the report hash, evidence refs,
+  receipt hash, and missing-evidence rejection.
+
+Next implementation tasks:
+
+1. Wire `build_weekly_report_proof_receipt(...)` into the scheduled weekly
+   report command and persist the receipt next to the report artifact.
 2. Keep source ranking, opportunity selection, and report wording product-local.
-3. Add evidence rows that Core-style lookup can verify deterministically.
+3. Add source-trust receipt rows that Core-style lookup can verify
+   deterministically.
 4. Use schema compatibility before changing receipt/report schema versions.
 5. Route unsupported or weak evidence to `needs_more_evidence`, not to a
    confident recommendation.
