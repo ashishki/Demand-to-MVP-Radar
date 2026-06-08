@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import UTC, datetime
 
 from demand_mvp_radar.cli import main
 from demand_mvp_radar.config import Settings
 from demand_mvp_radar.llm.adapter import FakeLLMProvider
-from demand_mvp_radar.mvp_weekly import run_mvp_of_week
+from demand_mvp_radar.models import EvidenceRecord
+from demand_mvp_radar.mvp_weekly import CandidateAggregate, _selected_source_mix, run_mvp_of_week
 from demand_mvp_radar.proof import WeeklyReportProofReceipt
 
 
@@ -100,6 +102,9 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["result"]["dossier_status"] == "investigate"
     assert payload["selected"]["dossier_status"] == "investigate"
+    assert payload["result"]["selected_source_mix"]["readiness"] == "telegram_only"
+    assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 0
+    assert payload["selected"]["source_mix"]["reddit_api_status"] == "not_used"
 
 
 def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp_path) -> None:
@@ -161,6 +166,130 @@ def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp
     assert "does not yet have two independent non-Telegram evidence sources" in report_text
     assert "operator profile" in report_text
     assert "Operator fit profile" in provider.calls[0][0]
+
+
+def test_mvp_of_week_exposes_source_mix_and_missing_reddit_credentials(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    for env_var in ("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "REDDIT_USER_AGENT"):
+        monkeypatch.delenv(env_var, raising=False)
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1006",
+                    "captured_at": "2026-05-20T10:00:00+00:00",
+                    "title": "Telegram SEO demand",
+                    "text": (
+                        "Creators ask for public searchable mirrors of Telegram channel archives."
+                    ),
+                    "snippet": "Creators want searchable mirrors of Telegram archives.",
+                    "source_url": "https://t.me/its_capitan/1006",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["creator_content_gap", "search_intent"],
+                    "mvp_shape": "Telegram Channel SEO Site Generator",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    source_config = tmp_path / "mvp_sources.json"
+    source_config.write_text(
+        json.dumps(
+            {
+                "run_id": "mvp-weekly-source-mix",
+                "sources": [
+                    {
+                        "source_name": "reddit_demand_live",
+                        "source_type": "reddit",
+                        "trust_level": "medium",
+                        "freshness_window_days": 14,
+                        "enabled": True,
+                        "cursor_support": True,
+                        "raw_snapshot_policy": "metadata_only",
+                        "approval_required": True,
+                        "credential_env_vars": [
+                            "REDDIT_CLIENT_ID",
+                            "REDDIT_CLIENT_SECRET",
+                            "REDDIT_USER_AGENT",
+                        ],
+                        "rate_limit_policy": {
+                            "requests_per_minute": 4,
+                            "burst_limit": 1,
+                        },
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-source-mix",
+        source_config=source_config,
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    source_mix = payload["selected"]["source_mix"]
+
+    assert result.selected_source_mix["readiness"] == "credential_limited"
+    assert source_mix["readiness"] == "credential_limited"
+    assert source_mix["selected_telegram_seed_evidence_count"] == 1
+    assert source_mix["selected_external_evidence_count"] == 0
+    assert source_mix["missing_credentials"] == ["reddit_demand_live"]
+    assert source_mix["missing_credential_env_vars"] == [
+        "REDDIT_CLIENT_ID",
+        "REDDIT_CLIENT_SECRET",
+        "REDDIT_USER_AGENT",
+    ]
+    assert source_mix["reddit_api_status"] == "missing_credentials"
+    assert "Readiness: credential_limited" in report_text
+    assert "Missing credentials/source errors: reddit_demand_live" in report_text
+    assert "Reddit API: missing_credentials" in report_text
+
+
+def test_selected_source_mix_marks_repeated_github_variants() -> None:
+    captured_at = datetime(2026, 5, 20, 10, tzinfo=UTC)
+    evidence = [
+        EvidenceRecord(
+            run_id="mvp-weekly-source-mix",
+            source_type="github_public",
+            source_id=f"github-{index}",
+            source_url=f"https://github.com/example/repo/issues/{index}",
+            captured_at=captured_at,
+            title="Telegram SEO issue",
+            snippet="Users ask for searchable Telegram archives.",
+            normalized_text="Users ask for searchable Telegram archives.",
+            content_hash=f"hash-{index}",
+            source_fingerprint=f"github_public:{index}:hash-{index}",
+            provider_metadata={"mvp_shape": "Telegram Channel SEO Site Generator"},
+        )
+        for index in (1, 2)
+    ]
+    candidate = CandidateAggregate(
+        key="telegram-channel-seo-site-generator",
+        title="Telegram Channel SEO Site Generator",
+        evidence=evidence,
+    )
+
+    source_mix = _selected_source_mix(
+        candidate,
+        {
+            "external_evidence_count": 2,
+            "external_source_types": ("github_public",),
+            "telegram_seed_evidence_count": 0,
+        },
+    )
+
+    assert source_mix["readiness"] == "externally_corroborated"
+    assert source_mix["selected_external_source_types"] == ["github_public"]
+    assert source_mix["github_evidence_role"] == "repeated_variants_only"
 
 
 def test_mvp_of_week_rewrites_contradictory_llm_gate_sections(tmp_path) -> None:
@@ -225,7 +354,9 @@ def test_mvp_of_week_rewrites_contradictory_llm_gate_sections(tmp_path) -> None:
     assert payload["selected"]["dossier_status"] == "investigate"
     assert report_text.startswith("# Candidate Dossier: Telegram Channel SEO Site Generator")
     assert "Status: investigate" in report_text
-    assert "Decision: Investigate missing evidence before treating this as build-ready." in report_text
+    assert (
+        "Decision: Investigate missing evidence before treating this as build-ready." in report_text
+    )
     assert "Recommendation: **revisit_with_evidence_gap**" in report_text
     assert "Recommendation: **focused_experiment**" not in report_text
     assert "- Recommendation allowed: no" in report_text

@@ -154,6 +154,7 @@ class MvpOfWeekResult(BaseModel):
     dossier_status: str | None = None
     recommendation: str | None = None
     score: int | None = None
+    selected_source_mix: dict[str, object] | None = None
     source_counts: dict[str, object] = Field(default_factory=dict)
     source_errors: dict[str, str] = Field(default_factory=dict)
     llm_synthesis_status: str = "not_requested"
@@ -271,6 +272,12 @@ def run_mvp_of_week(
         selected=selected,
         replacement=report_selected,
     )
+    selected_source_mix = _selected_source_mix(report_selected, source_counts)
+    if selected_source_mix is not None:
+        source_counts = {
+            **source_counts,
+            "selected_candidate_source_mix": selected_source_mix,
+        }
     markdown = (
         _render_report(
             run_id=effective_run_id,
@@ -309,12 +316,21 @@ def run_mvp_of_week(
         duplicate_count=duplicate_count + (collect_result.duplicate_count if collect_result else 0),
         quarantined_count=len(import_result.quarantined),
         retrieval_chunk_count=retrieval_chunk_count,
-        selected_title=selected_title or (report_selected.title if report_selected is not None else None),
-        dossier_status=_dossier_status(report_selected) if report_selected is not None else "reject",
-        recommendation=(
-            recommendation or (report_selected.recommendation if report_selected is not None else None)
+        selected_title=selected_title
+        or (report_selected.title if report_selected is not None else None),
+        dossier_status=(
+            _dossier_status(report_selected) if report_selected is not None else "reject"
         ),
-        score=score if score is not None else (report_selected.score if report_selected is not None else None),
+        recommendation=(
+            recommendation
+            or (report_selected.recommendation if report_selected is not None else None)
+        ),
+        score=(
+            score
+            if score is not None
+            else (report_selected.score if report_selected is not None else None)
+        ),
+        selected_source_mix=selected_source_mix,
         source_counts=source_counts,
         source_errors=source_errors,
         llm_synthesis_status=synthesis_status,
@@ -325,6 +341,7 @@ def run_mvp_of_week(
         selected=report_selected,
         candidates=report_candidates,
         result=result,
+        source_counts=source_counts,
         source_config=source_config,
     )
     _record_mvp_run(
@@ -1296,7 +1313,9 @@ def _dossier_next_action(candidate: CandidateAggregate) -> str:
         return "Open the related existing repo/backlog and attach the evidence as project context."
     status = _dossier_status(candidate)
     if status in {"build", "focused_experiment"}:
-        return "Run the next experiment below and record build/revisit/reject at the end of the week."
+        return (
+            "Run the next experiment below and record build/revisit/reject at the end of the week."
+        )
     if status == "investigate":
         return "Collect the missing source evidence listed below before building."
     return "Do not build; revisit only if a new independent source appears."
@@ -1341,7 +1360,9 @@ def _kill_criteria_lines(candidate: CandidateAggregate) -> list[str]:
     if candidate.recommendation == "existing_project_context":
         lines.append("- The signal cannot be tied to a concrete existing-project backlog change.")
     if candidate.risk_flags:
-        lines.append("- Risk flags remain unresolved: " + ", ".join(sorted(candidate.risk_flags)) + ".")
+        lines.append(
+            "- Risk flags remain unresolved: " + ", ".join(sorted(candidate.risk_flags)) + "."
+        )
     return lines
 
 
@@ -1372,7 +1393,10 @@ def _render_report(
                     "Status: reject",
                     "Decision: No usable opportunity seeds were available this week.",
                     "Confidence: insufficient",
-                    "Next action: Check ingestion and source collection before considering candidates.",
+                    (
+                        "Next action: Check ingestion and source collection "
+                        "before considering candidates."
+                    ),
                     "",
                     f"Generated: {generated_at}",
                     f"Run ID: {run_id}",
@@ -1498,33 +1522,252 @@ def _source_mix_summary(
     *,
     selected: CandidateAggregate | None = None,
 ) -> str:
-    external_types = source_counts.get("external_source_types", ())
-    if isinstance(external_types, str):
-        external_text = external_types
-    else:
-        external_text = ", ".join(str(value) for value in external_types) or "none"
-    external_count = source_counts.get("external_evidence_count", 0)
-    telegram_count = source_counts.get("telegram_seed_evidence_count", 0)
-    selected_external = (
-        ", ".join(_external_source_types(selected.evidence)) if selected is not None else "none"
-    ) or "none"
+    return "\n".join(_source_mix_card_lines(source_counts, selected=selected))
+
+
+def _source_mix_card_lines(
+    source_counts: dict[str, object],
+    *,
+    selected: CandidateAggregate | None = None,
+) -> list[str]:
+    selected_mix = _selected_source_mix(selected, source_counts)
+    if selected_mix is None:
+        run_external_types = _object_list(source_counts.get("external_source_types"))
+        run_external_count = _safe_int(source_counts.get("external_evidence_count"), default=0)
+        telegram_count = _safe_int(source_counts.get("telegram_seed_evidence_count"), default=0)
+        return [
+            "- Readiness: telegram_only",
+            f"- Run Telegram seed evidence: {telegram_count}",
+            (
+                "- Run external evidence: "
+                f"{run_external_count} (types: {_join_or_none(run_external_types)})"
+            ),
+            "- Selected external evidence: 0 (types: none)",
+            "- Missing credentials/source errors: none",
+            "- Reddit API: not_used",
+            "- GitHub evidence: none",
+            "- Gate: external evidence gap remains",
+        ]
+
+    missing_credentials = _string_list(selected_mix.get("missing_credentials"))
+    source_errors = _string_list(selected_mix.get("source_error_sources"))
+    issue_sources = missing_credentials or source_errors
+    missing_text = _join_or_none(issue_sources)
+    if missing_credentials:
+        env_vars = selected_mix.get("missing_credential_env_vars")
+        env_text = _join_or_none(_string_list(env_vars))
+        missing_text = f"{missing_text} ({env_text})"
+
+    selected_external_types = _string_list(selected_mix.get("selected_external_source_types"))
+    run_external_types = _string_list(selected_mix.get("run_external_source_types"))
     gate = (
         "decision-grade external evidence present"
-        if selected is not None and _has_decision_grade_external_evidence(selected)
+        if bool(selected_mix.get("decision_grade_external"))
         else "external evidence gap remains"
     )
-    source_errors = source_counts.get("source_errors") or {}
-    source_error_text = ""
-    if isinstance(source_errors, dict) and source_errors:
-        source_error_text = (
-            " Source errors: " + ", ".join(f"{key}" for key in sorted(source_errors)) + "."
-        )
-    return (
-        f"Run evidence mix: Telegram seed evidence={telegram_count}; "
-        f"external evidence={external_count}; external source types={external_text}. "
-        f"Selected-candidate external source types={selected_external}. Gate: {gate}."
-        f"{source_error_text}"
+    return [
+        f"- Readiness: {selected_mix.get('readiness', 'telegram_only')}",
+        (
+            "- Selected Telegram seed evidence: "
+            f"{selected_mix.get('selected_telegram_seed_evidence_count', 0)}"
+        ),
+        (
+            "- Selected external evidence: "
+            f"{selected_mix.get('selected_external_evidence_count', 0)} "
+            f"(types: {_join_or_none(selected_external_types)})"
+        ),
+        (
+            "- Run external evidence: "
+            f"{selected_mix.get('run_external_evidence_count', 0)} "
+            f"(types: {_join_or_none(run_external_types)})"
+        ),
+        f"- Missing credentials/source errors: {missing_text}",
+        f"- Reddit API: {selected_mix.get('reddit_api_status', 'not_used')}",
+        f"- GitHub evidence: {selected_mix.get('github_evidence_role', 'none')}",
+        f"- Gate: {gate}",
+    ]
+
+
+def _selected_source_mix(
+    selected: CandidateAggregate | None,
+    source_counts: dict[str, object],
+) -> dict[str, object] | None:
+    if selected is None:
+        return None
+    source_errors = _source_error_map(source_counts.get("source_errors"))
+    missing_credentials = _missing_credential_sources(source_errors)
+    selected_external_types = list(_external_source_types(selected.evidence))
+    selected_external_count = _external_evidence_count(selected.evidence)
+    selected_telegram_count = sum(
+        1 for record in selected.evidence if record.source_type == "telegram_research_agent"
     )
+    run_external_types = _object_list(source_counts.get("external_source_types"))
+    readiness = _source_mix_readiness(
+        selected_external_count=selected_external_count,
+        missing_credentials=missing_credentials,
+    )
+    return {
+        "readiness": readiness,
+        "selected_telegram_seed_evidence_count": selected_telegram_count,
+        "selected_external_evidence_count": selected_external_count,
+        "selected_external_source_types": selected_external_types,
+        "run_external_evidence_count": _safe_int(
+            source_counts.get("external_evidence_count"),
+            default=0,
+        ),
+        "run_external_source_types": run_external_types,
+        "decision_grade_external": _has_decision_grade_external_evidence(selected),
+        "source_error_sources": sorted(source_errors),
+        "missing_credentials": sorted(missing_credentials),
+        "missing_credential_env_vars": _missing_credential_env_vars(source_errors),
+        "reddit_api_status": _reddit_api_status(
+            selected=selected,
+            source_counts=source_counts,
+            missing_credentials=missing_credentials,
+        ),
+        "github_evidence_role": _github_evidence_role(selected),
+    }
+
+
+def _source_mix_readiness(
+    *,
+    selected_external_count: int,
+    missing_credentials: set[str],
+) -> str:
+    if missing_credentials:
+        return "credential_limited"
+    if selected_external_count <= 0:
+        return "telegram_only"
+    return "externally_corroborated"
+
+
+def _reddit_api_status(
+    *,
+    selected: CandidateAggregate,
+    source_counts: dict[str, object],
+    missing_credentials: set[str],
+) -> str:
+    configured_sources = _object_dict(source_counts.get("configured_sources"))
+    reddit_run_count = _safe_int(source_counts.get("reddit"), default=0)
+    reddit_config_count = sum(
+        _safe_int(value, default=0)
+        for key, value in configured_sources.items()
+        if "reddit" in str(key).lower()
+    )
+    if any(record.source_type == "reddit" for record in selected.evidence):
+        return "used"
+    if reddit_run_count > 0 or reddit_config_count > 0:
+        return "used"
+    if _has_serp_indexed_reddit(selected.evidence):
+        return "serp_indexed_only"
+    if any("reddit" in source.lower() for source in missing_credentials):
+        return "missing_credentials"
+    return "not_used"
+
+
+def _has_serp_indexed_reddit(records: list[EvidenceRecord]) -> bool:
+    for record in records:
+        if record.source_type != "serp":
+            continue
+        text = " ".join(
+            value
+            for value in (
+                record.source_url or "",
+                record.source_id,
+                record.title,
+                record.snippet,
+                record.normalized_text,
+            )
+            if value
+        ).lower()
+        if "reddit" in text:
+            return True
+    return False
+
+
+def _github_evidence_role(selected: CandidateAggregate) -> str:
+    github_records = [
+        record for record in selected.evidence if record.source_type == "github_public"
+    ]
+    if not github_records:
+        return "none"
+    signal_counts: dict[str, int] = {}
+    for record in github_records:
+        key = _source_signal_key(record)
+        signal_counts[key] = signal_counts.get(key, 0) + 1
+    repeated_count = sum(count - 1 for count in signal_counts.values() if count > 1)
+    if repeated_count and len(signal_counts) <= 1:
+        return "repeated_variants_only"
+    if repeated_count:
+        return "mixed_primary_and_variants"
+    return "primary_evidence"
+
+
+def _source_signal_key(record: EvidenceRecord) -> str:
+    value = (
+        _metadata_text(record.provider_metadata, "mvp_shape")
+        or _metadata_text(record.provider_metadata, "demand_signal_type")
+        or ",".join(_metadata_list(record.provider_metadata, "demand_surfaces"))
+        or record.title
+        or record.normalized_text[:80]
+    )
+    return " ".join(value.lower().split())
+
+
+def _source_error_map(value: object) -> dict[str, str]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): str(item) for key, item in value.items()}
+
+
+def _missing_credential_sources(source_errors: dict[str, str]) -> set[str]:
+    return {
+        source
+        for source, message in source_errors.items()
+        if "status=missing" in message or "missing required credential" in message
+    }
+
+
+def _missing_credential_env_vars(source_errors: dict[str, str]) -> list[str]:
+    env_vars: set[str] = set()
+    for source in _missing_credential_sources(source_errors):
+        message = source_errors[source]
+        match = re.search(r"env_vars=([^;]+)", message)
+        if not match:
+            continue
+        env_vars.update(value.strip() for value in match.group(1).split(",") if value.strip())
+    return sorted(env_vars)
+
+
+def _object_list(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, (list, tuple, set)):
+        return [str(item) for item in value if str(item)]
+    return [str(value)]
+
+
+def _string_list(value: object) -> list[str]:
+    return _object_list(value)
+
+
+def _object_dict(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
+
+
+def _join_or_none(values: list[str]) -> str:
+    return ", ".join(values) if values else "none"
+
+
+def _safe_int(value: object, *, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _decision_gate_summary(
@@ -1739,25 +1982,35 @@ def _write_json(
     selected: CandidateAggregate | None,
     candidates: list[CandidateAggregate],
     result: MvpOfWeekResult,
+    source_counts: dict[str, object],
     source_config: Path | None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "result": result.model_dump(mode="json"),
-        "selected": _candidate_json(selected) if selected is not None else None,
-        "candidates": [_candidate_json(candidate) for candidate in candidates],
+        "selected": _candidate_json(selected, source_counts=source_counts)
+        if selected is not None
+        else None,
+        "candidates": [
+            _candidate_json(candidate, source_counts=source_counts) for candidate in candidates
+        ],
         "source_config": str(source_config) if source_config is not None else None,
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def _candidate_json(candidate: CandidateAggregate) -> dict[str, object]:
+def _candidate_json(
+    candidate: CandidateAggregate,
+    *,
+    source_counts: dict[str, object],
+) -> dict[str, object]:
     return {
         "title": candidate.title,
         "score": candidate.score,
         "dossier_status": _dossier_status(candidate),
         "confidence": _dossier_confidence(candidate),
         "recommendation": candidate.recommendation,
+        "source_mix": _selected_source_mix(candidate, source_counts),
         "evidence_count": len(candidate.evidence),
         "surfaces": sorted(candidate.surfaces),
         "channels": sorted(candidate.channels),

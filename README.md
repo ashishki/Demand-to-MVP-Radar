@@ -143,8 +143,11 @@ demand-mvp-radar health --json
 the configured source collection before synthesis. The weekly artifact is a
 Candidate Dossier with canonical `Status`, `Decision`, `Confidence`, and
 `Next action` fields, plus matching JSON `dossier_status` values for the
-overall result and selected candidate. It is a separate opportunity artifact,
-not a technical upgrade brief for existing repos.
+overall result and selected candidate. It also exposes a machine-readable
+selected-candidate `source_mix` / `selected_source_mix` object with readiness,
+selected external evidence, run-level external evidence, missing credentials,
+Reddit API status, and GitHub evidence role. It is a separate opportunity
+artifact, not a technical upgrade brief for existing repos.
 
 The MVP recommendation is gated by source mix and operator fit:
 
@@ -165,6 +168,10 @@ The MVP recommendation is gated by source mix and operator fit:
 - Weekly reports expose Decision Gate, Source Trust And Repeated Signals,
   Build-Worthy Recommendations, and Interesting Signals sections so repeated
   source noise is visible before build-like recommendations.
+- Candidate Dossiers expose a compact Source Mix card near the top. The card
+  labels the run as `telegram_only`, `externally_corroborated`, or
+  `credential_limited`, and separates live Reddit API evidence from
+  SERP-indexed Reddit pages.
 - `config/operator_fit_profile.md` keeps the weekly idea close to the operator's
   Python/LLM workflow, evaluation, guardrail, knowledge-memory, research, and
   rollout strengths.

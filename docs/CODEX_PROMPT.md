@@ -56,8 +56,14 @@ Full historical prompt archived at
   anti-complexity sections. JSON result/selected objects expose the same
   `dossier_status`, and existing-project context cannot be framed as a new
   standalone MVP.
+- Cross-repo RADAR-3 added a selected-candidate source-mix truth surface:
+  Markdown now has a compact Source Mix card, JSON result/selected objects
+  expose machine-readable `selected_source_mix` / `source_mix`, missing
+  credentials remain visible, Reddit API usage is distinguished from
+  SERP-indexed Reddit pages, and GitHub evidence is labeled as primary or
+  repeated variants.
 - Cycle 20 deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
-- Current focused baseline: `tests/test_mvp_of_week.py` passes with 4 tests.
+- Current focused baseline: `tests/test_mvp_of_week.py` passes with 6 tests.
 
 ## Active Inputs
 
