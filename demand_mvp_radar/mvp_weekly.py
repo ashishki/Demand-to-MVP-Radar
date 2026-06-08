@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -259,11 +260,21 @@ def run_mvp_of_week(
         top_evidence=top_evidence,
         source_counts=source_counts,
     )
+    report_selected = _candidate_with_gated_result(
+        selected,
+        recommendation=recommendation,
+        score=score,
+    )
+    report_candidates = _replace_candidate_in_list(
+        candidates[:5],
+        selected=selected,
+        replacement=report_selected,
+    )
     markdown = (
         _render_report(
             run_id=effective_run_id,
-            selected=selected,
-            candidates=candidates[:5],
+            selected=report_selected,
+            candidates=report_candidates,
             evidence_count=len(evidence_records),
             quarantined_count=len(import_result.quarantined),
             top_evidence=top_evidence,
@@ -273,7 +284,7 @@ def run_mvp_of_week(
         else synthesis_markdown
     )
     write_markdown_report(report_path, markdown)
-    receipt_briefs = _receipt_briefs_for_candidates(candidates[:5])
+    receipt_briefs = _receipt_briefs_for_candidates(report_candidates)
     proof_receipt_path = None
     if receipt_briefs:
         proof_receipt_path = proof_receipt_path_for_report(report_path)
@@ -297,11 +308,11 @@ def run_mvp_of_week(
         duplicate_count=duplicate_count + (collect_result.duplicate_count if collect_result else 0),
         quarantined_count=len(import_result.quarantined),
         retrieval_chunk_count=retrieval_chunk_count,
-        selected_title=selected_title or (selected.title if selected is not None else None),
+        selected_title=selected_title or (report_selected.title if report_selected is not None else None),
         recommendation=(
-            recommendation or (selected.recommendation if selected is not None else None)
+            recommendation or (report_selected.recommendation if report_selected is not None else None)
         ),
-        score=score if score is not None else (selected.score if selected is not None else None),
+        score=score if score is not None else (report_selected.score if report_selected is not None else None),
         source_counts=source_counts,
         source_errors=source_errors,
         llm_synthesis_status=synthesis_status,
@@ -309,8 +320,8 @@ def run_mvp_of_week(
     )
     _write_json(
         json_path,
-        selected=selected,
-        candidates=candidates[:5],
+        selected=report_selected,
+        candidates=report_candidates,
         result=result,
         source_config=source_config,
     )
@@ -618,17 +629,33 @@ def _synthesize_or_render(
         score=score,
         source_counts=source_counts,
     )
+    display_candidate = _candidate_with_gated_result(
+        gate_candidate,
+        recommendation=recommendation,
+        score=score,
+    )
+    display_candidates = _replace_candidate_in_list(
+        candidates,
+        selected=gate_candidate,
+        replacement=display_candidate,
+    )
 
     markdown = synthesis.markdown.strip()
     if not markdown.startswith("#"):
         markdown = f"# MVP of the Week: {selected_title or selected.title}\n\n{markdown}"
+    markdown = _canonicalize_synthesis_markdown(
+        markdown,
+        selected=display_candidate,
+        candidates=display_candidates,
+        source_counts=source_counts,
+    )
     if gate_notes:
         markdown = _append_gate_notes(markdown, gate_notes)
     markdown = _append_report_quality_sections(
         markdown,
         source_counts=source_counts,
-        selected=gate_candidate,
-        candidates=candidates,
+        selected=display_candidate,
+        candidates=display_candidates,
     )
     return (
         markdown.rstrip() + "\n",
@@ -829,6 +856,118 @@ def _candidate_for_title(
         if candidate.key == normalized or _normalize_key(candidate.title) == normalized:
             return candidate
     return None
+
+
+def _candidate_with_gated_result(
+    candidate: CandidateAggregate | None,
+    *,
+    recommendation: str | None,
+    score: int | None,
+) -> CandidateAggregate | None:
+    if candidate is None:
+        return None
+    cloned = replace(
+        candidate,
+        evidence=list(candidate.evidence),
+        surfaces=set(candidate.surfaces),
+        channels=set(candidate.channels),
+        missing_evidence=set(candidate.missing_evidence),
+        risk_flags=set(candidate.risk_flags),
+        mvp_scopes=list(candidate.mvp_scopes),
+        anti_complexity_notes=list(candidate.anti_complexity_notes),
+        profile_fit_flags=set(candidate.profile_fit_flags),
+        profile_mismatch_flags=set(candidate.profile_mismatch_flags),
+    )
+    if recommendation:
+        cloned.recommendation = recommendation
+    if score is not None:
+        cloned.score = score
+    return cloned
+
+
+def _replace_candidate_in_list(
+    candidates: list[CandidateAggregate],
+    *,
+    selected: CandidateAggregate | None,
+    replacement: CandidateAggregate | None,
+) -> list[CandidateAggregate]:
+    if selected is None or replacement is None:
+        return list(candidates)
+    return [
+        replacement if candidate.key == selected.key else copy.copy(candidate)
+        for candidate in candidates
+    ]
+
+
+def _canonicalize_synthesis_markdown(
+    markdown: str,
+    *,
+    selected: CandidateAggregate,
+    candidates: list[CandidateAggregate],
+    source_counts: dict[str, object],
+) -> str:
+    markdown = _replace_top_recommendation_block(markdown, selected=selected)
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Decision Gate",
+        _decision_gate_summary(source_counts, selected=selected).splitlines(),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Build-Worthy Recommendations",
+        _build_worthy_lines(candidates),
+    )
+    return markdown
+
+
+def _replace_top_recommendation_block(markdown: str, *, selected: CandidateAggregate) -> str:
+    lines = markdown.rstrip().splitlines()
+    if not lines:
+        return markdown
+    title = lines[0]
+    body: list[str] = []
+    index = 1
+    while index < len(lines) and not lines[index].startswith("## "):
+        line = lines[index]
+        if re.match(r"^\s*(recommendation|score)\s*:", line, flags=re.IGNORECASE):
+            index += 1
+            continue
+        if line.strip() or body:
+            body.append(line)
+        index += 1
+
+    top_block = [
+        title,
+        "",
+        f"Recommendation: **{selected.recommendation}**",
+        f"Score: {selected.score}/100",
+    ]
+    if body:
+        top_block.extend(["", *body])
+    if index < len(lines):
+        top_block.extend(["", *lines[index:]])
+    return "\n".join(top_block).strip() + "\n"
+
+
+def _replace_or_append_markdown_section(
+    markdown: str,
+    heading: str,
+    body_lines: list[str],
+) -> str:
+    heading_line = f"## {heading}"
+    lines = markdown.rstrip().splitlines()
+    start = next(
+        (index for index, line in enumerate(lines) if line.strip().lower() == heading_line.lower()),
+        None,
+    )
+    replacement = [heading_line, "", *body_lines]
+    if start is None:
+        return "\n".join([*lines, "", *replacement]).strip() + "\n"
+    end = next(
+        (index for index in range(start + 1, len(lines)) if lines[index].startswith("## ")),
+        len(lines),
+    )
+    return "\n".join([*lines[:start], *replacement, "", *lines[end:]]).strip() + "\n"
 
 
 def _apply_synthesis_gates(

@@ -46,8 +46,12 @@ Full historical prompt archived at
   because the source mix is Telegram-only and external evidence is 0.
 - T72 created `docs/audit/PHASE19_OPERATING_DECISION.md`: next operating step is
   public corroboration research for Agent Instruction Conflict Review.
+- Cross-repo RADAR-2 hardening added deterministic final-gate rewriting for
+  `mvp-of-week`: LLM Markdown Decision Gate and Build-Worthy sections are
+  replaced with gated source-mix truth, and JSON `result`/`selected`
+  recommendations now agree with the rendered report.
 - Cycle 20 deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
-- Current baseline: 198 passing tests.
+- Current focused baseline: `tests/test_mvp_of_week.py` passes with 3 tests.
 
 ## Active Inputs
 

@@ -149,6 +149,10 @@ The MVP recommendation is gated by source mix and operator fit:
 - Telegram-only ideas cannot become `focused_experiment`; they stay
   `revisit_with_evidence_gap` / `needs_more_evidence` until public external
   evidence confirms the same pain.
+- Runtime LLM Markdown cannot override deterministic gates. If synthesis claims
+  a build/focused experiment while source mix fails, the rendered Decision Gate,
+  Build-Worthy section, and JSON result are rewritten to the gated
+  recommendation.
 - Strong recommendations need at least two non-Telegram evidence items from at
   least two independent external source types.
 - Weekly reports expose Decision Gate, Source Trust And Repeated Signals,

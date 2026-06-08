@@ -155,3 +155,71 @@ def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp
     assert "does not yet have two independent non-Telegram evidence sources" in report_text
     assert "operator profile" in report_text
     assert "Operator fit profile" in provider.calls[0][0]
+
+
+def test_mvp_of_week_rewrites_contradictory_llm_gate_sections(tmp_path) -> None:
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1004",
+                    "captured_at": "2026-05-20T10:00:00+00:00",
+                    "title": "Telegram SEO demand",
+                    "text": (
+                        "Creators keep asking for a way to publish Telegram channel "
+                        "archives as searchable SEO pages."
+                    ),
+                    "snippet": "Creators ask for searchable SEO pages from Telegram posts.",
+                    "source_url": "https://t.me/its_capitan/1004",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["creator_content_gap", "search_intent"],
+                    "mvp_shape": "Telegram Channel SEO Site Generator",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    provider = FakeLLMProvider(
+        json.dumps(
+            {
+                "selected_title": "Telegram Channel SEO Site Generator",
+                "recommendation": "focused_experiment",
+                "score": 91,
+                "markdown": (
+                    "# MVP of the Week: Telegram Channel SEO Site Generator\n\n"
+                    "Recommendation: **focused_experiment**\n"
+                    "Score: 91/100\n\n"
+                    "## Why This Week\nTelegram seed only.\n\n"
+                    "## Decision Gate\n"
+                    "- Recommendation allowed: yes\n"
+                    "- Reason: focused_experiment\n\n"
+                    "## Build-Worthy Recommendations\n"
+                    "- Build Telegram Channel SEO Site Generator now.\n"
+                ),
+            }
+        )
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-contradiction",
+        llm_provider=provider,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+
+    assert result.recommendation == "revisit_with_evidence_gap"
+    assert payload["result"]["recommendation"] == "revisit_with_evidence_gap"
+    assert payload["selected"]["recommendation"] == "revisit_with_evidence_gap"
+    assert "Recommendation: **revisit_with_evidence_gap**" in report_text
+    assert "Recommendation: **focused_experiment**" not in report_text
+    assert "- Recommendation allowed: no" in report_text
+    assert "- Recommendation allowed: yes" not in report_text
+    assert "- Reason: source_mix_gate" in report_text
+    assert "- Reason: focused_experiment" not in report_text
+    assert "- No build-worthy recommendations passed the Decision Gate." in report_text
+    assert "Build Telegram Channel SEO Site Generator now" not in report_text
+    assert "Downgraded from focused_experiment" in report_text
