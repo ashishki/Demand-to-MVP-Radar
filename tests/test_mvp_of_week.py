@@ -81,8 +81,11 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert report_path.exists()
     assert json_path.exists()
     assert receipt_path.exists()
-    assert "MVP of the Week: Telegram Channel SEO Site Generator" in report_path.read_text()
-    assert "This Week's Experiment" in report_path.read_text()
+    report_text = report_path.read_text()
+    assert "Candidate Dossier: Telegram Channel SEO Site Generator" in report_text
+    assert "Status: investigate" in report_text
+    assert "## Next Experiment" in report_text
+    assert "## Kill Criteria" in report_text
     receipt = WeeklyReportProofReceipt.model_validate(
         json.loads(receipt_path.read_text(encoding="utf-8"))
     )
@@ -94,6 +97,9 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     }
     assert run["status"] == "mvp_of_week"
     assert json.loads(run["source_counts"])["telegram_research_agent"] == 2
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload["result"]["dossier_status"] == "investigate"
+    assert payload["selected"]["dossier_status"] == "investigate"
 
 
 def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp_path) -> None:
@@ -212,8 +218,14 @@ def test_mvp_of_week_rewrites_contradictory_llm_gate_sections(tmp_path) -> None:
     payload = json.loads(result.json_path.read_text(encoding="utf-8"))
 
     assert result.recommendation == "revisit_with_evidence_gap"
+    assert result.dossier_status == "investigate"
     assert payload["result"]["recommendation"] == "revisit_with_evidence_gap"
+    assert payload["result"]["dossier_status"] == "investigate"
     assert payload["selected"]["recommendation"] == "revisit_with_evidence_gap"
+    assert payload["selected"]["dossier_status"] == "investigate"
+    assert report_text.startswith("# Candidate Dossier: Telegram Channel SEO Site Generator")
+    assert "Status: investigate" in report_text
+    assert "Decision: Investigate missing evidence before treating this as build-ready." in report_text
     assert "Recommendation: **revisit_with_evidence_gap**" in report_text
     assert "Recommendation: **focused_experiment**" not in report_text
     assert "- Recommendation allowed: no" in report_text
@@ -223,3 +235,45 @@ def test_mvp_of_week_rewrites_contradictory_llm_gate_sections(tmp_path) -> None:
     assert "- No build-worthy recommendations passed the Decision Gate." in report_text
     assert "Build Telegram Channel SEO Site Generator now" not in report_text
     assert "Downgraded from focused_experiment" in report_text
+
+
+def test_mvp_of_week_existing_project_context_is_not_new_mvp(tmp_path) -> None:
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@agents:1005",
+                    "captured_at": "2026-05-20T10:00:00+00:00",
+                    "title": "Workflow-to-agent signal",
+                    "text": "Operators ask how to turn recurring workflows into agent templates.",
+                    "snippet": "Operators ask for workflow-to-agent templates.",
+                    "source_url": "https://t.me/agents/1005",
+                    "channel_username": "@agents",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation"],
+                    "mvp_shape": "Workflow-to-Agent Studio",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-existing-project",
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+
+    assert result.recommendation == "existing_project_context"
+    assert result.dossier_status == "investigate"
+    assert payload["selected"]["dossier_status"] == "investigate"
+    assert report_text.startswith("# Candidate Dossier: Workflow-to-Agent Studio")
+    assert "Status: investigate" in report_text
+    assert "Apply this to an existing project/backlog" in report_text
+    assert "standalone new MVP" in report_text
+    assert "1. Attach this evidence to the existing project as context." in report_text
+    assert "The signal cannot be tied to a concrete existing-project backlog change." in report_text

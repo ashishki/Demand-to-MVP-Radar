@@ -140,9 +140,11 @@ demand-mvp-radar health --json
 ```
 
 `mvp-of-week` treats Telegram exports as seed evidence, then optionally runs
-the configured source collection before synthesis. The weekly report is a
-separate MVP opportunity artifact, not a technical upgrade brief for existing
-repos.
+the configured source collection before synthesis. The weekly artifact is a
+Candidate Dossier with canonical `Status`, `Decision`, `Confidence`, and
+`Next action` fields, plus matching JSON `dossier_status` values for the
+overall result and selected candidate. It is a separate opportunity artifact,
+not a technical upgrade brief for existing repos.
 
 The MVP recommendation is gated by source mix and operator fit:
 
@@ -153,6 +155,11 @@ The MVP recommendation is gated by source mix and operator fit:
   a build/focused experiment while source mix fails, the rendered Decision Gate,
   Build-Worthy section, and JSON result are rewritten to the gated
   recommendation.
+- Recommendation strings are mapped to reader-facing dossier status values:
+  `build`, `focused_experiment`, `investigate`, or `reject`. Existing-project
+  context is always rendered as `investigate` with explicit copy telling the
+  operator to apply the signal to an existing repo/backlog instead of treating
+  it as a new standalone MVP.
 - Strong recommendations need at least two non-Telegram evidence items from at
   least two independent external source types.
 - Weekly reports expose Decision Gate, Source Trust And Repeated Signals,

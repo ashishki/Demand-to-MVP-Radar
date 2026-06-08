@@ -50,8 +50,14 @@ Full historical prompt archived at
   `mvp-of-week`: LLM Markdown Decision Gate and Build-Worthy sections are
   replaced with gated source-mix truth, and JSON `result`/`selected`
   recommendations now agree with the rendered report.
+- Cross-repo RADAR-1 changed `mvp-of-week` output to a Candidate Dossier with
+  canonical reader-facing status, decision, confidence, next action, evidence,
+  missing evidence, next experiment, kill criteria, operator fit, and
+  anti-complexity sections. JSON result/selected objects expose the same
+  `dossier_status`, and existing-project context cannot be framed as a new
+  standalone MVP.
 - Cycle 20 deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
-- Current focused baseline: `tests/test_mvp_of_week.py` passes with 3 tests.
+- Current focused baseline: `tests/test_mvp_of_week.py` passes with 4 tests.
 
 ## Active Inputs
 

@@ -151,6 +151,7 @@ class MvpOfWeekResult(BaseModel):
     quarantined_count: int
     retrieval_chunk_count: int
     selected_title: str | None = None
+    dossier_status: str | None = None
     recommendation: str | None = None
     score: int | None = None
     source_counts: dict[str, object] = Field(default_factory=dict)
@@ -309,6 +310,7 @@ def run_mvp_of_week(
         quarantined_count=len(import_result.quarantined),
         retrieval_chunk_count=retrieval_chunk_count,
         selected_title=selected_title or (report_selected.title if report_selected is not None else None),
+        dossier_status=_dossier_status(report_selected) if report_selected is not None else "reject",
         recommendation=(
             recommendation or (report_selected.recommendation if report_selected is not None else None)
         ),
@@ -648,6 +650,7 @@ def _synthesize_or_render(
         selected=display_candidate,
         candidates=display_candidates,
         source_counts=source_counts,
+        top_evidence=top_evidence,
     )
     if gate_notes:
         markdown = _append_gate_notes(markdown, gate_notes)
@@ -703,12 +706,12 @@ def _build_synthesis_prompt(
         )
 
     prompt_lines = [
-        "You are writing Demand-to-MVP Radar's weekly MVP report.",
+        "You are writing Demand-to-MVP Radar's weekly Candidate Dossier.",
         "",
         ("This artifact is NOT a technical implementation-ideas brief for existing repositories."),
         (
-            "Its job is to choose one interesting and potentially profitable "
-            "one-function MVP experiment for this week."
+            "Its job is to choose one candidate and say whether it is build-ready, "
+            "a focused experiment, an investigation, or a rejection."
         ),
         (
             "Telegram Research Agent evidence is only a seed layer. Treat public "
@@ -763,15 +766,16 @@ def _build_synthesis_prompt(
             'needs_more_evidence | reject",'
         ),
         '  "score": 0,',
-        '  "markdown": "# MVP of the Week: ...\\n\\n## Why This Week\\n...\\n"',
+        '  "markdown": "# Candidate Dossier: ...\\n\\n## Why This Candidate\\n...\\n"',
         "}",
         "",
         "Markdown requirements:",
         (
-            "- Include sections: Why This Week, Source Mix, Decision Gate, "
+            "- Include sections: Why This Candidate, Source Mix, Decision Gate, "
             "Source Trust And Repeated Signals, Build-Worthy Recommendations, "
             "Interesting Signals, Operator Fit, One-Function MVP, Evidence, "
-            "Missing Evidence, Risks, This Week Experiment, Anti-Complexity Guardrail."
+            "Missing Evidence, Risks, Next Experiment, Kill Criteria, "
+            "Anti-Complexity Guardrail."
         ),
         "- Evidence section must cite only provided evidence IDs like [E1].",
         (
@@ -905,12 +909,56 @@ def _canonicalize_synthesis_markdown(
     selected: CandidateAggregate,
     candidates: list[CandidateAggregate],
     source_counts: dict[str, object],
+    top_evidence: int,
 ) -> str:
     markdown = _replace_top_recommendation_block(markdown, selected=selected)
     markdown = _replace_or_append_markdown_section(
         markdown,
+        "Why This Candidate",
+        [_why_this_week(selected)],
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Source Mix",
+        [_source_mix_summary(source_counts, selected=selected)],
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
         "Decision Gate",
         _decision_gate_summary(source_counts, selected=selected).splitlines(),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Evidence",
+        _evidence_lines(selected, top_evidence=top_evidence),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Missing Evidence",
+        _prefixed_lines(
+            sorted(selected.missing_evidence)
+            or ["pricing or willingness-to-pay signal", "competitor comparison"],
+        ),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Next Experiment",
+        _next_experiment_lines(selected),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Kill Criteria",
+        _kill_criteria_lines(selected),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Operator Fit",
+        [_operator_fit_summary(selected)],
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Anti-Complexity Guardrail",
+        [_anti_complexity_guardrail(selected)],
     )
     markdown = _replace_or_append_markdown_section(
         markdown,
@@ -924,12 +972,16 @@ def _replace_top_recommendation_block(markdown: str, *, selected: CandidateAggre
     lines = markdown.rstrip().splitlines()
     if not lines:
         return markdown
-    title = lines[0]
+    title = f"# Candidate Dossier: {selected.title}"
     body: list[str] = []
     index = 1
     while index < len(lines) and not lines[index].startswith("## "):
         line = lines[index]
-        if re.match(r"^\s*(recommendation|score)\s*:", line, flags=re.IGNORECASE):
+        if re.match(
+            r"^\s*(status|decision|confidence|next action|recommendation|score)\s*:",
+            line,
+            flags=re.IGNORECASE,
+        ):
             index += 1
             continue
         if line.strip() or body:
@@ -939,6 +991,10 @@ def _replace_top_recommendation_block(markdown: str, *, selected: CandidateAggre
     top_block = [
         title,
         "",
+        f"Status: {_dossier_status(selected)}",
+        f"Decision: {_dossier_decision(selected)}",
+        f"Confidence: {_dossier_confidence(selected)}",
+        f"Next action: {_dossier_next_action(selected)}",
         f"Recommendation: **{selected.recommendation}**",
         f"Score: {selected.score}/100",
     ]
@@ -1190,6 +1246,112 @@ def _is_generic_candidate(title: str) -> bool:
     return normalized in GENERIC_CANDIDATE_TITLES or normalized.startswith("opportunity probe:")
 
 
+def _dossier_status(candidate: CandidateAggregate) -> str:
+    recommendation = candidate.recommendation
+    if recommendation == "build":
+        return "build"
+    if recommendation == "focused_experiment":
+        return "focused_experiment"
+    if recommendation in {
+        "revisit_with_evidence_gap",
+        "needs_more_specific_scope",
+        "existing_project_context",
+    }:
+        return "investigate"
+    if recommendation == "needs_more_evidence":
+        if candidate.score < 40 or _has_blocking_gap(candidate):
+            return "reject"
+        return "investigate"
+    if recommendation == "reject":
+        return "reject"
+    return "investigate"
+
+
+def _dossier_confidence(candidate: CandidateAggregate) -> str:
+    status = _dossier_status(candidate)
+    if status == "build":
+        return "high"
+    if status == "focused_experiment":
+        return "medium"
+    if status == "investigate":
+        return "low"
+    return "insufficient"
+
+
+def _dossier_decision(candidate: CandidateAggregate) -> str:
+    status = _dossier_status(candidate)
+    if candidate.recommendation == "existing_project_context":
+        return "Apply this to an existing project/backlog; do not frame it as a standalone new MVP."
+    if status == "build":
+        return "Evidence is strong enough to build the narrow MVP."
+    if status == "focused_experiment":
+        return "Run a focused one-week experiment before committing to a build."
+    if status == "investigate":
+        return "Investigate missing evidence before treating this as build-ready."
+    return "Reject or park this candidate until evidence changes."
+
+
+def _dossier_next_action(candidate: CandidateAggregate) -> str:
+    if candidate.recommendation == "existing_project_context":
+        return "Open the related existing repo/backlog and attach the evidence as project context."
+    status = _dossier_status(candidate)
+    if status in {"build", "focused_experiment"}:
+        return "Run the next experiment below and record build/revisit/reject at the end of the week."
+    if status == "investigate":
+        return "Collect the missing source evidence listed below before building."
+    return "Do not build; revisit only if a new independent source appears."
+
+
+def _evidence_lines(candidate: CandidateAggregate, *, top_evidence: int) -> list[str]:
+    if not candidate.evidence:
+        return ["- No evidence rows available for this candidate."]
+    return [
+        _render_evidence_line(index, record)
+        for index, record in enumerate(candidate.evidence[:top_evidence], start=1)
+    ]
+
+
+def _next_experiment_lines(candidate: CandidateAggregate) -> list[str]:
+    if candidate.recommendation == "existing_project_context":
+        return [
+            "1. Attach this evidence to the existing project as context.",
+            "2. Identify one current backlog item that becomes clearer because of the signal.",
+            "3. Decide whether to update, defer, or reject that backlog item.",
+        ]
+    if _dossier_status(candidate) == "reject":
+        return [
+            "1. Do not start an experiment this week.",
+            "2. Watch for an independent public source that changes the evidence state.",
+        ]
+    return [
+        "1. Pick 3-5 public examples that match the evidence pattern.",
+        "2. Produce one static artifact or concierge workflow, not a platform.",
+        "3. Show before/after value in a copyable report.",
+        "4. Ask 5 relevant operators or creators whether they would use or pay for it.",
+        "5. End with build/revisit/reject and write the decision back to memory.",
+    ]
+
+
+def _kill_criteria_lines(candidate: CandidateAggregate) -> list[str]:
+    lines = [
+        "- No second independent non-Telegram source supports the same pain.",
+        "- Users describe curiosity but no repeated workaround, budget, or urgency.",
+        "- The only plausible implementation expands into a broad platform.",
+    ]
+    if candidate.recommendation == "existing_project_context":
+        lines.append("- The signal cannot be tied to a concrete existing-project backlog change.")
+    if candidate.risk_flags:
+        lines.append("- Risk flags remain unresolved: " + ", ".join(sorted(candidate.risk_flags)) + ".")
+    return lines
+
+
+def _anti_complexity_guardrail(candidate: CandidateAggregate) -> str:
+    return _first_or_default(
+        candidate.anti_complexity_notes,
+        "Do not build a platform. Build one proof artifact and one operator-facing report.",
+    )
+
+
 def _render_report(
     *,
     run_id: str,
@@ -1205,12 +1367,16 @@ def _render_report(
         return (
             "\n".join(
                 [
-                    "# MVP of the Week",
+                    "# Candidate Dossier",
+                    "",
+                    "Status: reject",
+                    "Decision: No usable opportunity seeds were available this week.",
+                    "Confidence: insufficient",
+                    "Next action: Check ingestion and source collection before considering candidates.",
                     "",
                     f"Generated: {generated_at}",
                     f"Run ID: {run_id}",
                     "",
-                    "No usable opportunity seeds were available this week.",
                     f"Imported evidence: {evidence_count}; quarantined rows: {quarantined_count}.",
                     "",
                     "## Source Mix",
@@ -1222,15 +1388,20 @@ def _render_report(
         )
 
     lines = [
-        f"# MVP of the Week: {selected.title}",
+        f"# Candidate Dossier: {selected.title}",
+        "",
+        f"Status: {_dossier_status(selected)}",
+        f"Decision: {_dossier_decision(selected)}",
+        f"Confidence: {_dossier_confidence(selected)}",
+        f"Next action: {_dossier_next_action(selected)}",
+        f"Recommendation: **{selected.recommendation}**",
+        f"Score: {selected.score}/100",
         "",
         f"Generated: {generated_at}",
         f"Run ID: {run_id}",
-        f"Recommendation: **{selected.recommendation}**",
-        f"Score: {selected.score}/100",
         f"Imported evidence: {evidence_count}; quarantined rows: {quarantined_count}.",
         "",
-        "## Why This Week",
+        "## Why This Candidate",
         "",
         _why_this_week(selected),
         "",
@@ -1246,13 +1417,24 @@ def _render_report(
         "",
         *_source_trust_lines(source_counts),
         "",
-        "## Build-Worthy Recommendations",
+        "## Evidence",
         "",
-        *_build_worthy_lines(candidates),
+        *_evidence_lines(selected, top_evidence=top_evidence),
         "",
-        "## Interesting Signals",
+        "## Missing Evidence",
         "",
-        *_interesting_signal_lines(candidates),
+        *_prefixed_lines(
+            sorted(selected.missing_evidence)
+            or ["pricing or willingness-to-pay signal", "competitor comparison"],
+        ),
+        "",
+        "## Next Experiment",
+        "",
+        *_next_experiment_lines(selected),
+        "",
+        "## Kill Criteria",
+        "",
+        *_kill_criteria_lines(selected),
         "",
         "## Operator Fit",
         "",
@@ -1265,41 +1447,26 @@ def _render_report(
             f"Build the smallest artifact that proves demand for {selected.title}.",
         ),
         "",
-        "## This Week's Experiment",
+        "## Anti-Complexity Guardrail",
         "",
-        "1. Pick 3-5 public examples that match the evidence pattern.",
-        "2. Produce one static artifact or concierge workflow, not a platform.",
-        "3. Show before/after value in a copyable report.",
-        "4. Ask 5 relevant operators or creators whether they would use or pay for it.",
-        "5. End with build/revisit/reject and write the decision back to memory.",
+        _anti_complexity_guardrail(selected),
         "",
-        "## Evidence",
+        "## Build-Worthy Recommendations",
+        "",
+        *_build_worthy_lines(candidates),
+        "",
+        "## Interesting Signals",
+        "",
+        *_interesting_signal_lines(candidates),
         "",
     ]
-    for index, record in enumerate(selected.evidence[:top_evidence], start=1):
-        lines.append(_render_evidence_line(index, record))
 
     lines.extend(
         [
-            "",
-            "## Missing Evidence",
-            "",
-            *_prefixed_lines(
-                sorted(selected.missing_evidence)
-                or ["pricing or willingness-to-pay signal", "competitor comparison"],
-            ),
-            "",
             "## Risk Flags",
             "",
             *_prefixed_lines(
                 sorted(selected.risk_flags) or ["No explicit risk flags in the seeds."]
-            ),
-            "",
-            "## Anti-Complexity Guardrail",
-            "",
-            _first_or_default(
-                selected.anti_complexity_notes,
-                "Do not build a platform. Build one proof artifact and one operator-facing report.",
             ),
             "",
             "## Other Candidates",
@@ -1588,6 +1755,8 @@ def _candidate_json(candidate: CandidateAggregate) -> dict[str, object]:
     return {
         "title": candidate.title,
         "score": candidate.score,
+        "dossier_status": _dossier_status(candidate),
+        "confidence": _dossier_confidence(candidate),
         "recommendation": candidate.recommendation,
         "evidence_count": len(candidate.evidence),
         "surfaces": sorted(candidate.surfaces),
