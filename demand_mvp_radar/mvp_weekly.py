@@ -677,6 +677,7 @@ def _synthesize_or_render(
         selected=display_candidate,
         candidates=display_candidates,
     )
+    markdown = _remove_failed_gate_build_claims(markdown, selected=display_candidate)
     return (
         markdown.rstrip() + "\n",
         selected_title,
@@ -1124,6 +1125,39 @@ def _append_report_quality_sections(
     if "## interesting signals" not in existing:
         lines.extend(["", "## Interesting Signals", "", *_interesting_signal_lines(candidates)])
     return "\n".join(lines)
+
+
+def _remove_failed_gate_build_claims(markdown: str, *, selected: CandidateAggregate) -> str:
+    if selected.recommendation in RECOMMENDATION_GATED:
+        return markdown
+    forbidden_phrases = (
+        "ready to build now",
+        "build now",
+        "gate passed",
+        "decision gate passed",
+        "recommendation allowed: yes",
+        "reason: focused_experiment",
+        "status: build",
+        "recommendation: **focused_experiment**",
+    )
+    lines: list[str] = []
+    removed = False
+    for line in markdown.splitlines():
+        normalized = line.lower()
+        if any(phrase in normalized for phrase in forbidden_phrases):
+            removed = True
+            continue
+        lines.append(line)
+    if removed and "## Gate Notes" not in markdown:
+        lines.extend(
+            [
+                "",
+                "## Gate Notes",
+                "",
+                "- Removed contradictory build-ready claim because source gates failed.",
+            ]
+        )
+    return "\n".join(lines).strip() + "\n"
 
 
 def _source_mix_has_any_external(source_counts: dict[str, object]) -> bool:

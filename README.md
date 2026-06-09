@@ -172,6 +172,10 @@ The MVP recommendation is gated by source mix and operator fit:
   labels the run as `telegram_only`, `externally_corroborated`, or
   `credential_limited`, and separates live Reddit API evidence from
   SERP-indexed Reddit pages.
+- `tests/test_mvp_report_quality.py` locks the Candidate Dossier contract:
+  canonical top block, source-mix card, missing evidence, kill criteria,
+  existing-project context, and no contradictory build-ready claims when source
+  gates fail.
 - `config/operator_fit_profile.md` keeps the weekly idea close to the operator's
   Python/LLM workflow, evaluation, guardrail, knowledge-memory, research, and
   rollout strengths.

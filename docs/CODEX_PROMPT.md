@@ -62,8 +62,14 @@ Full historical prompt archived at
   credentials remain visible, Reddit API usage is distinguished from
   SERP-indexed Reddit pages, and GitHub evidence is labeled as primary or
   repeated variants.
+- Cross-repo RADAR-4 added focused Radar report-quality contract tests for the
+  Candidate Dossier top block, required sections, source-mix card, missing
+  evidence, kill criteria, existing-project context, and no contradictory
+  build-ready claims when source gates fail. LLM Markdown is sanitized after
+  canonicalization if failed gates leave build-ready claims in extra sections.
 - Cycle 20 deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
-- Current focused baseline: `tests/test_mvp_of_week.py` passes with 6 tests.
+- Current focused baseline: `tests/test_mvp_report_quality.py
+  tests/test_mvp_of_week.py` passes with 9 tests.
 
 ## Active Inputs
 
