@@ -168,6 +168,73 @@ def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp
     assert "Operator fit profile" in provider.calls[0][0]
 
 
+def test_mvp_of_week_includes_live_intelligence_without_satisfying_source_gate(tmp_path) -> None:
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1010",
+                    "captured_at": "2026-05-20T10:00:00+00:00",
+                    "title": "Telegram channel archive search",
+                    "text": "Creators want searchable mirrors of Telegram channel archives.",
+                    "snippet": "Creators want searchable mirrors of Telegram archives.",
+                    "source_url": "https://t.me/its_capitan/1010",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["creator_content_gap", "search_intent"],
+                    "mvp_shape": "Telegram Channel SEO Site Generator",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    live_path = tmp_path / "live.json"
+    live_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "live_source_intelligence.v1",
+                "generated_at": "2026-05-20T12:00:00Z",
+                "generation_mode": "deterministic_event_log",
+                "events_scanned": 12,
+                "window": {"days": 14},
+                "pathway": {"status": "not_installed"},
+                "channels": [{"channel_username": "@capitan", "event_count": 8}],
+                "demand_surfaces": [{"surface": "creator_content_gap", "count": 5}],
+                "repeated_claim_candidates": [
+                    {
+                        "claim_key": "claim:1",
+                        "normalized_claim": "telegram archive search",
+                        "event_count": 2,
+                    }
+                ],
+                "radar_context": {
+                    "summary": "12 live source events; context only.",
+                    "context_only": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-live-context",
+        live_intelligence_path=live_path,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+
+    assert "## Live Source Intelligence" in report_text
+    assert "Context only: this snapshot does not satisfy external evidence gates." in report_text
+    assert result.source_counts["external_evidence_count"] == 0
+    assert result.selected_source_mix["readiness"] == "telegram_only"
+    assert result.source_counts["live_intelligence"]["events_scanned"] == 12
+    assert payload["live_intelligence"]["repeated_claim_count"] == 1
+    assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 0
+
+
 def test_mvp_of_week_exposes_source_mix_and_missing_reddit_credentials(
     tmp_path,
     monkeypatch,

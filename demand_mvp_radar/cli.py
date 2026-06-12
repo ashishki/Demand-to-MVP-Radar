@@ -95,6 +95,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-config",
         help="Optional live/snapshot source config to collect before MVP synthesis.",
     )
+    mvp.add_argument(
+        "--live-intelligence",
+        help="Optional Telegram Research Agent live source intelligence JSON context.",
+    )
     digest_to_seeds = subparsers.add_parser(
         "digest-to-seeds",
         help="Convert a Telegram weekly digest JSON into Radar opportunity seed JSON.",
@@ -249,6 +253,9 @@ def main(argv: list[str] | None = None) -> int:
             run_id=args.run_id,
             top_evidence=max(1, args.top_evidence),
             source_config=Path(args.source_config) if args.source_config else None,
+            live_intelligence_path=Path(args.live_intelligence)
+            if args.live_intelligence
+            else None,
         )
         print(result.model_dump_json())
         return 0

@@ -194,6 +194,7 @@ def run_mvp_of_week(
     run_id: str | None = None,
     top_evidence: int = 5,
     source_config: Path | None = None,
+    live_intelligence_path: Path | None = None,
     llm_provider: LLMProvider | None = None,
 ) -> MvpOfWeekResult:
     effective_run_id = run_id or f"mvp-weekly-{datetime.now(UTC).strftime('%Y-W%V')}"
@@ -245,6 +246,9 @@ def run_mvp_of_week(
     selected = candidates[0] if candidates else None
     llm_provider = llm_provider if llm_provider is not None else provider_from_env()
     source_counts = _source_counts(evidence_records, collect_result=collect_result)
+    live_intelligence = _load_live_intelligence_summary(live_intelligence_path)
+    if live_intelligence is not None:
+        source_counts = {**source_counts, "live_intelligence": live_intelligence}
     (
         synthesis_markdown,
         selected_title,
@@ -343,6 +347,7 @@ def run_mvp_of_week(
         result=result,
         source_counts=source_counts,
         source_config=source_config,
+        live_intelligence_path=live_intelligence_path,
     )
     _record_mvp_run(
         connection,
@@ -603,6 +608,34 @@ def _source_counts(
     return counts
 
 
+def _load_live_intelligence_summary(path: Path | None) -> dict[str, object] | None:
+    if path is None:
+        return None
+    if not path.exists():
+        raise FileNotFoundError(f"Live intelligence snapshot not found: {path}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Live intelligence snapshot must be a JSON object")
+    if payload.get("schema_version") != "live_source_intelligence.v1":
+        raise ValueError("Unsupported live intelligence schema_version")
+    radar_context = (
+        payload.get("radar_context") if isinstance(payload.get("radar_context"), dict) else {}
+    )
+    return {
+        "schema_version": payload.get("schema_version"),
+        "generated_at": payload.get("generated_at"),
+        "generation_mode": payload.get("generation_mode"),
+        "events_scanned": _safe_int(payload.get("events_scanned"), default=0),
+        "window": _object_dict(payload.get("window")),
+        "pathway": _object_dict(payload.get("pathway")),
+        "top_channels": _top_values(payload.get("channels"), key="channel_username", limit=5),
+        "top_demand_surfaces": _top_values(payload.get("demand_surfaces"), key="surface", limit=5),
+        "repeated_claim_count": len(_object_list(payload.get("repeated_claim_candidates"))),
+        "radar_summary": str(radar_context.get("summary") or ""),
+        "context_only": True,
+    }
+
+
 def _synthesize_or_render(
     *,
     provider: LLMProvider | None,
@@ -790,10 +823,10 @@ def _build_synthesis_prompt(
         "Markdown requirements:",
         (
             "- Include sections: Why This Candidate, Source Mix, Decision Gate, "
-            "Source Trust And Repeated Signals, Build-Worthy Recommendations, "
-            "Interesting Signals, Operator Fit, One-Function MVP, Evidence, "
-            "Missing Evidence, Risks, Next Experiment, Kill Criteria, "
-            "Anti-Complexity Guardrail."
+            "Live Source Intelligence, Source Trust And Repeated Signals, "
+            "Build-Worthy Recommendations, Interesting Signals, Operator Fit, "
+            "One-Function MVP, Evidence, Missing Evidence, Risks, Next Experiment, "
+            "Kill Criteria, Anti-Complexity Guardrail."
         ),
         "- Evidence section must cite only provided evidence IDs like [E1].",
         (
@@ -939,6 +972,11 @@ def _canonicalize_synthesis_markdown(
         markdown,
         "Source Mix",
         [_source_mix_summary(source_counts, selected=selected)],
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Live Source Intelligence",
+        _live_intelligence_lines(source_counts),
     )
     markdown = _replace_or_append_markdown_section(
         markdown,
@@ -1440,6 +1478,10 @@ def _render_report(
                     "## Source Mix",
                     "",
                     _source_mix_summary(source_counts),
+                    "",
+                    "## Live Source Intelligence",
+                    "",
+                    *_live_intelligence_lines(source_counts),
                 ]
             )
             + "\n"
@@ -1466,6 +1508,10 @@ def _render_report(
         "## Source Mix",
         "",
         _source_mix_summary(source_counts, selected=selected),
+        "",
+        "## Live Source Intelligence",
+        "",
+        *_live_intelligence_lines(source_counts),
         "",
         "## Decision Gate",
         "",
@@ -1793,6 +1839,20 @@ def _object_dict(value: object) -> dict[str, object]:
     return {str(key): item for key, item in value.items()}
 
 
+def _top_values(value: object, *, key: str, limit: int) -> list[str]:
+    items = value if isinstance(value, list) else []
+    results: list[str] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        rendered = str(item.get(key) or "").strip()
+        if rendered:
+            results.append(rendered)
+        if len(results) >= max(1, int(limit or 1)):
+            break
+    return results
+
+
 def _join_or_none(values: list[str]) -> str:
     return ", ".join(values) if values else "none"
 
@@ -1895,6 +1955,27 @@ def _source_trust_lines(source_counts: dict[str, object]) -> list[str]:
             f"rejection_reasons={reason_text}"
         )
     return lines or ["- No source trust records available."]
+
+
+def _live_intelligence_lines(source_counts: dict[str, object]) -> list[str]:
+    live = _object_dict(source_counts.get("live_intelligence"))
+    if not live:
+        return ["- No live source intelligence snapshot supplied."]
+    window = _object_dict(live.get("window"))
+    pathway = _object_dict(live.get("pathway"))
+    top_channels = _string_list(live.get("top_channels"))
+    top_surfaces = _string_list(live.get("top_demand_surfaces"))
+    return [
+        "- Context only: this snapshot does not satisfy external evidence gates.",
+        f"- Generated: {live.get('generated_at') or 'unknown'}",
+        f"- Window: {window.get('days', 'unknown')} day(s)",
+        f"- Events scanned: {live.get('events_scanned', 0)}",
+        f"- Top channels: {_join_or_none(top_channels)}",
+        f"- Top demand surfaces: {_join_or_none(top_surfaces)}",
+        f"- Repeated claim candidates: {live.get('repeated_claim_count', 0)}",
+        f"- Pathway runtime: {pathway.get('status', 'unknown')}",
+        f"- Summary: {live.get('radar_summary') or 'none'}",
+    ]
 
 
 def _build_worthy_lines(candidates: list[CandidateAggregate]) -> list[str]:
@@ -2018,6 +2099,7 @@ def _write_json(
     result: MvpOfWeekResult,
     source_counts: dict[str, object],
     source_config: Path | None,
+    live_intelligence_path: Path | None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -2029,6 +2111,10 @@ def _write_json(
             _candidate_json(candidate, source_counts=source_counts) for candidate in candidates
         ],
         "source_config": str(source_config) if source_config is not None else None,
+        "live_intelligence_path": str(live_intelligence_path)
+        if live_intelligence_path is not None
+        else None,
+        "live_intelligence": source_counts.get("live_intelligence"),
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
