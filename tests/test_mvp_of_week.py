@@ -168,6 +168,68 @@ def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp
     assert "Operator fit profile" in provider.calls[0][0]
 
 
+def test_mvp_of_week_ignores_llm_title_outside_shortlist(tmp_path) -> None:
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1004",
+                    "captured_at": "2026-05-20T10:00:00+00:00",
+                    "title": "Guardrail logs are hard to monitor",
+                    "text": "Teams need a small watchdog for LLM cost and guardrail logs.",
+                    "snippet": "Teams need a watchdog for LLM cost and guardrail logs.",
+                    "source_url": "https://t.me/its_capitan/1004",
+                    "channel_username": "@capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation", "cost_control"],
+                    "mvp_shape": "LLM Guardrail Watchdog",
+                },
+                {
+                    "upstream_id": "telegram:@capitan:1005",
+                    "captured_at": "2026-05-20T11:00:00+00:00",
+                    "title": "Dictation workflow",
+                    "text": "Creators want hotkey dictation workflows.",
+                    "snippet": "Creators want hotkey dictation workflows.",
+                    "source_url": "https://t.me/its_capitan/1005",
+                    "channel_username": "@capitan",
+                    "bucket": "watch",
+                    "demand_surfaces": ["workflow_automation"],
+                    "mvp_shape": "Hotkey Dictation Workflow Probe",
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    provider = FakeLLMProvider(
+        json.dumps(
+            {
+                "selected_title": "Imaginary Candidate Outside Shortlist",
+                "recommendation": "revisit_with_evidence_gap",
+                "score": 64,
+                "markdown": (
+                    "# Candidate Dossier: Imaginary Candidate Outside Shortlist\n\n"
+                    "## Why This Candidate\nLLM tried to rename the candidate.\n"
+                ),
+            }
+        )
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-title-gate",
+        llm_provider=provider,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+
+    assert result.selected_title == "LLM Guardrail Watchdog"
+    assert report_text.startswith("# Candidate Dossier: LLM Guardrail Watchdog")
+    assert "Imaginary Candidate Outside Shortlist" not in report_text.splitlines()[0]
+    assert payload["result"]["selected_title"] == payload["selected"]["title"]
+
+
 def test_mvp_of_week_includes_live_intelligence_without_satisfying_source_gate(tmp_path) -> None:
     export_path = tmp_path / "telegram_seeds.json"
     export_path.write_text(

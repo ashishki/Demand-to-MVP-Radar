@@ -266,14 +266,15 @@ def run_mvp_of_week(
         top_evidence=top_evidence,
         source_counts=source_counts,
     )
+    base_selected = _candidate_for_title(selected_title, candidates) or selected
     report_selected = _candidate_with_gated_result(
-        selected,
+        base_selected,
         recommendation=recommendation,
         score=score,
     )
     report_candidates = _replace_candidate_in_list(
         candidates[:5],
-        selected=selected,
+        selected=base_selected,
         replacement=report_selected,
     )
     selected_source_mix = _selected_source_mix(report_selected, source_counts)
@@ -320,8 +321,7 @@ def run_mvp_of_week(
         duplicate_count=duplicate_count + (collect_result.duplicate_count if collect_result else 0),
         quarantined_count=len(import_result.quarantined),
         retrieval_chunk_count=retrieval_chunk_count,
-        selected_title=selected_title
-        or (report_selected.title if report_selected is not None else None),
+        selected_title=(report_selected.title if report_selected is not None else None),
         dossier_status=(
             _dossier_status(report_selected) if report_selected is not None else "reject"
         ),
@@ -671,10 +671,19 @@ def _synthesize_or_render(
         )
         return None, None, None, None, "fallback_deterministic"
 
-    selected_title = _optional_non_empty(synthesis.selected_title)
+    llm_selected_title = _optional_non_empty(synthesis.selected_title)
     recommendation = _optional_non_empty(synthesis.recommendation)
     score = synthesis.score
-    gate_candidate = _candidate_for_title(selected_title, candidates) or selected
+    gate_candidate = _candidate_for_title(llm_selected_title, candidates)
+    if gate_candidate is None:
+        if llm_selected_title:
+            LOGGER.warning(
+                "MVP weekly LLM selected title not found in shortlist; "
+                "using deterministic candidate title=%r",
+                llm_selected_title,
+            )
+        gate_candidate = selected
+    selected_title = gate_candidate.title
     recommendation, score, gate_notes = _apply_synthesis_gates(
         candidate=gate_candidate,
         recommendation=recommendation,
@@ -694,7 +703,7 @@ def _synthesize_or_render(
 
     markdown = synthesis.markdown.strip()
     if not markdown.startswith("#"):
-        markdown = f"# MVP of the Week: {selected_title or selected.title}\n\n{markdown}"
+        markdown = f"# MVP of the Week: {selected_title}\n\n{markdown}"
     markdown = _canonicalize_synthesis_markdown(
         markdown,
         selected=display_candidate,
