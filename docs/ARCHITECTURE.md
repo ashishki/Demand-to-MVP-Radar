@@ -271,7 +271,7 @@ No destructive external tools are in v1. The following actions are treated as un
 | Configuration | `demand_mvp_radar/config.py` | Load env vars, paths, budgets, source settings, and validation thresholds. |
 | Domain models | `demand_mvp_radar/models.py` | Define evidence, opportunity, score, brief, decision, and run manifest schemas. |
 | Storage | `demand_mvp_radar/storage/` | Manage SQLite schema, migrations, repositories, and idempotent writes. |
-| Source adapters | `demand_mvp_radar/sources/` | Import Telegram exports, manual URLs, SERP snapshots, store listings, competitor pages, and notes. |
+| Source adapters | `demand_mvp_radar/sources/` | Import Telegram exports, including Knowledge Thread provenance from Telegram Research Agent, plus manual URLs, SERP snapshots, store listings, competitor pages, and notes. |
 | Telegram digest bridge | `demand_mvp_radar/telegram_digest.py` | Convert sanitized Telegram weekly digest JSON into local Radar seed exports without network, credentials, or source-trust policy changes. |
 | Source document contracts | `demand_mvp_radar/sources/base.py` | Define source refs, fetched source documents, normalized documents, and connector protocols before parsing or embedding. |
 | Tool layer | `demand_mvp_radar/tools/` | Define LLM-callable tool schemas, validation, permission checks, audit logging, and bounded execution. |
@@ -295,7 +295,7 @@ No destructive external tools are in v1. The following actions are treated as un
 
 1. Operator runs `demand-mvp-radar run --config config/local.toml`.
 2. Configuration loads source paths, network-enabled sources, thresholds, budgets, and output directory.
-3. Source adapters read Telegram-derived evidence, operator notes, owned GitHub repository snapshots, manual URLs, saved search/store snapshots, competitor pages, and Reddit/X exports. When the input is a sanitized Telegram weekly digest, `digest-to-seeds` can first convert it into the `mvp-of-week` seed export shape.
+3. Source adapters read Telegram-derived evidence, operator notes, owned GitHub repository snapshots, manual URLs, saved search/store snapshots, competitor pages, and Reddit/X exports. When the input is a sanitized Telegram weekly digest, `digest-to-seeds` can first convert it into the `mvp-of-week` seed export shape. When the input is a Telegram Research Agent opportunity seed, the bridge preserves KIR metadata such as `source_kind`, `knowledge_thread_slug`, `knowledge_thread_status`, `knowledge_atom_types`, `source_atom_ids`, and `source_urls`.
 4. Normalizers convert each source into typed evidence records with source provenance and stable fingerprints.
 5. Storage writes a run manifest, raw snapshot references, normalized evidence records, and audit events idempotently.
 6. Retrieval ingestion chunks, embeds, and indexes text evidence under the current corpus and schema version.
@@ -303,7 +303,7 @@ No destructive external tools are in v1. The following actions are treated as un
 8. Scoring computes deterministic score components, source trust records, repeated-signal counts, evidence density, rejection reasons, and confidence bands for each candidate.
 9. Query-time retrieval assembles evidence packets for top candidates and returns `insufficient_evidence` for candidates below evidence thresholds.
 10. LLM extraction and synthesis produce bounded fields and final briefs only from assembled evidence packets.
-11. Report generation writes ranked Markdown/HTML output with source links, snippets, score components, Decision Gate, source trust/repeated-signal notes, risk flags, and build / reject / revisit recommendations.
+11. Report generation writes ranked Markdown/HTML output with source links, snippets, score components, Decision Gate, source trust/repeated-signal notes, KIR gate state for Telegram-seeded candidates, risk flags, and build / reject / revisit recommendations.
 12. Operator records decisions; future runs use decision history to suppress repeats and revisit promising ideas.
 
 ---
@@ -343,7 +343,7 @@ No destructive external tools are in v1. The following actions are treated as un
 
 | Integration | Used for | Credential required? | v1 posture |
 |-------------|----------|----------------------|------------|
-| Telegram-derived exports / `telegram-research-agent` output | Initial demand signal corpus | Maybe, depending on export path | Prefer local exports or files produced by the existing agent. |
+| Telegram-derived exports / `telegram-research-agent` output | Initial demand signal corpus and KIR-backed opportunity seeds | Maybe, depending on export path | Prefer local exports or files produced by the existing agent; preserve Knowledge Thread provenance and require KIR plus external corroboration before build-like recommendations. |
 | Owned GitHub repositories | Active project direction, TODOs, issue snapshots, recent implementation friction | No for local snapshots; maybe for GitHub REST | Prefer local repository snapshots first; audit by repository identifier hash rather than local path. |
 | Manual URLs and competitor pages | Source evidence and positioning notes | No for public pages | Fetch politely with timeouts and source terms awareness. |
 | Search / SERP snapshots | Demand and query evidence | Optional provider key | Saved snapshots first; live provider later with approval. |

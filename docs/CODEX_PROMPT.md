@@ -67,9 +67,20 @@ Full historical prompt archived at
   evidence, kill criteria, existing-project context, and no contradictory
   build-ready claims when source gates fail. LLM Markdown is sanitized after
   canonicalization if failed gates leave build-ready claims in extra sections.
+- Cross-repo KIR-Q1 preserves Telegram Research Agent Knowledge Thread
+  provenance on seed import: `source_kind`, `source_urls`,
+  `knowledge_thread_slug`, `knowledge_thread_title`,
+  `knowledge_thread_status`, `knowledge_atom_types`, and `source_atom_ids`
+  survive in `EvidenceRecord.provider_metadata`.
+- Cross-repo KIR-Q2 adds the KIR-backed Radar gate for Telegram-seeded weekly
+  mode. Build-like recommendations require fresh Knowledge Thread evidence,
+  non-empty source atoms/source URLs, decision-grade external evidence,
+  operator fit, and no blocking risk/profile mismatch; Markdown and JSON expose
+  KIR evidence and gate state.
 - Cycle 20 deep review passed with Stop-Ship: No, P0: 0, P1: 0, P2: 0.
 - Current focused baseline: `tests/test_mvp_report_quality.py
-  tests/test_mvp_of_week.py` passes with 9 tests.
+  tests/test_mvp_of_week.py` passes with 13 tests; adding
+  `tests/test_telegram_research_bridge.py` passes with 18 tests.
 
 ## Active Inputs
 
@@ -88,7 +99,9 @@ Full historical prompt archived at
 
 ## Next Task
 
-none - Phase 19 task graph complete.
+none - Phase 19 task graph and cross-repo KIR-Q1/KIR-Q2 Radar hardening are
+complete. Next work should come from a newly accepted task or follow-up review,
+not from the completed Phase 19/KIR queue.
 
 ## Fix Queue
 

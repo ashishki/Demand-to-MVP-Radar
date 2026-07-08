@@ -78,13 +78,12 @@ LLM используется только ограниченно:
 
 ## Текущий статус
 
-Phase 1-19 завершены и прошли review без stop-ship findings. Planned task list complete; private beta and hosted/SaaS remain blocked until four real or properly backfilled solo evidence runs prove repeated personal value, useful human decisions, source value, backup verification, and support burden.
+Phase 1-19 завершены и прошли review без stop-ship findings. Planned task list complete; private beta and hosted/SaaS remain blocked until four real or properly backfilled solo evidence runs prove repeated personal value, useful human decisions, source value, backup verification, and support burden. Cross-repo KIR hardening for Telegram Research Agent seeds is implemented: Knowledge Thread provenance is preserved on import, and Telegram-seeded build-like recommendations require KIR source atoms, source URLs, and decision-grade external corroboration.
 
-Текущий baseline: 198 passing tests. Локально проходят:
+Текущая focused verification для weekly Radar/KIR surfaces:
 
-- `ruff check demand_mvp_radar/ tests/ scripts/`
-- `ruff format --check demand_mvp_radar/ tests/ scripts/`
-- `pytest tests/ -q`
+- `.venv/bin/python -m pytest tests/test_mvp_of_week.py tests/test_mvp_report_quality.py`
+- `.venv/bin/python -m pytest tests/test_mvp_of_week.py tests/test_mvp_report_quality.py tests/test_telegram_research_bridge.py`
 
 Реализовано:
 
@@ -102,7 +101,7 @@ Phase 1-19 завершены и прошли review без stop-ship findings. 
 - fixture-backed weekly pipeline command with LLM budget guard
 - final RAG and Tool-Use evaluation rows
 - operator workflow contract and source catalog configuration
-- sanitized `telegram-research-agent` bridge
+- sanitized `telegram-research-agent` bridge with preserved Knowledge Thread provenance fields (`source_kind`, `source_urls`, `knowledge_thread_slug`, `knowledge_thread_title`, `knowledge_thread_status`, `knowledge_atom_types`, `source_atom_ids`)
 - redacted operator notes importer with note-only build guard
 - local GitHub repository snapshot importer and `read_github_repo_snapshot` tool audit schema
 - `import-sources` command for owned-source imports without weekly report generation
@@ -149,11 +148,18 @@ selected external evidence, run-level external evidence, missing credentials,
 Reddit API status, and GitHub evidence role. It is a separate opportunity
 artifact, not a technical upgrade brief for existing repos.
 
-The MVP recommendation is gated by source mix and operator fit:
+The MVP recommendation is gated by source mix, KIR provenance, and operator fit:
 
 - Telegram-only ideas cannot become `focused_experiment`; they stay
   `revisit_with_evidence_gap` / `needs_more_evidence` until public external
   evidence confirms the same pain.
+- Telegram Research Agent Knowledge Thread seeds must preserve KIR provenance
+  and pass the KIR gate before any `build` or `focused_experiment`
+  recommendation is allowed.
+- The selected-candidate source mix exposes `kir_source_kind`,
+  `kir_thread_slug`, `kir_thread_status`, `kir_source_atom_count`,
+  `kir_source_url_count`, `kir_gate_status`, and `kir_gate_reasons` when KIR
+  gating is relevant.
 - Runtime LLM Markdown cannot override deterministic gates. If synthesis claims
   a build/focused experiment while source mix fails, the rendered Decision Gate,
   Build-Worthy section, and JSON result are rewritten to the gated
