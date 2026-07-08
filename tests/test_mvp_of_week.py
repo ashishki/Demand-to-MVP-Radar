@@ -383,6 +383,131 @@ def test_mvp_of_week_exposes_source_mix_and_missing_reddit_credentials(
     assert "Reddit API: missing_credentials" in report_text
 
 
+def test_mvp_of_week_kir_gate_blocks_telegram_seed_without_kir_metadata(
+    tmp_path,
+) -> None:
+    mvp_shape = "LLM Workflow Evidence Router"
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1101",
+                    "captured_at": _now_iso(),
+                    "title": f"{mvp_shape} demand",
+                    "text": (
+                        "LLM workflow teams ask for evidence routing that keeps "
+                        "research claims tied to source URLs."
+                    ),
+                    "snippet": "Teams ask for LLM workflow evidence routing.",
+                    "source_url": "https://t.me/its_capitan/1101",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation", "search_intent"],
+                    "mvp_shape": mvp_shape,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    source_config = _write_decision_grade_external_sources(
+        tmp_path,
+        mvp_shape=mvp_shape,
+        run_id="mvp-weekly-kir-missing",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-kir-missing",
+        source_config=source_config,
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    source_mix = payload["selected"]["source_mix"]
+
+    assert result.recommendation == "revisit_with_evidence_gap"
+    assert result.dossier_status == "investigate"
+    assert source_mix["decision_grade_external"] is True
+    assert source_mix["kir_required"] is True
+    assert source_mix["kir_gate_status"] == "missing_kir_thread"
+    assert source_mix["kir_source_atom_count"] == 0
+    assert "- Reason: kir_gate" in report_text
+    assert "## KIR Evidence" in report_text
+    assert "- KIR gate: missing_kir_thread" in report_text
+    assert "- Gate: KIR evidence gap remains" in report_text
+    assert "Recommendation: **focused_experiment**" not in report_text
+
+
+def test_mvp_of_week_allows_kir_backed_telegram_seed_with_external_evidence(
+    tmp_path,
+) -> None:
+    mvp_shape = "LLM Workflow Evidence Router"
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "knowledge-thread:llm-workflow-evidence-router",
+                    "captured_at": _now_iso(),
+                    "title": mvp_shape,
+                    "text": (
+                        "LLM workflow teams repeatedly ask for an evidence router "
+                        "that keeps research claims tied to source URLs."
+                    ),
+                    "snippet": "Teams ask for LLM workflow evidence routing.",
+                    "source_url": "https://t.me/market_ai/1101",
+                    "source_urls": [
+                        "https://t.me/market_ai/1101",
+                        "https://t.me/operators/1102",
+                    ],
+                    "channel_username": "@market_ai,@operators",
+                    "bucket": "knowledge_thread",
+                    "demand_surfaces": ["workflow_automation", "search_intent"],
+                    "mvp_shape": mvp_shape,
+                    "source_kind": "knowledge_thread",
+                    "knowledge_thread_slug": "llm-workflow-evidence-router",
+                    "knowledge_thread_title": "LLM Workflow Evidence Router",
+                    "knowledge_thread_status": "active",
+                    "knowledge_atom_types": ["market_signal", "workflow_pattern"],
+                    "source_atom_ids": [1101, 1102],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    source_config = _write_decision_grade_external_sources(
+        tmp_path,
+        mvp_shape=mvp_shape,
+        run_id="mvp-weekly-kir-passed",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-kir-passed",
+        source_config=source_config,
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    source_mix = payload["selected"]["source_mix"]
+
+    assert result.recommendation == "focused_experiment"
+    assert result.dossier_status == "focused_experiment"
+    assert source_mix["decision_grade_external"] is True
+    assert source_mix["kir_gate_status"] == "passed"
+    assert source_mix["kir_source_kind"] == "knowledge_thread"
+    assert source_mix["kir_thread_slug"] == "llm-workflow-evidence-router"
+    assert source_mix["kir_thread_status"] == "active"
+    assert source_mix["kir_source_atom_count"] == 2
+    assert source_mix["kir_has_fresh_thread"] is True
+    assert "- KIR gate: passed" in report_text
+    assert "- Gate: decision-grade external evidence present" in report_text
+    assert f"- {mvp_shape}:" in report_text
+
+
 def test_selected_source_mix_marks_repeated_github_variants() -> None:
     captured_at = datetime(2026, 5, 20, 10, tzinfo=UTC)
     evidence = [
@@ -537,3 +662,113 @@ def test_mvp_of_week_existing_project_context_is_not_new_mvp(tmp_path) -> None:
     assert "standalone new MVP" in report_text
     assert "1. Attach this evidence to the existing project as context." in report_text
     assert "The signal cannot be tied to a concrete existing-project backlog change." in report_text
+
+
+def _now_iso() -> str:
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+
+def _write_decision_grade_external_sources(tmp_path, *, mvp_shape: str, run_id: str):
+    captured_at = _now_iso()
+    serp_path = tmp_path / "serp-kir.json"
+    serp_path.write_text(
+        json.dumps(
+            {
+                "provider": "serpapi",
+                "captured_at": captured_at,
+                "searches": [
+                    {
+                        "query": "llm workflow evidence router",
+                        "captured_at": captured_at,
+                        "provider_metadata": {"engine": "google"},
+                        "results": [
+                            {
+                                "rank": 1,
+                                "title": mvp_shape,
+                                "url": "https://example.com/llm-workflow-evidence-router",
+                                "snippet": (
+                                    "Operators search for LLM workflow evidence routing "
+                                    "that preserves citations and source URLs for claims."
+                                ),
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    github_path = tmp_path / "github-kir.json"
+    github_path.write_text(
+        json.dumps(
+            {
+                "items": [
+                    {
+                        "kind": "issue",
+                        "repository": "acme/evidence-router",
+                        "number": 77,
+                        "title": mvp_shape,
+                        "body": (
+                            "Our LLM workflow review loses track of source URLs and "
+                            "claim evidence after research handoff. We need an evidence router."
+                        ),
+                        "url": "https://github.com/acme/evidence-router/issues/77",
+                        "labels": ["workflow", "evidence"],
+                        "created_at": captured_at,
+                        "updated_at": captured_at,
+                        "captured_at": captured_at,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    source_config = tmp_path / "kir-source-config.json"
+    source_config.write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "sources": [
+                    {
+                        "source_name": "serp_kir_fixture",
+                        "source_type": "serp",
+                        "trust_level": "medium",
+                        "freshness_window_days": 14,
+                        "enabled": True,
+                        "cursor_support": True,
+                        "raw_snapshot_policy": "metadata_only",
+                        "approval_required": False,
+                        "credential_env_vars": [],
+                        "rate_limit_policy": {
+                            "requests_per_minute": 10,
+                            "burst_limit": 2,
+                        },
+                        "fixture_path": str(serp_path.name),
+                        "queries": ["llm workflow evidence router"],
+                        "provider": "serpapi",
+                        "daily_budget_limit": 10,
+                        "per_run_budget_limit": 10,
+                    },
+                    {
+                        "source_name": "github_kir_fixture",
+                        "source_type": "github_public",
+                        "trust_level": "medium",
+                        "freshness_window_days": 14,
+                        "enabled": True,
+                        "cursor_support": True,
+                        "raw_snapshot_policy": "metadata_only",
+                        "approval_required": False,
+                        "credential_env_vars": [],
+                        "rate_limit_policy": {
+                            "requests_per_minute": 10,
+                            "burst_limit": 2,
+                        },
+                        "fixture_path": str(github_path.name),
+                        "queries": ["llm workflow evidence router"],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return source_config

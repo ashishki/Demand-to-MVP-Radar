@@ -133,6 +133,9 @@ PROFILE_STACK_FIT_FLAGS = {
     "document/data pipeline",
 }
 RECOMMENDATION_GATED = {"focused_experiment", "build"}
+KIR_FRESHNESS_DAYS = 30
+STALE_KIR_THREAD_STATUSES = {"stale", "superseded", "resolved", "hype_only"}
+KIR_GATE_PASSING_STATUSES = {"passed", "not_required"}
 LOGGER = logging.getLogger(__name__)
 
 
@@ -364,7 +367,12 @@ def run_mvp_of_week(
     return result
 
 
-def _rank_candidates(records: tuple[EvidenceRecord, ...]) -> list[CandidateAggregate]:
+def _rank_candidates(
+    records: tuple[EvidenceRecord, ...],
+    *,
+    as_of: datetime | None = None,
+) -> list[CandidateAggregate]:
+    gate_as_of = as_of or datetime.now(UTC)
     grouped: dict[str, CandidateAggregate] = {}
     for record in records:
         metadata = record.provider_metadata
@@ -402,11 +410,15 @@ def _rank_candidates(records: tuple[EvidenceRecord, ...]) -> list[CandidateAggre
             candidate.missing_evidence.add("second independent external source type")
         if candidate.profile_mismatch_flags:
             candidate.missing_evidence.add("operator-fit wedge that avoids an unfamiliar stack")
+        candidate.missing_evidence.update(
+            _kir_gate_missing_evidence(candidate, as_of=gate_as_of)
+        )
         candidate.score = _score_candidate(candidate)
         if (
             candidate.score >= 70
             and not _has_blocking_gap(candidate)
             and _has_decision_grade_external_evidence(candidate)
+            and _kir_gate_allows_candidate(candidate, as_of=gate_as_of)
             and not _has_profile_blocking_mismatch(candidate)
         ):
             candidate.recommendation = "focused_experiment"
@@ -597,6 +609,18 @@ def _source_counts(
     counts["telegram_seed_evidence_count"] = sum(
         1 for record in records if record.source_type == "telegram_research_agent"
     )
+    counts["kir_thread_seed_count"] = sum(
+        1
+        for record in records
+        if record.source_type == "telegram_research_agent"
+        and _kir_source_kind(record) == "knowledge_thread"
+    )
+    counts["kir_fresh_thread_seed_count"] = sum(
+        1
+        for record in records
+        if record.source_type == "telegram_research_agent"
+        and _kir_record_has_fresh_thread(record)
+    )
     counts["source_trust_records"] = tuple(
         record.as_dict() for record in build_source_trust_records(records)
     )
@@ -742,12 +766,15 @@ def _build_synthesis_prompt(
     candidate_lines = []
     for index, candidate in enumerate(candidates, start=1):
         external_types = ", ".join(_external_source_types(candidate.evidence)) or "none"
+        kir_state = _kir_gate_state(candidate)
         candidate_lines.append(
             f"{index}. {candidate.title} | score={candidate.score} | "
             f"recommendation={candidate.recommendation} | "
             f"surfaces={', '.join(sorted(candidate.surfaces)) or 'unknown'} | "
             f"evidence_count={len(candidate.evidence)} | "
             f"external_source_types={external_types} | "
+            f"kir_gate={kir_state.get('kir_gate_status')} | "
+            f"kir_thread={kir_state.get('kir_thread_slug') or 'none'} | "
             f"profile_fit={', '.join(sorted(candidate.profile_fit_flags)) or 'weak'} | "
             f"profile_mismatch={', '.join(sorted(candidate.profile_mismatch_flags)) or 'none'} | "
             f"risks={', '.join(sorted(candidate.risk_flags)) or 'none'}"
@@ -783,6 +810,12 @@ def _build_synthesis_prompt(
             "evidence packets from at least two independent external source types "
             "for the selected MVP. If that gate is not met, use "
             "revisit_with_evidence_gap or needs_more_evidence."
+        ),
+        (
+            "If the selected candidate includes Telegram Research Agent seed evidence, "
+            "build or focused_experiment also requires fresh Knowledge Thread "
+            "provenance with source_atom_ids and source_urls. If the KIR gate is not "
+            "passed, use revisit_with_evidence_gap or needs_more_evidence."
         ),
         (
             "If evidence is thin, choose revisit_with_evidence_gap instead of "
@@ -832,7 +865,7 @@ def _build_synthesis_prompt(
         "Markdown requirements:",
         (
             "- Include sections: Why This Candidate, Source Mix, Decision Gate, "
-            "Live Source Intelligence, Source Trust And Repeated Signals, "
+            "KIR Evidence, Live Source Intelligence, Source Trust And Repeated Signals, "
             "Build-Worthy Recommendations, Interesting Signals, Operator Fit, "
             "One-Function MVP, Evidence, Missing Evidence, Risks, Next Experiment, "
             "Kill Criteria, Anti-Complexity Guardrail."
@@ -984,6 +1017,11 @@ def _canonicalize_synthesis_markdown(
     )
     markdown = _replace_or_append_markdown_section(
         markdown,
+        "KIR Evidence",
+        _kir_evidence_lines(selected),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
         "Live Source Intelligence",
         _live_intelligence_lines(source_counts),
     )
@@ -1104,12 +1142,29 @@ def _apply_synthesis_gates(
     gated_score = score
 
     if normalized_recommendation in RECOMMENDATION_GATED:
+        kir_state = _kir_gate_state(candidate)
+        if str(kir_state.get("kir_gate_status")) not in KIR_GATE_PASSING_STATUSES:
+            gated_recommendation = "revisit_with_evidence_gap"
+            gated_score = min(gated_score if gated_score is not None else candidate.score, 64)
+            reasons = _string_list(kir_state.get("kir_gate_reasons"))
+            notes.append(
+                "Downgraded from focused_experiment because the selected Telegram-seeded "
+                "candidate failed the KIR gate: "
+                f"{_join_or_none(reasons)}."
+            )
         if not _has_decision_grade_external_evidence(candidate):
             gated_recommendation = "revisit_with_evidence_gap"
             gated_score = min(gated_score if gated_score is not None else candidate.score, 64)
             notes.append(
                 "Downgraded from focused_experiment because the selected candidate "
                 "does not yet have two independent non-Telegram evidence sources."
+            )
+        if _has_blocking_gap(candidate):
+            gated_recommendation = "needs_more_evidence"
+            gated_score = min(gated_score if gated_score is not None else candidate.score, 49)
+            notes.append(
+                "Downgraded because the selected candidate has blocking risk flags "
+                "that must be resolved before a build or focused experiment."
             )
         if _has_profile_blocking_mismatch(candidate):
             gated_recommendation = "needs_more_evidence"
@@ -1160,6 +1215,8 @@ def _append_report_quality_sections(
                 *_source_trust_lines(source_counts),
             ]
         )
+    if "## kir evidence" not in existing:
+        lines.extend(["", "## KIR Evidence", "", *_kir_evidence_lines(selected)])
     if "## build-worthy recommendations" not in existing:
         lines.extend(
             [
@@ -1247,6 +1304,11 @@ def _compact_metadata(metadata: dict[str, str]) -> str:
         "bucket",
         "demand_signal_type",
         "demand_surfaces",
+        "knowledge_thread_slug",
+        "knowledge_thread_status",
+        "source_atom_ids",
+        "source_kind",
+        "source_urls",
         "mvp_shape",
         "verification_needed",
     )
@@ -1301,6 +1363,156 @@ def _has_decision_grade_external_evidence(candidate: CandidateAggregate) -> bool
         _external_evidence_count(candidate.evidence) >= 2
         and len(_external_source_types(candidate.evidence)) >= 2
     )
+
+
+def _kir_gate_allows_candidate(
+    candidate: CandidateAggregate,
+    *,
+    as_of: datetime | None = None,
+) -> bool:
+    state = _kir_gate_state(candidate, as_of=as_of)
+    return str(state.get("kir_gate_status")) in KIR_GATE_PASSING_STATUSES
+
+
+def _kir_gate_missing_evidence(
+    candidate: CandidateAggregate,
+    *,
+    as_of: datetime | None = None,
+) -> tuple[str, ...]:
+    state = _kir_gate_state(candidate, as_of=as_of)
+    if str(state.get("kir_gate_status")) in KIR_GATE_PASSING_STATUSES:
+        return ()
+    reasons = state.get("kir_gate_reasons")
+    if isinstance(reasons, tuple | list):
+        return tuple(str(reason) for reason in reasons if str(reason).strip())
+    if isinstance(reasons, str) and reasons.strip():
+        return (reasons.strip(),)
+    return ("fresh KIR Knowledge Thread evidence with source atoms and source URLs",)
+
+
+def _kir_gate_state(
+    candidate: CandidateAggregate,
+    *,
+    as_of: datetime | None = None,
+) -> dict[str, object]:
+    telegram_records = [
+        record for record in candidate.evidence if record.source_type == "telegram_research_agent"
+    ]
+    kir_required = bool(telegram_records)
+    kir_records = [
+        record for record in telegram_records if _kir_source_kind(record) == "knowledge_thread"
+    ]
+    selected_record = kir_records[0] if kir_records else None
+    atom_ids = _kir_source_atom_ids(kir_records)
+    source_urls = _kir_source_urls(kir_records)
+    has_fresh_thread = any(
+        _kir_record_has_fresh_thread(record, as_of=as_of) for record in kir_records
+    )
+    blockers: list[tuple[str, str]] = []
+
+    if kir_required:
+        if not kir_records:
+            blockers.append(("missing_kir_thread", "fresh KIR Knowledge Thread evidence"))
+        elif not has_fresh_thread:
+            blockers.append(("stale_kir_thread", "fresh KIR Knowledge Thread evidence"))
+        if kir_records and not atom_ids:
+            blockers.append(("missing_source_atoms", "KIR source atom IDs"))
+        if kir_records and not source_urls:
+            blockers.append(("missing_source_urls", "KIR source URLs"))
+        if not _has_decision_grade_external_evidence(candidate):
+            blockers.append(
+                (
+                    "missing_decision_grade_external_evidence",
+                    "two independent non-Telegram evidence sources",
+                )
+            )
+        if _has_blocking_gap(candidate):
+            blockers.append(("blocking_risk", "no blocking risk flags"))
+        if _has_profile_blocking_mismatch(candidate):
+            blockers.append(("profile_mismatch", "operator-fit wedge without profile mismatch"))
+        elif not _has_operator_fit(candidate):
+            blockers.append(("missing_operator_fit", "positive operator fit signal"))
+
+    status = "not_required"
+    if kir_required:
+        status = blockers[0][0] if blockers else "passed"
+
+    return {
+        "kir_required": kir_required,
+        "kir_source_kind": _kir_source_kind(selected_record) if selected_record else None,
+        "kir_thread_slug": (
+            _metadata_text(selected_record.provider_metadata, "knowledge_thread_slug")
+            if selected_record
+            else None
+        ),
+        "kir_thread_title": (
+            _metadata_text(selected_record.provider_metadata, "knowledge_thread_title")
+            if selected_record
+            else None
+        ),
+        "kir_thread_status": _metadata_text(
+            selected_record.provider_metadata,
+            "knowledge_thread_status",
+        )
+        if selected_record
+        else None,
+        "kir_source_atom_count": len(atom_ids),
+        "kir_source_url_count": len(source_urls),
+        "kir_has_fresh_thread": has_fresh_thread,
+        "kir_gate_status": status,
+        "kir_gate_reasons": tuple(reason for _status, reason in blockers),
+    }
+
+
+def _kir_source_kind(record: EvidenceRecord | None) -> str | None:
+    if record is None:
+        return None
+    return _metadata_text(record.provider_metadata, "source_kind")
+
+
+def _kir_source_atom_ids(records: list[EvidenceRecord]) -> tuple[str, ...]:
+    atom_ids: list[str] = []
+    for record in records:
+        for atom_id in _metadata_list(record.provider_metadata, "source_atom_ids"):
+            if atom_id not in atom_ids:
+                atom_ids.append(atom_id)
+    return tuple(atom_ids)
+
+
+def _kir_source_urls(records: list[EvidenceRecord]) -> tuple[str, ...]:
+    urls: list[str] = []
+    for record in records:
+        for url in _metadata_list(record.provider_metadata, "source_urls"):
+            if url not in urls:
+                urls.append(url)
+        if record.source_url and record.source_url not in urls:
+            urls.append(record.source_url)
+    return tuple(urls)
+
+
+def _kir_record_has_fresh_thread(
+    record: EvidenceRecord,
+    *,
+    as_of: datetime | None = None,
+) -> bool:
+    if _kir_source_kind(record) != "knowledge_thread":
+        return False
+    status = (_metadata_text(record.provider_metadata, "knowledge_thread_status") or "").lower()
+    if not status or status in STALE_KIR_THREAD_STATUSES:
+        return False
+    current = as_of or datetime.now(UTC)
+    age_days = max((_to_utc(current) - _to_utc(record.captured_at)).days, 0)
+    return age_days <= KIR_FRESHNESS_DAYS
+
+
+def _to_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
+def _has_operator_fit(candidate: CandidateAggregate) -> bool:
+    return bool(candidate.profile_fit_flags) and not _has_profile_blocking_mismatch(candidate)
 
 
 def _has_profile_blocking_mismatch(candidate: CandidateAggregate) -> bool:
@@ -1488,6 +1700,10 @@ def _render_report(
                     "",
                     _source_mix_summary(source_counts),
                     "",
+                    "## KIR Evidence",
+                    "",
+                    "- KIR gate: not_required",
+                    "",
                     "## Live Source Intelligence",
                     "",
                     *_live_intelligence_lines(source_counts),
@@ -1517,6 +1733,10 @@ def _render_report(
         "## Source Mix",
         "",
         _source_mix_summary(source_counts, selected=selected),
+        "",
+        "## KIR Evidence",
+        "",
+        *_kir_evidence_lines(selected),
         "",
         "## Live Source Intelligence",
         "",
@@ -1614,6 +1834,29 @@ def _source_mix_summary(
     return "\n".join(_source_mix_card_lines(source_counts, selected=selected))
 
 
+def _kir_evidence_lines(selected: CandidateAggregate | None) -> list[str]:
+    if selected is None:
+        return ["- KIR gate: not_required"]
+    state = _kir_gate_state(selected)
+    required = "yes" if bool(state.get("kir_required")) else "no"
+    fresh = "yes" if bool(state.get("kir_has_fresh_thread")) else "no"
+    reasons = _string_list(state.get("kir_gate_reasons"))
+    thread_slug = state.get("kir_thread_slug") or "none"
+    thread_status = state.get("kir_thread_status") or "none"
+    source_kind = state.get("kir_source_kind") or "none"
+    return [
+        f"- KIR required: {required}",
+        f"- KIR gate: {state.get('kir_gate_status')}",
+        (
+            f"- Knowledge Thread: {thread_slug} "
+            f"(source_kind={source_kind}, status={thread_status}, fresh={fresh})"
+        ),
+        f"- Source atoms: {state.get('kir_source_atom_count', 0)}",
+        f"- Source URLs: {state.get('kir_source_url_count', 0)}",
+        f"- KIR blockers: {_join_or_none(reasons)}",
+    ]
+
+
 def _source_mix_card_lines(
     source_counts: dict[str, object],
     *,
@@ -1649,8 +1892,12 @@ def _source_mix_card_lines(
 
     selected_external_types = _string_list(selected_mix.get("selected_external_source_types"))
     run_external_types = _string_list(selected_mix.get("run_external_source_types"))
+    kir_gate_status = str(selected_mix.get("kir_gate_status") or "not_required")
     gate = (
         "decision-grade external evidence present"
+        if bool(selected_mix.get("decision_grade_external"))
+        and kir_gate_status in KIR_GATE_PASSING_STATUSES
+        else "KIR evidence gap remains"
         if bool(selected_mix.get("decision_grade_external"))
         else "external evidence gap remains"
     )
@@ -1673,6 +1920,7 @@ def _source_mix_card_lines(
         f"- Missing credentials/source errors: {missing_text}",
         f"- Reddit API: {selected_mix.get('reddit_api_status', 'not_used')}",
         f"- GitHub evidence: {selected_mix.get('github_evidence_role', 'none')}",
+        f"- KIR gate: {kir_gate_status}",
         f"- Gate: {gate}",
     ]
 
@@ -1690,6 +1938,7 @@ def _selected_source_mix(
     selected_telegram_count = sum(
         1 for record in selected.evidence if record.source_type == "telegram_research_agent"
     )
+    kir_state = _kir_gate_state(selected)
     run_external_types = _object_list(source_counts.get("external_source_types"))
     readiness = _source_mix_readiness(
         selected_external_count=selected_external_count,
@@ -1715,6 +1964,7 @@ def _selected_source_mix(
             missing_credentials=missing_credentials,
         ),
         "github_evidence_role": _github_evidence_role(selected),
+        **kir_state,
     }
 
 
@@ -1885,7 +2135,8 @@ def _decision_gate_summary(
         external_types = ", ".join(str(value) for value in external_types) or "none"
     repeated_signal_count = _selected_repeated_signal_count(source_counts, selected=selected)
     missing_evidence = ", ".join(sorted(selected.missing_evidence)) or "none"
-    allowed = "yes" if selected.recommendation == "focused_experiment" else "no"
+    kir_state = _kir_gate_state(selected)
+    allowed = "yes" if selected.recommendation in RECOMMENDATION_GATED else "no"
     reason = _decision_gate_reason(selected, external_count=external_count)
     return "\n".join(
         [
@@ -1893,6 +2144,7 @@ def _decision_gate_summary(
             f"- External evidence: {external_count}",
             f"- External source types: {external_types}",
             f"- Repeated signal count: {repeated_signal_count}",
+            f"- KIR gate: {kir_state.get('kir_gate_status')}",
             f"- Missing evidence: {missing_evidence}",
             f"- Recommendation allowed: {allowed}",
             f"- Reason: {reason}",
@@ -1925,11 +2177,16 @@ def _decision_gate_reason(
     *,
     external_count: object,
 ) -> str:
-    if selected.recommendation == "focused_experiment":
-        return "focused_experiment"
+    if selected.recommendation in RECOMMENDATION_GATED:
+        return selected.recommendation
     if selected.missing_evidence:
-        if "non-Telegram public evidence for the same pain" in selected.missing_evidence:
+        if selected.missing_evidence & {
+            "non-Telegram public evidence for the same pain",
+            "second independent external source type",
+        }:
             return "source_mix_gate"
+        if not _kir_gate_allows_candidate(selected):
+            return "kir_gate"
         return "insufficient_evidence"
     if _has_profile_blocking_mismatch(selected):
         return "operator_fit_gate"
@@ -1938,6 +2195,8 @@ def _decision_gate_reason(
             return "source_mix_gate"
     except (TypeError, ValueError):
         return "missing_gate_fields"
+    if not _kir_gate_allows_candidate(selected):
+        return "kir_gate"
     return "insufficient_evidence"
 
 
@@ -1989,7 +2248,7 @@ def _live_intelligence_lines(source_counts: dict[str, object]) -> list[str]:
 
 def _build_worthy_lines(candidates: list[CandidateAggregate]) -> list[str]:
     build_worthy = [
-        candidate for candidate in candidates if candidate.recommendation == "focused_experiment"
+        candidate for candidate in candidates if candidate.recommendation in RECOMMENDATION_GATED
     ]
     if not build_worthy:
         return ["- No build-worthy recommendations passed the Decision Gate."]
