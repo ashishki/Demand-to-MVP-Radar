@@ -85,6 +85,54 @@ def test_bridge_preserves_optional_opportunity_metadata(tmp_path) -> None:
     assert metadata["signal_score"] == "0.67"
 
 
+def test_bridge_preserves_knowledge_thread_provenance_metadata(tmp_path) -> None:
+    repository, _connection = _repository(tmp_path)
+    export_path = tmp_path / "knowledge-thread-export.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "knowledge-thread:lead-response-sla-monitors",
+                    "captured_at": "2026-07-06T08:00:00+00:00",
+                    "title": "Lead Response SLA Monitor",
+                    "text": "Lead response SLA monitors are recurring operator demand.",
+                    "source_url": "https://t.me/market_ai/501",
+                    "source_kind": "knowledge_thread",
+                    "source_urls": [
+                        "https://t.me/market_ai/501",
+                        "https://t.me/operators/502",
+                    ],
+                    "knowledge_thread_slug": "lead-response-sla-monitors",
+                    "knowledge_thread_title": "Lead Response SLA Monitors",
+                    "knowledge_thread_status": "active",
+                    "knowledge_atom_types": ["market_signal", "workflow_pattern"],
+                    "source_atom_ids": [501, 502],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = TelegramResearchAgentBridge().import_file(
+        export_path,
+        run_id="run-tra-kir",
+        repository=repository,
+        quarantine_path=tmp_path / "quarantine.jsonl",
+    )
+
+    metadata = result.evidence[0].provider_metadata
+    assert metadata["source_kind"] == "knowledge_thread"
+    assert metadata["knowledge_thread_slug"] == "lead-response-sla-monitors"
+    assert metadata["knowledge_thread_title"] == "Lead Response SLA Monitors"
+    assert metadata["knowledge_thread_status"] == "active"
+    assert json.loads(metadata["knowledge_atom_types"]) == ["market_signal", "workflow_pattern"]
+    assert json.loads(metadata["source_atom_ids"]) == [501, 502]
+    assert json.loads(metadata["source_urls"]) == [
+        "https://t.me/market_ai/501",
+        "https://t.me/operators/502",
+    ]
+
+
 def test_bridge_import_is_idempotent(tmp_path) -> None:
     repository, connection = _repository(tmp_path)
     bridge = TelegramResearchAgentBridge()
