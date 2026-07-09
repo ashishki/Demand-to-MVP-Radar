@@ -1,7 +1,7 @@
 # MVP Weekly Live Sources
 
 Status: Active weekly production contract
-Date: 2026-05-25
+Date: 2026-07-09
 
 ## Purpose
 
@@ -29,11 +29,23 @@ The active weekly source config is `config/mvp_weekly_sources.json`.
 | SERP / SerpApi | `serp` | search intent, alternatives, competitor pages | `SERPAPI_API_KEY` |
 | YouTube Data API | `youtube` | tutorial/creator demand and how-to intent | `YOUTUBE_API_KEY` |
 | Product Hunt | `product_hunt` | launch and competitor traction | `PRODUCT_HUNT_TOKEN` |
-| Reddit | `reddit` | community pain and manual workaround language | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` |
+| Reddit | `reddit` | community pain, repeated complaints, and manual workaround language | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` |
 
 Enabled weekly sources should not disappear silently. If a source cannot run
 because a credential is missing, the run records it in `source_errors`. If a
 source is intentionally disabled, it appears in `skipped_sources`.
+
+For RVE validation, SERP and Reddit sources can also run in bounded non-live
+operation:
+
+- `cache_only: true` reads a configured fixture/cache file without requiring
+  the live source credential;
+- `dry_run: true` validates config and records adapter status without reading a
+  fixture or making a live request;
+- live mode remains credential-gated and missing credentials are reported as
+  `credential_limited` in `validation_adapter_status`;
+- Reddit/forum live rate limits are reported as `rate_limited`, not as weekly
+  report failures.
 
 ## Credential File
 
@@ -96,7 +108,8 @@ Expected source contract in a healthy broad run:
 - public sources collect evidence even without paid/community credentials.
 - missing credentials appear under `source_errors`.
 - `external_evidence_count` is greater than zero.
-- strong recommendations still require candidate-level external corroboration.
+- strong recommendations still require candidate-level matched external
+  corroboration.
 
 ## Decision Gates
 
@@ -104,10 +117,19 @@ The weekly MVP synthesis is gated after the LLM response:
 
 - Telegram-only candidates cannot become `focused_experiment`.
 - A confident experiment requires at least two non-Telegram evidence items from
-  at least two independent external source types for the selected candidate.
+  at least two independent matched external source types for the selected
+  candidate.
+- Unmatched SERP snippets remain `decision_context.external_research_context`
+  and do not satisfy gates.
+- Unmatched or adjacent-pain Reddit/forum complaints remain
+  `decision_context.external_research_context` and do not satisfy gates.
+- Matched Reddit/forum evidence keeps query provenance, subreddit/forum label,
+  public URL, source-created date, and privacy-preserving author metadata when
+  available.
 - Ideas outside the operator profile, such as Java/JVM-heavy or mobile-native
   builds, are downgraded unless they have a narrow Python/LLM workflow wedge.
-- The report must include Source Mix and Operator Fit sections.
+- The report must include Source Mix, Validation Query Pack, Matched External
+  Evidence, and Operator Fit sections.
 
 The operator profile lives in `config/operator_fit_profile.md`.
 

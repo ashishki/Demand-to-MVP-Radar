@@ -1,6 +1,6 @@
 # Radar Validation Evidence Contract
 
-Status: active contract for RVE-0/RVE-2
+Status: active contract for RVE-0/RVE-4
 Date: 2026-07-09
 
 ## Purpose
@@ -79,8 +79,13 @@ Required matcher fields for each record:
 - `source_type`
 - `source_name`
 - `source_url`
+- `source_title`
+- `source_snippet`
 - `captured_at`
+- `source_created_at`
 - `query`
+- optional forum provenance such as `subreddit`, `comment_id`, and
+  privacy-preserving `author_hash`
 - `matched_candidate_title`
 - `match_basis`
 - `decision_grade`
@@ -118,7 +123,15 @@ weekly run. Allowed statuses:
 
 Missing credentials and disabled adapters degrade to `credential_limited` or
 `adapter_disabled`. External validation adapters must support cache-first and
-dry-run operation before they are allowed into the weekly run.
+dry-run operation before they are allowed into the weekly run. Search/SERP
+validation reports `cache_only` when it uses a fixture/cache or dry-run mode
+without live external calls. Reddit/forum validation reports:
+
+- `credential_limited` when Reddit/forum credentials are missing;
+- `rate_limited` when the live source health payload reports a provider rate
+  limit or a rate-limit source error;
+- `cache_only` when it uses a fixture/cache or dry-run mode without live API
+  calls.
 
 ## Gate Rules
 
@@ -130,6 +143,8 @@ dry-run operation before they are allowed into the weekly run.
 - Search demand alone can support `investigate` or `focused_experiment` only
   when matched to the selected candidate and corroborated as required by
   existing gates.
+- Reddit/forum complaint evidence must describe the same selected candidate
+  pain. Adjacent but different workflow pain remains context-only.
 - Do not weaken existing source/KIR/operator-fit gates to make candidates look
   stronger.
 - If no matched external evidence exists, the report must show missing
@@ -143,12 +158,23 @@ section in `mvp-of-week` Markdown. RVE-2 adds candidate-level matching in
 `demand_mvp_radar/validation_evidence.py`, renders a `Matched External
 Evidence` section, writes matched evidence into JSON, and gates candidate
 external evidence counts/source types through `supports_gate=true` matches.
-Both layers are deterministic and make no live external calls.
+RVE-3 wires the existing SERP source boundary into this contract: source config
+supports `cache_only` and `dry_run`, missing live credentials surface as
+`credential_limited`, SERP `search_query` provenance is persisted through
+SQLite, and Matched External Evidence lines show the query that produced each
+matched item.
 
-All validation adapters currently report `adapter_disabled`. Later RVE tasks
-will add adapters in this order:
+RVE-4 wires the Reddit/forum complaint boundary into the same contract. Reddit
+posts and comments capture complaint text, public URL, subreddit/forum label,
+created date, score/comment metadata, privacy-preserving author hash for
+comments, and search-query provenance. Cache-only and dry-run modes bypass live
+credential requirements, missing live credentials surface as
+`credential_limited`, rate-limit state surfaces as `rate_limited`, repeated
+complaints and manual workaround mentions are classified separately, and
+adjacent-pain Reddit/forum results remain external research context only.
 
-1. Search/SERP demand.
-2. Reddit/forum complaints.
-3. Competitor/workaround crawler.
-4. X/Twitter corroboration.
+Search/SERP and Reddit/forum validation are the first active adapter
+boundaries. Later RVE tasks will add adapters in this order:
+
+1. Competitor/workaround crawler.
+2. X/Twitter corroboration.
