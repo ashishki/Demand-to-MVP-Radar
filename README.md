@@ -196,12 +196,14 @@ The MVP recommendation is gated by source mix, KIR provenance, and operator fit:
 - `docs/RADAR_VALIDATION_EVIDENCE.md` is the RVE contract for
   `validation_queries`, `matched_external_evidence`,
   `decision_context.external_research_context`,
-  `missing_evidence_by_category`, and `validation_adapter_status`. Context-only
-  market records and unmatched external results never satisfy gates.
+  `missing_evidence_by_category`, `validation_adapter_status`, and
+  `decision_change_action`. Context-only market records and unmatched external
+  results never satisfy gates.
 
 `mvp-of-week` now renders a planning-only `Validation Query Pack` and a matched
-`Matched External Evidence` section for the selected candidate. Query planning
-and matching are deterministic. The Search/SERP, Reddit/forum,
+`Matched External Evidence` section for the selected candidate, followed by a
+`What Would Change The Decision` action block with the next repeatable query.
+Query planning and matching are deterministic. The Search/SERP, Reddit/forum,
 competitor/workaround crawler, and X/Twitter corroboration boundaries support
 live, `cache_only`, and `dry_run` modes; missing live credentials surface as
 `credential_limited`, rate limits surface as `rate_limited`, and neither state

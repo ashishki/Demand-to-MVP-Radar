@@ -1,6 +1,6 @@
 # Radar Validation Evidence Contract
 
-Status: active contract for RVE-0/RVE-6
+Status: active contract for RVE-0/RVE-7
 Date: 2026-07-09
 
 ## Purpose
@@ -25,12 +25,16 @@ source/KIR/operator-fit gates.
   query to run for each category.
 - `validation_adapter_status`: per-source status for future validation
   adapters.
+- `decision_change_action`: the next repeatable validation action, matched
+  external evidence count/source types, and the gate change required before a
+  selected candidate can move toward `focused_experiment` or `build`.
 - `decision_context.external_research_context`: unmatched or context-only
   research that can explain the decision but cannot satisfy gates.
 
 The selected candidate also repeats its own `validation_queries` and
-`matched_external_evidence` so downstream consumers can read the candidate
-object without chasing the top-level contract.
+`matched_external_evidence`, `missing_evidence_by_category`, and
+`decision_change_action` so downstream consumers can read the candidate object
+without chasing the top-level contract.
 
 ## `validation_queries`
 
@@ -176,6 +180,9 @@ X/Twitter corroboration reports:
   stronger.
 - If no matched external evidence exists, the report must show missing
   evidence and the next repeatable validation query.
+- The Markdown report must include `What Would Change The Decision` after
+  `Matched External Evidence`, and downstream Brief surfaces must label market
+  context as context only, not proof.
 
 ## Current Implementation
 
@@ -215,5 +222,8 @@ hashes author IDs, marks every matched X item as `lower_confidence` and
 `corroboration_required`, and prevents X results from satisfying gates. Broad
 trend chatter is classified as `negative_signal`.
 
-RVE-7 should improve the Weekly Brief and Radar validation surface for these
-adapter states.
+RVE-7 adds the reader-facing validation surface. `mvp-of-week` emits
+`decision_change_action` in JSON/CLI stdout, repeats it on the selected
+candidate object, and renders `What Would Change The Decision` in Markdown.
+Telegram Research Agent consumes the same fields in the Weekly Brief MVP Radar
+Gate Card and MVP weekly operator notification.
