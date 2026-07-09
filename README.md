@@ -193,6 +193,19 @@ The MVP recommendation is gated by source mix, KIR provenance, and operator fit:
   secrets for the VPS env file.
 - `docs/MVP_WEEKLY_LIVE_SOURCES.md` is the operator-facing contract for the
   full weekly source bundle, required credentials, and source-mix gates.
+- `docs/RADAR_VALIDATION_EVIDENCE.md` is the RVE contract for
+  `validation_queries`, `matched_external_evidence`,
+  `decision_context.external_research_context`,
+  `missing_evidence_by_category`, and `validation_adapter_status`. Context-only
+  market records and unmatched external results never satisfy gates.
+
+`mvp-of-week` now renders a planning-only `Validation Query Pack` and a matched
+`Matched External Evidence` section for the selected candidate. Query planning
+and matching are deterministic and make no live API calls. Future adapters must
+consume the query pack behind cache-first, dry-run capable, and
+credential-tolerant boundaries. Candidate source gates count only matched
+decision-grade external evidence; unmatched external results remain
+`decision_context.external_research_context`.
 
 Runtime LLM synthesis is opt-in through env:
 

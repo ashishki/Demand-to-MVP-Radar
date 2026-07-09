@@ -86,6 +86,9 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     report_text = report_path.read_text()
     assert "Candidate Dossier: Telegram Channel SEO Site Generator" in report_text
     assert "Status: investigate" in report_text
+    assert "## Validation Query Pack" in report_text
+    assert 'search_demand: "Telegram Channel SEO Site Generator"' in report_text
+    assert "## Matched External Evidence" in report_text
     assert "## Next Experiment" in report_text
     assert "## Kill Criteria" in report_text
     receipt = WeeklyReportProofReceipt.model_validate(
@@ -105,6 +108,19 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert payload["result"]["selected_source_mix"]["readiness"] == "telegram_only"
     assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 0
     assert payload["selected"]["source_mix"]["reddit_api_status"] == "not_used"
+    assert (
+        payload["selected"]["validation_queries"]["queries_by_intent"]["search_demand"][0][
+            "target_candidate"
+        ]
+        == "Telegram Channel SEO Site Generator"
+    )
+    assert payload["validation_queries"]["schema_version"] == "radar_validation_evidence.v1"
+    assert payload["matched_external_evidence"] == []
+    assert payload["selected"]["matched_external_evidence"] == []
+    assert payload["validation_adapter_status"]["search_demand"]["status"] == "adapter_disabled"
+    assert (
+        payload["decision_context"]["external_research_context"]["source_gate_satisfied"] is False
+    )
 
 
 def test_mvp_of_week_keeps_market_context_out_of_candidate_ranking(tmp_path) -> None:
@@ -131,7 +147,10 @@ def test_mvp_of_week_keeps_market_context_out_of_candidate_ranking(tmp_path) -> 
                     "upstream_id": "telegram:@capitan:1001",
                     "captured_at": "2026-05-20T10:00:00+00:00",
                     "title": "Telegram content is hard to search",
-                    "text": "Channel owners keep asking how to turn Telegram posts into searchable SEO pages.",
+                    "text": (
+                        "Channel owners keep asking how to turn Telegram posts "
+                        "into searchable SEO pages."
+                    ),
                     "snippet": "Channel owners ask for searchable SEO pages from Telegram posts.",
                     "source_url": "https://t.me/its_capitan/1001",
                     "channel_username": "@its_capitan",
@@ -557,6 +576,8 @@ def test_mvp_of_week_allows_kir_backed_telegram_seed_with_external_evidence(
     assert result.recommendation == "focused_experiment"
     assert result.dossier_status == "focused_experiment"
     assert source_mix["decision_grade_external"] is True
+    assert source_mix["selected_external_evidence_count"] == 2
+    assert sorted(source_mix["selected_external_source_types"]) == ["github_public", "serp"]
     assert source_mix["kir_gate_status"] == "passed"
     assert source_mix["kir_source_kind"] == "knowledge_thread"
     assert source_mix["kir_thread_slug"] == "llm-workflow-evidence-router"
@@ -565,7 +586,16 @@ def test_mvp_of_week_allows_kir_backed_telegram_seed_with_external_evidence(
     assert source_mix["kir_has_fresh_thread"] is True
     assert "- KIR gate: passed" in report_text
     assert "- Gate: decision-grade external evidence present" in report_text
+    assert "## Matched External Evidence" in report_text
+    assert "developer_issue: github_public" in report_text
+    assert "search_demand: serp" in report_text
     assert f"- {mvp_shape}:" in report_text
+    assert len(payload["matched_external_evidence"]) == 2
+    assert {item["evidence_kind"] for item in payload["matched_external_evidence"]} == {
+        "developer_issue",
+        "search_demand",
+    }
+    assert all(item["supports_gate"] for item in payload["matched_external_evidence"])
 
 
 def test_selected_source_mix_marks_repeated_github_variants() -> None:

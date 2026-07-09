@@ -38,6 +38,18 @@ from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAge
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
 from demand_mvp_radar.storage.repositories import EvidenceRepository
+from demand_mvp_radar.validation_evidence import (
+    decision_grade_match_count,
+    external_research_context,
+    match_external_evidence,
+    matched_external_fingerprints,
+    matched_external_source_types,
+    missing_evidence_by_kind,
+)
+from demand_mvp_radar.validation_queries import (
+    build_validation_query_pack,
+    validation_adapter_status,
+)
 
 SURFACE_WEIGHTS = {
     "manual_workaround": 24,
@@ -412,15 +424,13 @@ def _rank_candidates(
         candidate.profile_mismatch_flags.update(_profile_mismatch_flags(text))
 
     for candidate in grouped.values():
-        if _external_evidence_count(candidate.evidence) == 0:
+        if _matched_external_count(candidate) == 0:
             candidate.missing_evidence.add("non-Telegram public evidence for the same pain")
-        elif len(_external_source_types(candidate.evidence)) < 2:
+        elif len(_matched_external_source_types(candidate)) < 2:
             candidate.missing_evidence.add("second independent external source type")
         if candidate.profile_mismatch_flags:
             candidate.missing_evidence.add("operator-fit wedge that avoids an unfamiliar stack")
-        candidate.missing_evidence.update(
-            _kir_gate_missing_evidence(candidate, as_of=gate_as_of)
-        )
+        candidate.missing_evidence.update(_kir_gate_missing_evidence(candidate, as_of=gate_as_of))
         candidate.score = _score_candidate(candidate)
         if (
             candidate.score >= 70
@@ -675,8 +685,7 @@ def _source_counts(
     counts["kir_fresh_thread_seed_count"] = sum(
         1
         for record in records
-        if record.source_type == "telegram_research_agent"
-        and _kir_record_has_fresh_thread(record)
+        if record.source_type == "telegram_research_agent" and _kir_record_has_fresh_thread(record)
     )
     counts["source_trust_records"] = tuple(
         record.as_dict() for record in build_source_trust_records(records)
@@ -822,7 +831,7 @@ def _build_synthesis_prompt(
 ) -> str:
     candidate_lines = []
     for index, candidate in enumerate(candidates, start=1):
-        external_types = ", ".join(_external_source_types(candidate.evidence)) or "none"
+        external_types = ", ".join(_matched_external_source_types(candidate)) or "none"
         kir_state = _kir_gate_state(candidate)
         candidate_lines.append(
             f"{index}. {candidate.title} | score={candidate.score} | "
@@ -927,8 +936,9 @@ def _build_synthesis_prompt(
             "- Include sections: Why This Candidate, Source Mix, Decision Gate, "
             "Market Context Lens, KIR Evidence, Live Source Intelligence, Source Trust "
             "And Repeated Signals, Build-Worthy Recommendations, Interesting Signals, "
-            "Operator Fit, One-Function MVP, Evidence, Missing Evidence, Risks, "
-            "Next Experiment, Kill Criteria, Anti-Complexity Guardrail."
+            "Validation Query Pack, Matched External Evidence, Operator Fit, "
+            "One-Function MVP, Evidence, Missing Evidence, Risks, Next Experiment, "
+            "Kill Criteria, Anti-Complexity Guardrail."
         ),
         "- Evidence section must cite only provided evidence IDs like [E1].",
         "- Market Context Lens is context only and must not be cited as validation evidence.",
@@ -1075,6 +1085,16 @@ def _canonicalize_synthesis_markdown(
         markdown,
         "Source Mix",
         [_source_mix_summary(source_counts, selected=selected)],
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Validation Query Pack",
+        _validation_query_pack_lines(selected),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Matched External Evidence",
+        _matched_external_evidence_lines(selected),
     )
     markdown = _replace_or_append_markdown_section(
         markdown,
@@ -1281,6 +1301,24 @@ def _append_report_quality_sections(
                 *_source_trust_lines(source_counts),
             ]
         )
+    if "## validation query pack" not in existing:
+        lines.extend(
+            [
+                "",
+                "## Validation Query Pack",
+                "",
+                *_validation_query_pack_lines(selected),
+            ]
+        )
+    if "## matched external evidence" not in existing:
+        lines.extend(
+            [
+                "",
+                "## Matched External Evidence",
+                "",
+                *_matched_external_evidence_lines(selected),
+            ]
+        )
     if "## kir evidence" not in existing:
         lines.extend(["", "## KIR Evidence", "", *_kir_evidence_lines(selected)])
     if "## build-worthy recommendations" not in existing:
@@ -1388,8 +1426,8 @@ def _score_candidate(candidate: CandidateAggregate) -> int:
     score += min(len(candidate.channels) * 4, 12)
     score += min(sum(SURFACE_WEIGHTS.get(surface, 6) for surface in candidate.surfaces), 28)
     score += min(_bucket_bonus(candidate.evidence), 18)
-    score += min(_external_evidence_count(candidate.evidence) * 6, 18)
-    score += min(len(_external_source_types(candidate.evidence)) * 6, 18)
+    score += min(_matched_external_count(candidate) * 6, 18)
+    score += min(len(_matched_external_source_types(candidate)) * 6, 18)
     score += min(len(candidate.profile_fit_flags) * 5, 15)
     if candidate.mvp_scopes:
         score += 8
@@ -1397,7 +1435,7 @@ def _score_candidate(candidate: CandidateAggregate) -> int:
         score += 6
     score -= min(len(candidate.risk_flags) * 8, 24)
     score -= min(len(candidate.profile_mismatch_flags) * 12, 36)
-    if _external_evidence_count(candidate.evidence) == 0:
+    if _matched_external_count(candidate) == 0:
         score -= 14
     if _has_blocking_gap(candidate):
         score -= 12
@@ -1426,8 +1464,8 @@ def _has_blocking_gap(candidate: CandidateAggregate) -> bool:
 
 def _has_decision_grade_external_evidence(candidate: CandidateAggregate) -> bool:
     return (
-        _external_evidence_count(candidate.evidence) >= 2
-        and len(_external_source_types(candidate.evidence)) >= 2
+        _matched_external_count(candidate) >= 2
+        and len(_matched_external_source_types(candidate)) >= 2
     )
 
 
@@ -1766,6 +1804,14 @@ def _render_report(
                     "",
                     _source_mix_summary(source_counts),
                     "",
+                    "## Validation Query Pack",
+                    "",
+                    *_validation_query_pack_lines(None),
+                    "",
+                    "## Matched External Evidence",
+                    "",
+                    *_matched_external_evidence_lines(None),
+                    "",
                     "## Market Context Lens",
                     "",
                     *_market_context_lines(source_counts),
@@ -1803,6 +1849,14 @@ def _render_report(
         "## Source Mix",
         "",
         _source_mix_summary(source_counts, selected=selected),
+        "",
+        "## Validation Query Pack",
+        "",
+        *_validation_query_pack_lines(selected),
+        "",
+        "## Matched External Evidence",
+        "",
+        *_matched_external_evidence_lines(selected),
         "",
         "## Market Context Lens",
         "",
@@ -1906,6 +1960,109 @@ def _source_mix_summary(
     selected: CandidateAggregate | None = None,
 ) -> str:
     return "\n".join(_source_mix_card_lines(source_counts, selected=selected))
+
+
+def _validation_query_pack(selected: CandidateAggregate | None) -> dict[str, object] | None:
+    if selected is None:
+        return None
+    return build_validation_query_pack(
+        candidate_title=selected.title,
+        surfaces=selected.surfaces,
+        missing_evidence=selected.missing_evidence,
+    )
+
+
+def _matched_external_evidence(selected: CandidateAggregate | None) -> list[dict[str, object]]:
+    if selected is None:
+        return []
+    return match_external_evidence(
+        candidate_title=selected.title,
+        records=selected.evidence,
+        external_source_types=EXTERNAL_DEMAND_SOURCE_TYPES,
+    )
+
+
+def _matched_external_count(selected: CandidateAggregate) -> int:
+    return decision_grade_match_count(_matched_external_evidence(selected))
+
+
+def _matched_external_source_types(selected: CandidateAggregate) -> tuple[str, ...]:
+    return matched_external_source_types(_matched_external_evidence(selected))
+
+
+def _matched_external_records(selected: CandidateAggregate) -> list[EvidenceRecord]:
+    fingerprints = matched_external_fingerprints(_matched_external_evidence(selected))
+    return [record for record in selected.evidence if record.source_fingerprint in fingerprints]
+
+
+def _validation_query_pack_lines(selected: CandidateAggregate | None) -> list[str]:
+    pack = _validation_query_pack(selected)
+    if pack is None:
+        return [
+            "- Planner: deterministic_rve_query_planner",
+            "- Live API calls: false",
+            "- Status: no selected candidate, so no candidate-specific queries.",
+        ]
+    lines = [
+        "- Planner: deterministic_rve_query_planner",
+        "- Live API calls: false",
+        (
+            "- Gate rule: planned queries do not satisfy gates until matched "
+            "external evidence is attached to this candidate."
+        ),
+    ]
+    next_query = _object_dict(pack.get("next_query"))
+    if next_query:
+        lines.append(f"- Next query: {next_query.get('query')} ({next_query.get('intent')})")
+    queries_by_intent = pack.get("queries_by_intent")
+    if not isinstance(queries_by_intent, dict):
+        return lines
+    intent_order = (
+        "search_demand",
+        "manual_workarounds",
+        "competitors",
+        "wtp_signals",
+        "reddit_forum_complaints",
+        "github_discussions",
+        "x_discussions",
+    )
+    for intent in intent_order:
+        records = queries_by_intent.get(intent) or []
+        if not isinstance(records, list) or not records:
+            continue
+        first = records[0]
+        if not isinstance(first, dict):
+            continue
+        sources = _string_list(first.get("source_types"))
+        lines.append(
+            "- "
+            f"{intent}: {first.get('query')} | "
+            f"kind={first.get('expected_evidence_kind')} | "
+            f"sources={_join_or_none(sources)} | "
+            f"priority={first.get('priority')}"
+        )
+    return lines
+
+
+def _matched_external_evidence_lines(selected: CandidateAggregate | None) -> list[str]:
+    matches = _matched_external_evidence(selected)
+    if not matches:
+        return [
+            "- No matched external validation evidence for the selected candidate.",
+            "- Gate rule: unmatched external results remain decision context only.",
+        ]
+    lines = ["- Gate rule: only matched decision-grade external evidence can satisfy source gates."]
+    for match in matches[:8]:
+        decision_grade = "yes" if bool(match.get("decision_grade")) else "no"
+        supports_gate = "yes" if bool(match.get("supports_gate")) else "no"
+        url = match.get("source_url") or "no url"
+        lines.append(
+            "- "
+            f"{match.get('evidence_kind')}: {match.get('source_type')} | "
+            f"decision_grade={decision_grade} | supports_gate={supports_gate} | "
+            f"basis={match.get('match_basis')} | {url}"
+        )
+    return lines
 
 
 def _market_context_prompt_lines(source_counts: dict[str, object]) -> list[str]:
@@ -2052,8 +2209,10 @@ def _selected_source_mix(
         return None
     source_errors = _source_error_map(source_counts.get("source_errors"))
     missing_credentials = _missing_credential_sources(source_errors)
-    selected_external_types = list(_external_source_types(selected.evidence))
-    selected_external_count = _external_evidence_count(selected.evidence)
+    selected_external_matches = _matched_external_evidence(selected)
+    selected_external_records = _matched_external_records(selected)
+    selected_external_types = list(matched_external_source_types(selected_external_matches))
+    selected_external_count = decision_grade_match_count(selected_external_matches)
     selected_telegram_count = sum(
         1 for record in selected.evidence if record.source_type == "telegram_research_agent"
     )
@@ -2078,11 +2237,11 @@ def _selected_source_mix(
         "missing_credentials": sorted(missing_credentials),
         "missing_credential_env_vars": _missing_credential_env_vars(source_errors),
         "reddit_api_status": _reddit_api_status(
-            selected=selected,
+            selected_external_records=selected_external_records,
             source_counts=source_counts,
             missing_credentials=missing_credentials,
         ),
-        "github_evidence_role": _github_evidence_role(selected),
+        "github_evidence_role": _github_evidence_role(selected_external_records),
         **kir_state,
     }
 
@@ -2101,7 +2260,7 @@ def _source_mix_readiness(
 
 def _reddit_api_status(
     *,
-    selected: CandidateAggregate,
+    selected_external_records: list[EvidenceRecord],
     source_counts: dict[str, object],
     missing_credentials: set[str],
 ) -> str:
@@ -2112,14 +2271,14 @@ def _reddit_api_status(
         for key, value in configured_sources.items()
         if "reddit" in str(key).lower()
     )
-    if any(record.source_type == "reddit" for record in selected.evidence):
+    if any(record.source_type == "reddit" for record in selected_external_records):
         return "used"
-    if reddit_run_count > 0 or reddit_config_count > 0:
-        return "used"
-    if _has_serp_indexed_reddit(selected.evidence):
+    if _has_serp_indexed_reddit(selected_external_records):
         return "serp_indexed_only"
     if any("reddit" in source.lower() for source in missing_credentials):
         return "missing_credentials"
+    if reddit_run_count > 0 or reddit_config_count > 0:
+        return "run_only_unmatched"
     return "not_used"
 
 
@@ -2143,9 +2302,9 @@ def _has_serp_indexed_reddit(records: list[EvidenceRecord]) -> bool:
     return False
 
 
-def _github_evidence_role(selected: CandidateAggregate) -> str:
+def _github_evidence_role(selected_external_records: list[EvidenceRecord]) -> str:
     github_records = [
-        record for record in selected.evidence if record.source_type == "github_public"
+        record for record in selected_external_records if record.source_type == "github_public"
     ]
     if not github_records:
         return "none"
@@ -2252,6 +2411,8 @@ def _decision_gate_summary(
     external_types = source_counts.get("external_source_types", "missing")
     if not isinstance(external_types, str):
         external_types = ", ".join(str(value) for value in external_types) or "none"
+    matched_count = _matched_external_count(selected)
+    matched_types = ", ".join(_matched_external_source_types(selected)) or "none"
     repeated_signal_count = _selected_repeated_signal_count(source_counts, selected=selected)
     missing_evidence = ", ".join(sorted(selected.missing_evidence)) or "none"
     kir_state = _kir_gate_state(selected)
@@ -2260,8 +2421,10 @@ def _decision_gate_summary(
     return "\n".join(
         [
             f"- Telegram seed evidence: {telegram_count}",
-            f"- External evidence: {external_count}",
+            f"- Run external evidence: {external_count}",
             f"- External source types: {external_types}",
+            f"- Matched external evidence: {matched_count}",
+            f"- Matched external source types: {matched_types}",
             f"- Repeated signal count: {repeated_signal_count}",
             f"- KIR gate: {kir_state.get('kir_gate_status')}",
             f"- Missing evidence: {missing_evidence}",
@@ -2498,6 +2661,20 @@ def _write_json(
     live_intelligence_path: Path | None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    validation_pack = _validation_query_pack(selected)
+    matched_evidence = _matched_external_evidence(selected)
+    matched_fingerprints = matched_external_fingerprints(matched_evidence)
+    missing_evidence_by_category = missing_evidence_by_kind(
+        matched_evidence=matched_evidence,
+        validation_queries=validation_pack,
+        current_missing=selected.missing_evidence if selected is not None else (),
+    )
+    external_context = external_research_context(
+        candidate_title=selected.title if selected is not None else None,
+        records=tuple(record for candidate in candidates for record in candidate.evidence),
+        matched_fingerprints=matched_fingerprints,
+        external_source_types=EXTERNAL_DEMAND_SOURCE_TYPES,
+    )
     payload = {
         "result": result.model_dump(mode="json"),
         "selected": _candidate_json(selected, source_counts=source_counts)
@@ -2511,8 +2688,13 @@ def _write_json(
         if live_intelligence_path is not None
         else None,
         "live_intelligence": source_counts.get("live_intelligence"),
+        "validation_queries": validation_pack,
+        "matched_external_evidence": matched_evidence,
+        "missing_evidence_by_category": missing_evidence_by_category,
+        "validation_adapter_status": validation_adapter_status(),
         "decision_context": {
             "market_context": source_counts.get("market_context"),
+            "external_research_context": external_context,
             "context_only_record_count": source_counts.get("context_only_record_count", 0),
         },
     }
@@ -2531,10 +2713,12 @@ def _candidate_json(
         "confidence": _dossier_confidence(candidate),
         "recommendation": candidate.recommendation,
         "source_mix": _selected_source_mix(candidate, source_counts),
+        "validation_queries": _validation_query_pack(candidate),
+        "matched_external_evidence": _matched_external_evidence(candidate),
         "evidence_count": len(candidate.evidence),
         "surfaces": sorted(candidate.surfaces),
         "channels": sorted(candidate.channels),
-        "external_source_types": list(_external_source_types(candidate.evidence)),
+        "external_source_types": list(_matched_external_source_types(candidate)),
         "profile_fit_flags": sorted(candidate.profile_fit_flags),
         "profile_mismatch_flags": sorted(candidate.profile_mismatch_flags),
         "missing_evidence": sorted(candidate.missing_evidence),

@@ -99,9 +99,9 @@ Full historical prompt archived at
 
 ## Next Task
 
-none - Phase 19 task graph and cross-repo KIR-Q1/KIR-Q2 Radar hardening are
-complete. Next work should come from a newly accepted task or follow-up review,
-not from the completed Phase 19/KIR queue.
+none - Phase 19 task graph complete. Cross-repo KIR-Q1/KIR-Q2 Radar hardening
+is also complete. Next work should come from a newly accepted task or follow-up
+review, not from the completed Phase 19/KIR queue.
 
 ## Fix Queue
 

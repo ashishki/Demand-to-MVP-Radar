@@ -26,6 +26,8 @@ def test_candidate_dossier_report_quality_contract(tmp_path) -> None:
     for heading in (
         "## Why This Candidate",
         "## Source Mix",
+        "## Validation Query Pack",
+        "## Matched External Evidence",
         "## Evidence",
         "## Missing Evidence",
         "## Next Experiment",
