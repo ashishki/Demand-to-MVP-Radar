@@ -740,6 +740,157 @@ def test_mvp_of_week_uses_cache_only_reddit_complaint_validation(
     assert persisted_rows[1]["author_hash"]
 
 
+def test_mvp_of_week_uses_cache_only_crawler_validation(
+    tmp_path,
+) -> None:
+    mvp_shape = "CSV cleanup automation for client exports"
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1401",
+                    "captured_at": _now_iso(),
+                    "title": f"{mvp_shape} demand",
+                    "text": (
+                        "Operators ask for CSV cleanup automation for client exports "
+                        "and want competitor/workaround validation."
+                    ),
+                    "snippet": "Operators ask for CSV cleanup automation.",
+                    "source_url": "https://t.me/its_capitan/1401",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation", "competitor_traction"],
+                    "mvp_shape": mvp_shape,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    crawler_path = tmp_path / "crawl4ai-cache.json"
+    crawler_path.write_text(
+        json.dumps(
+            {
+                "pages": [
+                    {
+                        "query": "csv cleanup automation alternative",
+                        "url": "https://cleansheet.example/csv-cleanup",
+                        "title": "CleanSheet CSV Cleanup",
+                        "positioning": (
+                            "CSV cleanup automation for client exports with schema repair."
+                        ),
+                        "body": (
+                            "CleanSheet automates CSV cleanup automation for client exports, "
+                            "delimiter detection, header repair, and broken column checks."
+                        ),
+                        "page_kind": "competitor",
+                        "pricing_hint": "$29/mo",
+                        "target_candidate": mvp_shape,
+                        "target_icp": "small SaaS operators",
+                        "captured_at": "2026-05-21T15:00:00+00:00",
+                    },
+                    {
+                        "query": "csv cleanup automation workaround",
+                        "url": "https://cleansheet.example/blog/manual-csv-cleanup",
+                        "title": "Manual CSV cleanup checklist",
+                        "positioning": "Manual workaround guide for cleaning client CSV exports.",
+                        "body": (
+                            "The workaround is a spreadsheet macro plus manual delimiter "
+                            "checks after every client export."
+                        ),
+                        "page_kind": "workaround",
+                        "target_candidate": mvp_shape,
+                        "captured_at": "2026-05-21T15:05:00+00:00",
+                    },
+                    {
+                        "query": "csv cleanup automation hype",
+                        "url": "https://docs.example/ai-data-platform",
+                        "title": "AI data platform",
+                        "positioning": "Generic AI data platform copy.",
+                        "body": (
+                            "This page is broad AI platform hype and does not describe "
+                            "the CSV cleanup automation pain or ICP."
+                        ),
+                        "page_kind": "irrelevant",
+                        "target_candidate": mvp_shape,
+                        "captured_at": "2026-05-21T15:10:00+00:00",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    source_config = tmp_path / "crawler-cache-config.json"
+    source_config.write_text(
+        json.dumps(
+            {
+                "run_id": "mvp-weekly-crawler-cache",
+                "sources": [
+                    {
+                        "source_name": "crawl4ai_competitor_cache",
+                        "source_type": "crawl4ai",
+                        "trust_level": "medium",
+                        "freshness_window_days": 30,
+                        "enabled": True,
+                        "cursor_support": True,
+                        "raw_snapshot_policy": "metadata_only",
+                        "approval_required": False,
+                        "credential_env_vars": [],
+                        "rate_limit_policy": {
+                            "requests_per_minute": 2,
+                            "burst_limit": 1,
+                        },
+                        "fixture_path": str(crawler_path.name),
+                        "allowed_domains": ["cleansheet.example", "docs.example"],
+                        "urls": ["https://cleansheet.example/csv-cleanup"],
+                        "queries": ["csv cleanup automation alternative"],
+                        "max_pages_per_run": 3,
+                        "max_pages_per_domain": 2,
+                        "cache_only": True,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-crawler-cache",
+        source_config=source_config,
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    matches = payload["matched_external_evidence"]
+
+    assert (
+        payload["validation_adapter_status"]["competitor_workaround_crawler"]["status"]
+        == "cache_only"
+    )
+    assert {item["evidence_kind"] for item in matches} == {
+        "competitor_traction",
+        "manual_workaround",
+        "negative_signal",
+    }
+    competitor = next(item for item in matches if item["evidence_kind"] == "competitor_traction")
+    negative = next(item for item in matches if item["evidence_kind"] == "negative_signal")
+    assert competitor["page_kind"] == "competitor"
+    assert competitor["pricing_hint"] == "$29/mo"
+    assert competitor["target_icp"] == "small SaaS operators"
+    assert competitor["supports_gate"] is True
+    assert negative["page_kind"] == "irrelevant"
+    assert negative["supports_gate"] is False
+    assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 2
+    assert payload["selected"]["source_mix"]["selected_external_source_types"] == ["crawl4ai"]
+    assert "query=csv cleanup automation alternative" in report_text
+    assert "crawl4ai/competitor" in report_text
+    assert "negative_signal: crawl4ai/irrelevant" in report_text
+    assert "supports_gate=no" in report_text
+    assert result.recommendation == "revisit_with_evidence_gap"
+
+
 def test_mvp_of_week_kir_gate_blocks_telegram_seed_without_kir_metadata(
     tmp_path,
 ) -> None:

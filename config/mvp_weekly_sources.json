@@ -203,6 +203,30 @@
       ],
       "per_query_limit": 5,
       "timeout_seconds": 20
+    },
+    {
+      "source_name": "crawl4ai_competitor_workaround_disabled",
+      "source_type": "crawl4ai",
+      "validation_adapter": "competitor_workaround_crawler",
+      "cache_only": false,
+      "dry_run": false,
+      "trust_level": "medium",
+      "freshness_window_days": 30,
+      "enabled": false,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "approval_required": false,
+      "credential_env_vars": [],
+      "rate_limit_policy": {
+        "requests_per_minute": 2,
+        "burst_limit": 1
+      },
+      "allowed_domains": [],
+      "urls": [],
+      "queries": [],
+      "max_pages_per_run": 5,
+      "max_pages_per_domain": 2,
+      "timeout_seconds": 20
     }
   ]
 }

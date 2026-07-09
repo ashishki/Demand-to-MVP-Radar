@@ -128,3 +128,28 @@ def test_validation_adapter_status_maps_reddit_modes_credentials_and_rate_limits
     assert credential_limited["reddit_forum_complaints"]["status"] == "credential_limited"
     assert cache_only["reddit_forum_complaints"]["status"] == "cache_only"
     assert rate_limited["reddit_forum_complaints"]["status"] == "rate_limited"
+
+
+def test_validation_adapter_status_maps_crawler_modes_and_skipped_sources() -> None:
+    cache_only = validation_adapter_status(
+        {
+            "configured_sources": {
+                "crawl4ai_competitor_cache": 3,
+                "source_modes": {"crawl4ai_competitor_cache": "cache_only"},
+                "source_types": {"crawl4ai_competitor_cache": "crawl4ai"},
+            }
+        }
+    )
+    skipped = validation_adapter_status(
+        {
+            "configured_sources": {
+                "crawl4ai_competitor_disabled": 0,
+                "skipped_sources": ("crawl4ai_competitor_disabled",),
+                "source_modes": {"crawl4ai_competitor_disabled": "live"},
+                "source_types": {"crawl4ai_competitor_disabled": "crawl4ai"},
+            }
+        }
+    )
+
+    assert cache_only["competitor_workaround_crawler"]["status"] == "cache_only"
+    assert skipped["competitor_workaround_crawler"]["status"] == "adapter_disabled"

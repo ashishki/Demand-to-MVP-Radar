@@ -88,6 +88,7 @@ GENERIC_CANDIDATE_TITLES = {
     "creator content discovery gap report",
 }
 EXTERNAL_DEMAND_SOURCE_TYPES = {
+    "crawl4ai",
     "serp",
     "github_public",
     "stack_exchange",
@@ -2106,6 +2107,9 @@ def _matched_external_evidence_lines(selected: CandidateAggregate | None) -> lis
         subreddit = match.get("subreddit")
         if isinstance(subreddit, str) and subreddit.strip():
             source_label = f"{source_label}/r/{subreddit.strip()}"
+        page_kind = match.get("page_kind")
+        if isinstance(page_kind, str) and page_kind.strip():
+            source_label = f"{source_label}/{page_kind.strip()}"
         lines.append(
             "- "
             f"{match.get('evidence_kind')}: {source_label} | "

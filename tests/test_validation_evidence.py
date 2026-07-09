@@ -124,6 +124,85 @@ def test_reddit_adjacent_pain_remains_context_only() -> None:
     )
 
 
+def test_crawler_competitor_requires_target_icp_for_gate_support() -> None:
+    captured_at = datetime(2026, 7, 9, 10, tzinfo=UTC)
+    without_icp = _record(
+        source_type="crawl4ai",
+        source_id="crawl4ai:competitor-without-icp",
+        title="CleanSheet CSV Cleanup",
+        text="CSV cleanup automation for client exports with pricing and alternatives.",
+        source_url="https://cleansheet.example/csv-cleanup",
+        captured_at=captured_at,
+        provider_metadata={
+            "evidence_kind": "competitor_traction",
+            "page_kind": "competitor",
+            "target_candidate": "CSV cleanup automation for client exports",
+        },
+    )
+    with_icp = _record(
+        source_type="crawl4ai",
+        source_id="crawl4ai:competitor-with-icp",
+        title="CleanSheet CSV Cleanup",
+        text="CSV cleanup automation for client exports with pricing and alternatives.",
+        source_url="https://cleansheet.example/csv-cleanup",
+        captured_at=captured_at,
+        provider_metadata={
+            "evidence_kind": "competitor_traction",
+            "page_kind": "competitor",
+            "target_candidate": "CSV cleanup automation for client exports",
+            "target_icp": "small SaaS operators",
+        },
+    )
+
+    weak_match = match_external_evidence(
+        candidate_title="CSV cleanup automation for client exports",
+        records=(without_icp,),
+    )
+    decision_grade_match = match_external_evidence(
+        candidate_title="CSV cleanup automation for client exports",
+        records=(with_icp,),
+    )
+
+    assert weak_match[0]["decision_grade"] is False
+    assert weak_match[0]["supports_gate"] is False
+    assert weak_match[0]["target_icp"] is None
+    assert decision_grade_match[0]["decision_grade"] is True
+    assert decision_grade_match[0]["supports_gate"] is True
+    assert decision_grade_match[0]["target_icp"] == "small SaaS operators"
+
+
+def test_crawler_adjacent_pain_remains_context_only() -> None:
+    captured_at = datetime(2026, 7, 9, 10, tzinfo=UTC)
+    crawler_record = _record(
+        source_type="crawl4ai",
+        source_id="crawl4ai:csv-competitor",
+        title="CleanSheet CSV Cleanup",
+        text="CSV cleanup automation for client exports with pricing and alternatives.",
+        source_url="https://cleansheet.example/csv-cleanup",
+        captured_at=captured_at,
+        provider_metadata={
+            "evidence_kind": "competitor_traction",
+            "page_kind": "competitor",
+            "target_candidate": "CSV cleanup automation for client exports",
+            "target_icp": "small SaaS operators",
+        },
+    )
+
+    matches = match_external_evidence(
+        candidate_title="Hotkey Dictation Workflow Probe",
+        records=(crawler_record,),
+    )
+    context = external_research_context(
+        candidate_title="Hotkey Dictation Workflow Probe",
+        records=(crawler_record,),
+        matched_fingerprints=matched_external_fingerprints(matches),
+    )
+
+    assert matches == []
+    assert context["record_count"] == 1
+    assert context["records"][0]["source_gate_satisfied"] is False
+
+
 def _record(
     *,
     source_type: str,
@@ -132,6 +211,7 @@ def _record(
     text: str,
     source_url: str,
     captured_at: datetime,
+    provider_metadata: dict[str, str] | None = None,
 ) -> EvidenceRecord:
     return EvidenceRecord(
         run_id="test",
@@ -144,4 +224,5 @@ def _record(
         normalized_text=text,
         content_hash=f"hash:{source_id}",
         source_fingerprint=f"{source_type}:{source_id}",
+        provider_metadata=provider_metadata or {},
     )

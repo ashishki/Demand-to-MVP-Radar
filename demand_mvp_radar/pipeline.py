@@ -32,6 +32,7 @@ from demand_mvp_radar.retrieval.ingestion import build_corpus
 from demand_mvp_radar.retrieval.query import EvidencePacket
 from demand_mvp_radar.scoring import score_opportunity
 from demand_mvp_radar.sources.base import SourceImportResult
+from demand_mvp_radar.sources.crawl4ai import Crawl4AIConnector
 from demand_mvp_radar.sources.discord import DiscordConnector
 from demand_mvp_radar.sources.github_public import GitHubPublicSearchConnector
 from demand_mvp_radar.sources.github_repo import GitHubRepoSnapshotImporter
@@ -635,6 +636,28 @@ def _collect_configured_live_source(
             client_secret=os.environ.get("REDDIT_CLIENT_SECRET", "").strip() or None,
             user_agent=os.environ.get("REDDIT_USER_AGENT", "").strip() or None,
             per_query_limit=int(source_config.get("per_query_limit", 10)),
+            timeout_seconds=int(source_config.get("timeout_seconds", 20)),
+        ).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "crawl4ai":
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
+        if bool(source_config.get("cache_only", False)) and fixture_path is None:
+            raise ValueError("cache_only crawler source requires fixture_path")
+        return Crawl4AIConnector(
+            fixture_path,
+            urls=tuple(str(url) for url in source_config.get("urls", ())),
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+            allowed_domains=tuple(
+                str(domain) for domain in source_config.get("allowed_domains", ())
+            ),
+            max_pages_per_run=int(source_config.get("max_pages_per_run", 5)),
+            max_pages_per_domain=int(source_config.get("max_pages_per_domain", 2)),
             timeout_seconds=int(source_config.get("timeout_seconds", 20)),
         ).collect(
             live_config,

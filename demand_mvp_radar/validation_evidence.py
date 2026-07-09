@@ -21,6 +21,7 @@ EVIDENCE_KINDS = {
 }
 
 DEFAULT_EXTERNAL_SOURCE_TYPES = {
+    "crawl4ai",
     "serp",
     "github_public",
     "stack_exchange",
@@ -59,8 +60,9 @@ def match_external_evidence(
             continue
         evidence_kind = _evidence_kind(record)
         negative_signal = evidence_kind == "negative_signal"
-        decision_grade = bool(record.source_url) and not negative_signal
+        decision_grade = _decision_grade(record, evidence_kind=evidence_kind)
         supports_gate = decision_grade
+        metadata = record.provider_metadata
         matches.append(
             {
                 "schema_version": SCHEMA_VERSION,
@@ -77,6 +79,10 @@ def match_external_evidence(
                 "subreddit": record.subreddit,
                 "comment_id": record.comment_id,
                 "author_hash": record.author_hash,
+                "page_kind": _metadata_text(metadata, "page_kind"),
+                "positioning": _metadata_text(metadata, "positioning"),
+                "pricing_hint": _metadata_text(metadata, "pricing_hint"),
+                "target_icp": _metadata_text(metadata, "target_icp"),
                 "matched_candidate_title": candidate_title,
                 "match_basis": match_basis,
                 "decision_grade": decision_grade,
@@ -110,6 +116,18 @@ def matched_external_source_types(matches: Iterable[dict[str, object]]) -> tuple
 
 def decision_grade_match_count(matches: Iterable[dict[str, object]]) -> int:
     return sum(1 for match in matches if bool(match.get("supports_gate")))
+
+
+def _decision_grade(record: EvidenceRecord, *, evidence_kind: str) -> bool:
+    if not record.source_url or evidence_kind == "negative_signal":
+        return False
+    page_kind = (_metadata_text(record.provider_metadata, "page_kind") or "").lower()
+    if record.source_type in {"crawl4ai", "crawler", "landing_page"} and page_kind in {
+        "competitor",
+        "integration",
+    }:
+        return bool(_metadata_text(record.provider_metadata, "target_icp"))
+    return True
 
 
 def external_research_context(

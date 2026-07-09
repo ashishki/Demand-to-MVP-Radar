@@ -142,6 +142,19 @@ def validation_adapter_status(
         ok_reason="Reddit/forum validation source ran.",
         disabled_status=statuses["reddit_forum_complaints"],
     )
+    statuses["competitor_workaround_crawler"] = _source_family_status(
+        source_counts,
+        source_type_names={"crawl4ai", "crawler", "landing_page"},
+        source_name_tokens={"crawl", "crawler", "workaround"},
+        display_name="Competitor/workaround crawler",
+        credential_reason=(
+            "Competitor/workaround crawler is configured but credentials are missing."
+        ),
+        cache_reason="Competitor/workaround crawler ran without live external calls.",
+        error_reason="Competitor/workaround crawler returned an error.",
+        ok_reason="Competitor/workaround crawler ran.",
+        disabled_status=statuses["competitor_workaround_crawler"],
+    )
     return statuses
 
 
@@ -176,7 +189,8 @@ def _source_family_status(
     adapter_sources = [
         source_name
         for source_name in adapter_sources
-        if source_name not in {"source_health", "source_modes", "source_types", "skipped_sources"}
+        if source_name not in _service_source_keys()
+        and source_name not in _string_set(configured_sources.get("skipped_sources"))
     ]
     if not adapter_sources:
         return disabled_status
@@ -250,6 +264,18 @@ def _dict_value(value: object) -> dict[str, object]:
     if not isinstance(value, dict):
         return {}
     return {str(key): item for key, item in value.items()}
+
+
+def _string_set(value: object) -> set[str]:
+    if isinstance(value, str):
+        return {value} if value else set()
+    if isinstance(value, (list, tuple, set)):
+        return {str(item) for item in value if str(item)}
+    return set()
+
+
+def _service_source_keys() -> set[str]:
+    return {"source_health", "source_modes", "source_types", "skipped_sources"}
 
 
 def _queries_by_intent(
