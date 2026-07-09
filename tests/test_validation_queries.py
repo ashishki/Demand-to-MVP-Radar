@@ -50,3 +50,81 @@ def test_validation_adapter_status_is_failure_tolerant_before_live_adapters() ->
     assert statuses["reddit_forum_complaints"]["status"] == "adapter_disabled"
     assert statuses["competitor_workaround_crawler"]["status"] == "adapter_disabled"
     assert statuses["x_discussions"]["status"] == "adapter_disabled"
+
+
+def test_validation_adapter_status_maps_serp_modes_and_credentials() -> None:
+    credential_limited = validation_adapter_status(
+        {
+            "configured_sources": {
+                "serp_search": 0,
+                "source_modes": {"serp_search": "live"},
+                "source_types": {"serp_search": "serp"},
+            },
+            "source_errors": {
+                "serp_search": (
+                    "serp_search: missing required credential environment variable; "
+                    "status=missing; env_vars=SERPAPI_API_KEY"
+                )
+            },
+        }
+    )
+    cache_only = validation_adapter_status(
+        {
+            "configured_sources": {
+                "serp_search": 1,
+                "source_modes": {"serp_search": "cache_only"},
+                "source_types": {"serp_search": "serp"},
+            }
+        }
+    )
+
+    assert credential_limited["search_demand"]["status"] == "credential_limited"
+    assert cache_only["search_demand"]["status"] == "cache_only"
+
+
+def test_validation_adapter_status_maps_reddit_modes_credentials_and_rate_limits() -> None:
+    credential_limited = validation_adapter_status(
+        {
+            "configured_sources": {
+                "reddit_demand_live": 0,
+                "source_modes": {"reddit_demand_live": "live"},
+                "source_types": {"reddit_demand_live": "reddit"},
+            },
+            "source_errors": {
+                "reddit_demand_live": (
+                    "reddit_demand_live: missing required credential environment variable; "
+                    "status=missing; env_vars=REDDIT_CLIENT_ID,REDDIT_CLIENT_SECRET"
+                )
+            },
+        }
+    )
+    cache_only = validation_adapter_status(
+        {
+            "configured_sources": {
+                "reddit_demand_cache": 2,
+                "source_modes": {"reddit_demand_cache": "cache_only"},
+                "source_types": {"reddit_demand_cache": "reddit"},
+            }
+        }
+    )
+    rate_limited = validation_adapter_status(
+        {
+            "configured_sources": {
+                "reddit_demand_live": 0,
+                "source_modes": {"reddit_demand_live": "live"},
+                "source_types": {"reddit_demand_live": "reddit"},
+                "source_health": {
+                    "reddit_demand_live": {
+                        "rate_limit_state": {
+                            "limited": True,
+                            "retry_after_seconds": 60,
+                        }
+                    }
+                },
+            }
+        }
+    )
+
+    assert credential_limited["reddit_forum_complaints"]["status"] == "credential_limited"
+    assert cache_only["reddit_forum_complaints"]["status"] == "cache_only"
+    assert rate_limited["reddit_forum_complaints"]["status"] == "rate_limited"

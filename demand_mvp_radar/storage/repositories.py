@@ -21,6 +21,7 @@ class EvidenceRepository:
     def write_with_status(self, evidence: EvidenceRecord) -> tuple[int, bool]:
         params = {
             "run_id": evidence.run_id,
+            "source_name": evidence.source_name,
             "source_type": evidence.source_type,
             "source_id": evidence.source_id,
             "source_url": evidence.source_url,
@@ -30,12 +31,26 @@ class EvidenceRepository:
             "normalized_text": evidence.normalized_text,
             "content_hash": evidence.content_hash,
             "source_fingerprint": evidence.source_fingerprint,
+            "connector_version": evidence.connector_version,
+            "search_query": evidence.search_query,
+            "result_rank": evidence.result_rank,
+            "provider": evidence.provider,
+            "provider_metadata": json.dumps(evidence.provider_metadata, sort_keys=True),
+            "source_created_at": evidence.created_at.isoformat()
+            if evidence.created_at is not None
+            else None,
+            "author_hash": evidence.author_hash,
+            "subreddit": evidence.subreddit,
+            "comment_id": evidence.comment_id,
+            "score": evidence.score,
+            "comment_count": evidence.comment_count,
         }
         with span("sqlite.write_evidence"):
             cursor = self.connection.execute(
                 """
                 INSERT INTO evidence (
                     run_id,
+                    source_name,
                     source_type,
                     source_id,
                     source_url,
@@ -44,10 +59,22 @@ class EvidenceRepository:
                     snippet,
                     normalized_text,
                     content_hash,
-                    source_fingerprint
+                    source_fingerprint,
+                    connector_version,
+                    search_query,
+                    result_rank,
+                    provider,
+                    provider_metadata,
+                    source_created_at,
+                    author_hash,
+                    subreddit,
+                    comment_id,
+                    score,
+                    comment_count
                 )
                 VALUES (
                     :run_id,
+                    :source_name,
                     :source_type,
                     :source_id,
                     :source_url,
@@ -56,7 +83,18 @@ class EvidenceRepository:
                     :snippet,
                     :normalized_text,
                     :content_hash,
-                    :source_fingerprint
+                    :source_fingerprint,
+                    :connector_version,
+                    :search_query,
+                    :result_rank,
+                    :provider,
+                    :provider_metadata,
+                    :source_created_at,
+                    :author_hash,
+                    :subreddit,
+                    :comment_id,
+                    :score,
+                    :comment_count
                 )
                 ON CONFLICT(source_fingerprint) DO NOTHING
                 """,

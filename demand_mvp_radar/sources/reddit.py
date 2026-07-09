@@ -231,6 +231,11 @@ def _post_record(
         content_hash=content_hash,
         source_fingerprint=f"{config.source_type}:post:{post_id}:{content_hash}",
         connector_version=connector_version,
+        search_query=_optional_text(row.get("query")),
+        provider_metadata={
+            "mvp_shape": title,
+            "forum": f"r/{subreddit}",
+        },
         subreddit=subreddit,
         score=score,
         comment_count=comment_count,
@@ -260,6 +265,7 @@ def _comment_record(
     captured_at = datetime.fromisoformat(_required_text(row, "captured_at"))
     created_at = datetime.fromisoformat(_required_text(row, "created_at"))
     content_hash = _content_hash(config.source_type, subreddit, post_id, comment_id, body)
+    post_title = _required_text(post, "title")
     return EvidenceRecord(
         run_id=run_id,
         source_name=config.source_name,
@@ -267,12 +273,17 @@ def _comment_record(
         source_id=f"comment:{post_id}:{comment_id}",
         source_url=source_url,
         captured_at=captured_at,
-        title=f"Comment on {_required_text(post, 'title')}",
+        title=f"Comment on {post_title}",
         snippet=body[:160],
         normalized_text=f"Reddit comment in r/{subreddit}\n\n{body}",
         content_hash=content_hash,
         source_fingerprint=f"{config.source_type}:comment:{post_id}:{comment_id}:{content_hash}",
         connector_version=connector_version,
+        search_query=_optional_text(post.get("query")),
+        provider_metadata={
+            "mvp_shape": post_title,
+            "forum": f"r/{subreddit}",
+        },
         subreddit=subreddit,
         score=_int(row, "score"),
         comment_id=comment_id,
@@ -320,6 +331,12 @@ def _required_text(row: object, field: str) -> str:
     value = row[field]
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} is required")
+    return value.strip()
+
+
+def _optional_text(value: object) -> str | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
     return value.strip()
 
 

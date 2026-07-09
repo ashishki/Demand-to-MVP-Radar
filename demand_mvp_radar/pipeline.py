@@ -265,15 +265,23 @@ def collect_sources(
     error_counts: dict[str, int] = {}
     source_errors: dict[str, str] = {}
     source_health: dict[str, dict[str, object]] = {}
+    source_modes: dict[str, str] = {}
+    source_types: dict[str, str] = {}
     skipped_sources: list[str] = []
     duplicate_count = 0
 
     for raw_source in payload.get("sources", []):
         source_config = dict(raw_source)
         live_config = _live_config_from_payload(source_config)
+        source_mode = _source_collection_mode(source_config)
+        source_modes[live_config.source_name] = source_mode
+        source_types[live_config.source_name] = live_config.source_type
         if not live_config.enabled:
             skipped_sources.append(live_config.source_name)
             continue
+
+        if source_mode in {"cache_only", "dry_run"}:
+            live_config = live_config.model_copy(update={"credential_requirements": ()})
 
         credential_state = resolve_live_source_credentials((live_config,))[0]
         if credential_state.source_error is not None:
@@ -289,12 +297,26 @@ def collect_sources(
             continue
 
         try:
-            result_records = _collect_configured_live_source(
-                live_config,
-                source_config,
-                run_id=effective_run_id,
-                config_dir=config_dir,
-            )
+            if source_mode == "dry_run":
+                result_records = LiveConnectorResult(
+                    evidence=(),
+                    quarantined=(),
+                    source_counts={live_config.source_name: 0},
+                    error_counts={live_config.source_name: 0},
+                    cursor_state={
+                        str(key): str(value)
+                        for key, value in dict(source_config.get("cursor_state", {})).items()
+                    },
+                    rate_limit_state=RateLimitState(limited=False),
+                    last_success_at=datetime.now(UTC),
+                )
+            else:
+                result_records = _collect_configured_live_source(
+                    live_config,
+                    source_config,
+                    run_id=effective_run_id,
+                    config_dir=config_dir,
+                )
         except (KeyError, OSError, TimeoutError, TypeError, ValueError) as error:
             source_counts[live_config.source_name] = 0
             error_counts[live_config.source_name] = 1
@@ -325,6 +347,9 @@ def collect_sources(
                 duplicate_count += 1
 
     source_counts["skipped_sources"] = tuple(skipped_sources)
+    source_counts["source_modes"] = source_modes
+    source_counts["source_types"] = source_types
+    source_counts["source_health"] = source_health
     if evidence_rows:
         corpus_metadata = build_corpus(connection, evidence_rows, corpus_version=corpus_version)
         retrieval_chunk_count = int(corpus_metadata["chunk_count"])
@@ -415,6 +440,14 @@ def _live_config_from_payload(source_config: dict[str, object]) -> LiveSourceCon
             for env_var_name in credential_env_vars
         ),
     )
+
+
+def _source_collection_mode(source_config: dict[str, object]) -> str:
+    if bool(source_config.get("dry_run", False)):
+        return "dry_run"
+    if bool(source_config.get("cache_only", False)):
+        return "cache_only"
+    return "live"
 
 
 def _source_health_from_result(
@@ -535,6 +568,8 @@ def _collect_configured_live_source(
         )
     if live_config.source_type == "serp":
         fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
+        if bool(source_config.get("cache_only", False)) and fixture_path is None:
+            raise ValueError("cache_only SERP source requires fixture_path")
         return SERPSearchConnector(
             fixture_path,
             queries=tuple(str(query) for query in source_config.get("queries", ())),

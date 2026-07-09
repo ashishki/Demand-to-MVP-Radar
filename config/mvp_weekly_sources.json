@@ -76,6 +76,9 @@
     {
       "source_name": "serp_search_intent_live",
       "source_type": "serp",
+      "validation_adapter": "search_demand",
+      "cache_only": false,
+      "dry_run": false,
       "trust_level": "medium",
       "freshness_window_days": 14,
       "enabled": true,
@@ -161,6 +164,9 @@
     {
       "source_name": "reddit_demand_live",
       "source_type": "reddit",
+      "validation_adapter": "reddit_forum_complaints",
+      "cache_only": false,
+      "dry_run": false,
       "trust_level": "medium",
       "freshness_window_days": 14,
       "enabled": true,

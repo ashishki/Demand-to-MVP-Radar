@@ -30,11 +30,11 @@ INTENT_EVIDENCE_KIND: dict[str, str] = {
 ADAPTER_STATUS_TEMPLATE: dict[str, dict[str, str]] = {
     "search_demand": {
         "status": "adapter_disabled",
-        "reason": "RVE-3 search/SERP demand adapter is not implemented yet.",
+        "reason": "No search/SERP validation source ran for this report.",
     },
     "reddit_forum_complaints": {
         "status": "adapter_disabled",
-        "reason": "RVE-4 Reddit/forum complaint adapter is not implemented yet.",
+        "reason": "No Reddit/forum complaint validation source ran for this report.",
     },
     "competitor_workaround_crawler": {
         "status": "adapter_disabled",
@@ -107,10 +107,149 @@ def build_validation_query_pack(
     }
 
 
-def validation_adapter_status() -> dict[str, dict[str, str]]:
-    """Return current validation adapter status without probing external APIs."""
+def validation_adapter_status(
+    source_counts: dict[str, object] | None = None,
+) -> dict[str, dict[str, str]]:
+    """Return validation adapter status without probing external APIs."""
 
-    return {key: dict(value) for key, value in ADAPTER_STATUS_TEMPLATE.items()}
+    statuses = {key: dict(value) for key, value in ADAPTER_STATUS_TEMPLATE.items()}
+    if not source_counts:
+        return statuses
+
+    statuses["search_demand"] = _source_family_status(
+        source_counts,
+        source_type_names={"serp", "yandex_search", "yandex_wordstat"},
+        source_name_tokens={"serp", "search", "wordstat"},
+        display_name="Search/SERP",
+        credential_reason=(
+            "Search/SERP validation source is configured but credentials are missing."
+        ),
+        cache_reason="Search/SERP validation ran without live external calls.",
+        error_reason="Search/SERP validation source returned an error.",
+        ok_reason="Search/SERP validation source ran.",
+        disabled_status=statuses["search_demand"],
+    )
+    statuses["reddit_forum_complaints"] = _source_family_status(
+        source_counts,
+        source_type_names={"reddit", "forum"},
+        source_name_tokens={"reddit", "forum"},
+        display_name="Reddit/forum",
+        credential_reason=(
+            "Reddit/forum validation source is configured but credentials are missing."
+        ),
+        cache_reason="Reddit/forum validation ran without live external calls.",
+        error_reason="Reddit/forum validation source returned an error.",
+        ok_reason="Reddit/forum validation source ran.",
+        disabled_status=statuses["reddit_forum_complaints"],
+    )
+    return statuses
+
+
+def _source_family_status(
+    source_counts: dict[str, object],
+    *,
+    source_type_names: set[str],
+    source_name_tokens: set[str],
+    display_name: str,
+    credential_reason: str,
+    cache_reason: str,
+    error_reason: str,
+    ok_reason: str,
+    disabled_status: dict[str, str],
+) -> dict[str, str]:
+    configured_sources = _dict_value(source_counts.get("configured_sources"))
+    source_errors = _dict_value(source_counts.get("source_errors"))
+    source_modes = _dict_value(configured_sources.get("source_modes"))
+    source_types = _dict_value(configured_sources.get("source_types"))
+    source_health = _dict_value(configured_sources.get("source_health"))
+    adapter_sources = [
+        source_name
+        for source_name, source_type in source_types.items()
+        if str(source_type) in source_type_names
+    ]
+    if not adapter_sources:
+        adapter_sources = [
+            source_name
+            for source_name in configured_sources
+            if any(token in str(source_name).lower() for token in source_name_tokens)
+        ]
+    adapter_sources = [
+        source_name
+        for source_name in adapter_sources
+        if source_name not in {"source_health", "source_modes", "source_types", "skipped_sources"}
+    ]
+    if not adapter_sources:
+        return disabled_status
+
+    adapter_errors = {
+        source_name: str(source_errors.get(source_name) or "")
+        for source_name in adapter_sources
+        if source_errors.get(source_name)
+    }
+    if any(
+        "status=missing" in value or "missing required credential" in value
+        for value in adapter_errors.values()
+    ):
+        return {
+            "status": "credential_limited",
+            "sources": ",".join(sorted(adapter_sources)),
+            "reason": credential_reason,
+        }
+    if _rate_limited(adapter_sources, source_health, adapter_errors):
+        return {
+            "status": "rate_limited",
+            "sources": ",".join(sorted(adapter_sources)),
+            "reason": f"{display_name} validation source hit a rate limit.",
+        }
+    if adapter_errors:
+        return {
+            "status": "error",
+            "sources": ",".join(sorted(adapter_errors)),
+            "reason": error_reason,
+        }
+
+    modes = {str(source_modes.get(source_name) or "live") for source_name in adapter_sources}
+    if modes & {"cache_only", "dry_run"}:
+        return {
+            "status": "cache_only",
+            "sources": ",".join(sorted(adapter_sources)),
+            "mode": ",".join(sorted(modes)),
+            "reason": cache_reason,
+        }
+
+    return {
+        "status": "ok",
+        "sources": ",".join(sorted(adapter_sources)),
+        "reason": ok_reason,
+    }
+
+
+def _rate_limited(
+    source_names: list[str],
+    source_health: dict[str, object],
+    source_errors: dict[str, str],
+) -> bool:
+    if any(_looks_rate_limited(value) for value in source_errors.values()):
+        return True
+    for source_name in source_names:
+        health = source_health.get(source_name)
+        if not isinstance(health, dict):
+            continue
+        rate_limit_state = health.get("rate_limit_state")
+        if isinstance(rate_limit_state, dict) and bool(rate_limit_state.get("limited")):
+            return True
+    return False
+
+
+def _looks_rate_limited(value: str) -> bool:
+    normalized = value.lower().replace("_", " ")
+    return "rate limit" in normalized or "429" in normalized
+
+
+def _dict_value(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
 
 
 def _queries_by_intent(

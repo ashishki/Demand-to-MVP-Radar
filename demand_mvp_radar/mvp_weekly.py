@@ -629,6 +629,7 @@ def _stored_records_for_run(connection, run_id: str) -> tuple[EvidenceRecord, ..
         """
         SELECT
             run_id,
+            source_name,
             source_type,
             source_id,
             source_url,
@@ -637,7 +638,18 @@ def _stored_records_for_run(connection, run_id: str) -> tuple[EvidenceRecord, ..
             snippet,
             normalized_text,
             content_hash,
-            source_fingerprint
+            source_fingerprint,
+            connector_version,
+            search_query,
+            result_rank,
+            provider,
+            provider_metadata,
+            source_created_at,
+            author_hash,
+            subreddit,
+            comment_id,
+            score,
+            comment_count
         FROM evidence
         WHERE run_id = :run_id
         ORDER BY id ASC
@@ -649,6 +661,7 @@ def _stored_records_for_run(connection, run_id: str) -> tuple[EvidenceRecord, ..
         records.append(
             EvidenceRecord(
                 run_id=str(row["run_id"]),
+                source_name=row["source_name"],
                 source_type=str(row["source_type"]),
                 source_id=str(row["source_id"]),
                 source_url=row["source_url"],
@@ -658,9 +671,41 @@ def _stored_records_for_run(connection, run_id: str) -> tuple[EvidenceRecord, ..
                 normalized_text=str(row["normalized_text"]),
                 content_hash=str(row["content_hash"]),
                 source_fingerprint=str(row["source_fingerprint"]),
+                connector_version=row["connector_version"],
+                search_query=row["search_query"],
+                result_rank=row["result_rank"],
+                provider=row["provider"],
+                provider_metadata=_provider_metadata_from_row(row["provider_metadata"]),
+                created_at=_optional_datetime(row["source_created_at"]),
+                author_hash=row["author_hash"],
+                subreddit=row["subreddit"],
+                comment_id=row["comment_id"],
+                score=row["score"],
+                comment_count=row["comment_count"],
             )
         )
     return tuple(records)
+
+
+def _optional_datetime(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _provider_metadata_from_row(value: object) -> dict[str, str]:
+    if not isinstance(value, str) or not value.strip():
+        return {}
+    try:
+        decoded = json.loads(value)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(decoded, dict):
+        return {}
+    return {str(key): str(item) for key, item in decoded.items()}
 
 
 def _source_counts(
@@ -2056,9 +2101,15 @@ def _matched_external_evidence_lines(selected: CandidateAggregate | None) -> lis
         decision_grade = "yes" if bool(match.get("decision_grade")) else "no"
         supports_gate = "yes" if bool(match.get("supports_gate")) else "no"
         url = match.get("source_url") or "no url"
+        query = match.get("query") or "no query"
+        source_label = str(match.get("source_type") or "unknown")
+        subreddit = match.get("subreddit")
+        if isinstance(subreddit, str) and subreddit.strip():
+            source_label = f"{source_label}/r/{subreddit.strip()}"
         lines.append(
             "- "
-            f"{match.get('evidence_kind')}: {match.get('source_type')} | "
+            f"{match.get('evidence_kind')}: {source_label} | "
+            f"query={query} | "
             f"decision_grade={decision_grade} | supports_gate={supports_gate} | "
             f"basis={match.get('match_basis')} | {url}"
         )
@@ -2691,7 +2742,7 @@ def _write_json(
         "validation_queries": validation_pack,
         "matched_external_evidence": matched_evidence,
         "missing_evidence_by_category": missing_evidence_by_category,
-        "validation_adapter_status": validation_adapter_status(),
+        "validation_adapter_status": validation_adapter_status(source_counts),
         "decision_context": {
             "market_context": source_counts.get("market_context"),
             "external_research_context": external_context,

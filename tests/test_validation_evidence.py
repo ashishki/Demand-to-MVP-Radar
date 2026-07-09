@@ -92,6 +92,38 @@ def test_external_evidence_matcher_handles_cyrillic_candidate_titles() -> None:
     assert matches[0]["supports_gate"] is True
 
 
+def test_reddit_adjacent_pain_remains_context_only() -> None:
+    captured_at = datetime(2026, 7, 9, 10, tzinfo=UTC)
+    reddit_record = _record(
+        source_type="reddit",
+        source_id="reddit:csv-cleanup",
+        title="CSV cleanup automation for client exports",
+        text=(
+            "SaaS operators complain about weekly CSV cleanup and brittle spreadsheet "
+            "macros after client exports."
+        ),
+        source_url="https://www.reddit.com/r/SaaS/comments/reddit-post-001/csv_cleanup/",
+        captured_at=captured_at,
+    )
+
+    matches = match_external_evidence(
+        candidate_title="Hotkey Dictation Workflow Probe",
+        records=(reddit_record,),
+    )
+    context = external_research_context(
+        candidate_title="Hotkey Dictation Workflow Probe",
+        records=(reddit_record,),
+        matched_fingerprints=matched_external_fingerprints(matches),
+    )
+
+    assert matches == []
+    assert context["record_count"] == 1
+    assert context["records"][0]["source_gate_satisfied"] is False
+    assert context["records"][0]["reason"] == (
+        "external result was not matched to the selected candidate"
+    )
+
+
 def _record(
     *,
     source_type: str,

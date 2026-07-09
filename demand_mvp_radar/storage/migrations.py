@@ -27,6 +27,7 @@ SCHEMA_STATEMENTS = [
     CREATE TABLE IF NOT EXISTS evidence (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         run_id TEXT NOT NULL,
+        source_name TEXT,
         source_type TEXT NOT NULL,
         source_id TEXT NOT NULL,
         source_url TEXT,
@@ -36,6 +37,17 @@ SCHEMA_STATEMENTS = [
         normalized_text TEXT NOT NULL,
         content_hash TEXT NOT NULL,
         source_fingerprint TEXT NOT NULL UNIQUE,
+        connector_version TEXT,
+        search_query TEXT,
+        result_rank INTEGER,
+        provider TEXT,
+        provider_metadata TEXT NOT NULL DEFAULT '{}',
+        source_created_at TEXT,
+        author_hash TEXT,
+        subreddit TEXT,
+        comment_id TEXT,
+        score INTEGER,
+        comment_count INTEGER,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """,
@@ -115,6 +127,7 @@ def create_schema(connection: sqlite3.Connection) -> None:
             connection.execute(statement)
         _ensure_decision_columns(connection)
         _ensure_run_columns(connection)
+        _ensure_evidence_columns(connection)
         connection.commit()
 
 
@@ -134,3 +147,26 @@ def _ensure_run_columns(connection: sqlite3.Connection) -> None:
         connection.execute("ALTER TABLE runs ADD COLUMN source_errors TEXT NOT NULL DEFAULT '{}'")
     if "source_health" not in existing_columns:
         connection.execute("ALTER TABLE runs ADD COLUMN source_health TEXT NOT NULL DEFAULT '{}'")
+
+
+def _ensure_evidence_columns(connection: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"] for row in connection.execute("PRAGMA table_info(evidence)").fetchall()
+    }
+    optional_columns = {
+        "source_name": "TEXT",
+        "connector_version": "TEXT",
+        "search_query": "TEXT",
+        "result_rank": "INTEGER",
+        "provider": "TEXT",
+        "provider_metadata": "TEXT NOT NULL DEFAULT '{}'",
+        "source_created_at": "TEXT",
+        "author_hash": "TEXT",
+        "subreddit": "TEXT",
+        "comment_id": "TEXT",
+        "score": "INTEGER",
+        "comment_count": "INTEGER",
+    }
+    for column_name, column_type in optional_columns.items():
+        if column_name not in existing_columns:
+            connection.execute(f"ALTER TABLE evidence ADD COLUMN {column_name} {column_type}")

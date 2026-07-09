@@ -462,6 +462,284 @@ def test_mvp_of_week_exposes_source_mix_and_missing_reddit_credentials(
     assert "Reddit API: missing_credentials" in report_text
 
 
+def test_mvp_of_week_uses_cache_only_serp_validation_queries(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("SERPAPI_API_KEY", raising=False)
+    mvp_shape = "Hotkey Dictation Workflow Probe"
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1201",
+                    "captured_at": _now_iso(),
+                    "title": f"{mvp_shape} demand",
+                    "text": "Operators ask for hotkey dictation workflow probes.",
+                    "snippet": "Operators ask for hotkey dictation workflow probes.",
+                    "source_url": "https://t.me/its_capitan/1201",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation", "search_intent"],
+                    "mvp_shape": mvp_shape,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    serp_path = tmp_path / "serp-cache.json"
+    serp_path.write_text(
+        json.dumps(
+            {
+                "provider": "serpapi",
+                "captured_at": _now_iso(),
+                "searches": [
+                    {
+                        "query": "hotkey dictation workflow probe",
+                        "captured_at": _now_iso(),
+                        "provider_metadata": {"engine": "google"},
+                        "results": [
+                            {
+                                "rank": 1,
+                                "title": mvp_shape,
+                                "url": "https://example.com/hotkey-dictation-workflow",
+                                "snippet": (
+                                    "Operators search for a hotkey dictation workflow "
+                                    "probe to remove manual note cleanup."
+                                ),
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    source_config = tmp_path / "serp-cache-config.json"
+    source_config.write_text(
+        json.dumps(
+            {
+                "run_id": "mvp-weekly-serp-cache",
+                "sources": [
+                    {
+                        "source_name": "serp_search_intent_cache",
+                        "source_type": "serp",
+                        "trust_level": "medium",
+                        "freshness_window_days": 14,
+                        "enabled": True,
+                        "cursor_support": True,
+                        "raw_snapshot_policy": "metadata_only",
+                        "approval_required": True,
+                        "credential_env_vars": ["SERPAPI_API_KEY"],
+                        "rate_limit_policy": {
+                            "requests_per_minute": 10,
+                            "burst_limit": 1,
+                        },
+                        "fixture_path": str(serp_path.name),
+                        "queries": ["hotkey dictation workflow probe"],
+                        "provider": "serpapi",
+                        "daily_budget_limit": 10,
+                        "per_run_budget_limit": 1,
+                        "cache_only": True,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-serp-cache",
+        source_config=source_config,
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+
+    assert payload["validation_adapter_status"]["search_demand"]["status"] == "cache_only"
+    assert payload["matched_external_evidence"][0]["query"] == ("hotkey dictation workflow probe")
+    assert payload["matched_external_evidence"][0]["evidence_kind"] == "manual_workaround"
+    assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 1
+    assert "query=hotkey dictation workflow probe" in report_text
+    assert "supports_gate=yes" in report_text
+    assert result.recommendation == "revisit_with_evidence_gap"
+
+
+def test_mvp_of_week_uses_cache_only_reddit_complaint_validation(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    for env_var in ("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "REDDIT_USER_AGENT"):
+        monkeypatch.delenv(env_var, raising=False)
+    mvp_shape = "CSV cleanup automation for client exports"
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1301",
+                    "captured_at": _now_iso(),
+                    "title": f"{mvp_shape} demand",
+                    "text": (
+                        "Operators ask for CSV cleanup automation for client exports "
+                        "instead of manual spreadsheet cleanup."
+                    ),
+                    "snippet": "Operators ask for CSV cleanup automation.",
+                    "source_url": "https://t.me/its_capitan/1301",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation", "manual_workaround"],
+                    "mvp_shape": mvp_shape,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    reddit_path = tmp_path / "reddit-cache.json"
+    reddit_path.write_text(
+        json.dumps(
+            {
+                "rate_limit": {
+                    "limited": False,
+                    "remaining": 42,
+                },
+                "posts": [
+                    {
+                        "query": "csv cleanup automation",
+                        "subreddit": "SaaS",
+                        "post_id": "reddit-post-001",
+                        "url": (
+                            "https://www.reddit.com/r/SaaS/comments/"
+                            "reddit-post-001/csv_cleanup_automation/"
+                        ),
+                        "title": mvp_shape,
+                        "body": (
+                            "I keep cleaning client CSV exports by hand every week and "
+                            "need automation for delimiter detection, headers, and broken "
+                            "columns."
+                        ),
+                        "score": 37,
+                        "comment_count": 11,
+                        "created_at": "2026-05-20T10:00:00+00:00",
+                        "captured_at": "2026-05-21T15:00:00+00:00",
+                        "comments": [
+                            {
+                                "comment_id": "reddit-comment-001",
+                                "author_id": "reddit-user-private-001",
+                                "body": (
+                                    "Same CSV cleanup pain here; the workaround is a "
+                                    "brittle spreadsheet macro and manual checks after "
+                                    "every export."
+                                ),
+                                "score": 9,
+                                "created_at": "2026-05-20T12:00:00+00:00",
+                                "captured_at": "2026-05-21T15:05:00+00:00",
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    source_config = tmp_path / "reddit-cache-config.json"
+    source_config.write_text(
+        json.dumps(
+            {
+                "run_id": "mvp-weekly-reddit-cache",
+                "sources": [
+                    {
+                        "source_name": "reddit_demand_cache",
+                        "source_type": "reddit",
+                        "trust_level": "medium",
+                        "freshness_window_days": 14,
+                        "enabled": True,
+                        "cursor_support": True,
+                        "raw_snapshot_policy": "metadata_only",
+                        "approval_required": True,
+                        "credential_env_vars": [
+                            "REDDIT_CLIENT_ID",
+                            "REDDIT_CLIENT_SECRET",
+                            "REDDIT_USER_AGENT",
+                        ],
+                        "rate_limit_policy": {
+                            "requests_per_minute": 4,
+                            "burst_limit": 1,
+                        },
+                        "fixture_path": str(reddit_path.name),
+                        "allowed_subreddits": ["SaaS"],
+                        "queries": ["csv cleanup automation"],
+                        "cache_only": True,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-reddit-cache",
+        source_config=source_config,
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    matches = payload["matched_external_evidence"]
+    connection = sqlite3.connect(tmp_path / "data" / "radar.sqlite3")
+    connection.row_factory = sqlite3.Row
+    persisted_rows = connection.execute(
+        """
+        SELECT
+            source_id,
+            search_query,
+            subreddit,
+            source_created_at,
+            author_hash,
+            comment_id,
+            score,
+            comment_count
+        FROM evidence
+        WHERE run_id = ? AND source_type = 'reddit'
+        ORDER BY id ASC
+        """,
+        ("mvp-weekly-reddit-cache",),
+    ).fetchall()
+
+    assert payload["validation_adapter_status"]["reddit_forum_complaints"]["status"] == (
+        "cache_only"
+    )
+    assert [item["query"] for item in matches] == [
+        "csv cleanup automation",
+        "csv cleanup automation",
+    ]
+    assert {item["evidence_kind"] for item in matches} == {
+        "manual_workaround",
+        "repeated_complaint",
+    }
+    assert {item["subreddit"] for item in matches} == {"SaaS"}
+    assert any(item["comment_id"] == "reddit-comment-001" for item in matches)
+    assert any(item["author_hash"] for item in matches)
+    assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 2
+    assert payload["selected"]["source_mix"]["selected_external_source_types"] == ["reddit"]
+    assert payload["selected"]["source_mix"]["reddit_api_status"] == "used"
+    assert "query=csv cleanup automation" in report_text
+    assert "reddit/r/SaaS" in report_text
+    assert result.recommendation == "revisit_with_evidence_gap"
+    assert len(persisted_rows) == 2
+    assert persisted_rows[0]["search_query"] == "csv cleanup automation"
+    assert persisted_rows[0]["subreddit"] == "SaaS"
+    assert persisted_rows[0]["source_created_at"] == "2026-05-20T10:00:00+00:00"
+    assert persisted_rows[0]["score"] == 37
+    assert persisted_rows[0]["comment_count"] == 11
+    assert persisted_rows[1]["comment_id"] == "reddit-comment-001"
+    assert persisted_rows[1]["author_hash"]
+
+
 def test_mvp_of_week_kir_gate_blocks_telegram_seed_without_kir_metadata(
     tmp_path,
 ) -> None:
@@ -589,6 +867,7 @@ def test_mvp_of_week_allows_kir_backed_telegram_seed_with_external_evidence(
     assert "## Matched External Evidence" in report_text
     assert "developer_issue: github_public" in report_text
     assert "search_demand: serp" in report_text
+    assert "query=llm workflow evidence router" in report_text
     assert f"- {mvp_shape}:" in report_text
     assert len(payload["matched_external_evidence"]) == 2
     assert {item["evidence_kind"] for item in payload["matched_external_evidence"]} == {
