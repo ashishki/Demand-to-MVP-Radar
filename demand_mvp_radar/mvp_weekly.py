@@ -172,6 +172,10 @@ class MvpOfWeekResult(BaseModel):
     recommendation: str | None = None
     score: int | None = None
     selected_source_mix: dict[str, object] | None = None
+    validation_adapter_status: dict[str, object] = Field(default_factory=dict)
+    matched_external_evidence: list[dict[str, object]] = Field(default_factory=list)
+    missing_evidence_by_category: dict[str, object] = Field(default_factory=dict)
+    decision_change_action: dict[str, object] | None = None
     source_counts: dict[str, object] = Field(default_factory=dict)
     source_errors: dict[str, str] = Field(default_factory=dict)
     llm_synthesis_status: str = "not_requested"
@@ -308,6 +312,15 @@ def run_mvp_of_week(
             **source_counts,
             "selected_candidate_source_mix": selected_source_mix,
         }
+    matched_external_evidence = _matched_external_evidence(report_selected)
+    validation_pack = _validation_query_pack(report_selected)
+    missing_evidence_by_category = _missing_evidence_by_category_for_selected(
+        report_selected,
+        matched_evidence=matched_external_evidence,
+        validation_queries=validation_pack,
+    )
+    adapter_status = validation_adapter_status(source_counts)
+    decision_change_action = _decision_change_action(report_selected)
     markdown = (
         _render_report(
             run_id=effective_run_id,
@@ -360,6 +373,10 @@ def run_mvp_of_week(
             else (report_selected.score if report_selected is not None else None)
         ),
         selected_source_mix=selected_source_mix,
+        validation_adapter_status=adapter_status,
+        matched_external_evidence=matched_external_evidence,
+        missing_evidence_by_category=missing_evidence_by_category,
+        decision_change_action=decision_change_action,
         source_counts=source_counts,
         source_errors=source_errors,
         llm_synthesis_status=synthesis_status,
@@ -1145,6 +1162,11 @@ def _canonicalize_synthesis_markdown(
     )
     markdown = _replace_or_append_markdown_section(
         markdown,
+        "What Would Change The Decision",
+        _decision_change_action_lines(selected),
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
         "Market Context Lens",
         _market_context_lines(source_counts),
     )
@@ -1859,6 +1881,10 @@ def _render_report(
                     "",
                     *_matched_external_evidence_lines(None),
                     "",
+                    "## What Would Change The Decision",
+                    "",
+                    *_decision_change_action_lines(None),
+                    "",
                     "## Market Context Lens",
                     "",
                     *_market_context_lines(source_counts),
@@ -1904,6 +1930,10 @@ def _render_report(
         "## Matched External Evidence",
         "",
         *_matched_external_evidence_lines(selected),
+        "",
+        "## What Would Change The Decision",
+        "",
+        *_decision_change_action_lines(selected),
         "",
         "## Market Context Lens",
         "",
@@ -2122,6 +2152,144 @@ def _matched_external_evidence_lines(selected: CandidateAggregate | None) -> lis
             f"basis={match.get('match_basis')} | {url}"
         )
     return lines
+
+
+def _missing_evidence_by_category_for_selected(
+    selected: CandidateAggregate | None,
+    *,
+    matched_evidence: list[dict[str, object]] | None = None,
+    validation_queries: dict[str, object] | None = None,
+) -> dict[str, dict[str, object]]:
+    if selected is None:
+        return {}
+    effective_matches = (
+        matched_evidence if matched_evidence is not None else _matched_external_evidence(selected)
+    )
+    effective_queries = (
+        validation_queries if validation_queries is not None else _validation_query_pack(selected)
+    )
+    return missing_evidence_by_kind(
+        matched_evidence=effective_matches,
+        validation_queries=effective_queries,
+        current_missing=selected.missing_evidence,
+    )
+
+
+def _decision_change_action(selected: CandidateAggregate | None) -> dict[str, object] | None:
+    if selected is None:
+        return {
+            "current_gate": "reject",
+            "next_validation_action": (
+                "Collect usable opportunity seeds, then run the candidate-specific "
+                "validation query pack."
+            ),
+            "required_gate_change": (
+                "select a candidate before build/focused decisions are considered"
+            ),
+            "market_context_role": "context_only_not_proof",
+            "context_only_results_rule": "context-only records do not satisfy source gates",
+        }
+    matched_evidence = _matched_external_evidence(selected)
+    validation_pack = _validation_query_pack(selected)
+    missing = _missing_evidence_by_category_for_selected(
+        selected,
+        matched_evidence=matched_evidence,
+        validation_queries=validation_pack,
+    )
+    next_query = _next_validation_query(validation_pack, missing)
+    matched_types = list(_matched_external_source_types(selected))
+    matched_count = decision_grade_match_count(matched_evidence)
+    missing_category = str(next_query.get("category") or "")
+    query = str(next_query.get("query") or "").strip()
+    intent = str(next_query.get("intent") or "").strip()
+    if query:
+        action = (
+            f"Run `{query}` for {intent or missing_category or 'external validation'} "
+            "and attach only records that explicitly match the candidate and ICP."
+        )
+    else:
+        action = (
+            "Run the candidate-specific validation query pack and attach only records "
+            "that explicitly match the candidate and ICP."
+        )
+    return {
+        "current_gate": _dossier_status(selected),
+        "matched_external_evidence_count": matched_count,
+        "matched_external_source_types": matched_types,
+        "next_query": query or None,
+        "next_intent": intent or None,
+        "missing_category": missing_category or None,
+        "next_validation_action": action,
+        "required_gate_change": (
+            "two independent matched decision-grade external source types, including "
+            "manual-workaround or willingness-to-pay evidence, before build/focused status"
+        ),
+        "market_context_role": "context_only_not_proof",
+        "context_only_results_rule": (
+            "unmatched external research and market lens records remain context only"
+        ),
+    }
+
+
+def _decision_change_action_lines(selected: CandidateAggregate | None) -> list[str]:
+    action = _decision_change_action(selected) or {}
+    lines = [
+        f"- Current gate: {action.get('current_gate') or 'unknown'}",
+        f"- Next validation action: {action.get('next_validation_action')}",
+        f"- Required gate change: {action.get('required_gate_change')}",
+        "- Market context: context only, not proof.",
+        f"- Context-only rule: {action.get('context_only_results_rule')}",
+    ]
+    matched_count = action.get("matched_external_evidence_count")
+    if matched_count is not None:
+        matched_types = _string_list(action.get("matched_external_source_types"))
+        lines.insert(
+            1,
+            (
+                f"- Matched decision-grade external evidence: {matched_count} "
+                f"(types: {', '.join(matched_types) or 'none'})"
+            ),
+        )
+    return lines
+
+
+def _next_validation_query(
+    validation_queries: dict[str, object] | None,
+    missing_by_category: dict[str, dict[str, object]],
+) -> dict[str, object]:
+    for category, entry in missing_by_category.items():
+        if not isinstance(entry, dict):
+            continue
+        query = str(entry.get("next_query") or "").strip()
+        if query:
+            return {
+                "category": category,
+                "intent": str(entry.get("next_intent") or ""),
+                "query": query,
+            }
+    if not isinstance(validation_queries, dict):
+        return {}
+    next_query = validation_queries.get("next_query")
+    if isinstance(next_query, dict):
+        return {
+            "category": None,
+            "intent": str(next_query.get("intent") or ""),
+            "query": str(next_query.get("query") or "").strip(),
+        }
+    queries_by_intent = validation_queries.get("queries_by_intent")
+    if isinstance(queries_by_intent, dict):
+        for intent in ("search_demand", "manual_workarounds", "reddit_forum_complaints"):
+            records = queries_by_intent.get(intent)
+            if not isinstance(records, list) or not records:
+                continue
+            first = records[0]
+            if isinstance(first, dict) and str(first.get("query") or "").strip():
+                return {
+                    "category": None,
+                    "intent": intent,
+                    "query": str(first.get("query") or "").strip(),
+                }
+    return {}
 
 
 def _market_context_prompt_lines(source_counts: dict[str, object]) -> list[str]:
@@ -2751,6 +2919,7 @@ def _write_json(
         "matched_external_evidence": matched_evidence,
         "missing_evidence_by_category": missing_evidence_by_category,
         "validation_adapter_status": validation_adapter_status(source_counts),
+        "decision_change_action": _decision_change_action(selected),
         "decision_context": {
             "market_context": source_counts.get("market_context"),
             "external_research_context": external_context,
@@ -2774,6 +2943,8 @@ def _candidate_json(
         "source_mix": _selected_source_mix(candidate, source_counts),
         "validation_queries": _validation_query_pack(candidate),
         "matched_external_evidence": _matched_external_evidence(candidate),
+        "missing_evidence_by_category": _missing_evidence_by_category_for_selected(candidate),
+        "decision_change_action": _decision_change_action(candidate),
         "evidence_count": len(candidate.evidence),
         "surfaces": sorted(candidate.surfaces),
         "channels": sorted(candidate.channels),

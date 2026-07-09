@@ -28,6 +28,7 @@ def test_candidate_dossier_report_quality_contract(tmp_path) -> None:
         "## Source Mix",
         "## Validation Query Pack",
         "## Matched External Evidence",
+        "## What Would Change The Decision",
         "## Evidence",
         "## Missing Evidence",
         "## Next Experiment",
@@ -40,10 +41,14 @@ def test_candidate_dossier_report_quality_contract(tmp_path) -> None:
     assert "- Selected external evidence: 0 (types: none)" in report_text
     assert "- Gate: external evidence gap remains" in report_text
     assert "- No second independent non-Telegram source supports the same pain." in report_text
+    assert "- Next validation action:" in report_text
+    assert "- Market context: context only, not proof." in report_text
     assert payload["result"]["dossier_status"] == "investigate"
     assert payload["result"]["selected_source_mix"]["readiness"] == "telegram_only"
     assert payload["selected"]["dossier_status"] == "investigate"
     assert payload["selected"]["source_mix"]["readiness"] == "telegram_only"
+    assert payload["decision_change_action"]["current_gate"] == "investigate"
+    assert payload["selected"]["decision_change_action"]["current_gate"] == "investigate"
 
 
 def test_failed_source_gate_removes_contradictory_build_ready_claims(tmp_path) -> None:

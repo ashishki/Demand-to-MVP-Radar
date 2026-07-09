@@ -89,6 +89,8 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert "## Validation Query Pack" in report_text
     assert 'search_demand: "Telegram Channel SEO Site Generator"' in report_text
     assert "## Matched External Evidence" in report_text
+    assert "## What Would Change The Decision" in report_text
+    assert "- Market context: context only, not proof." in report_text
     assert "## Next Experiment" in report_text
     assert "## Kill Criteria" in report_text
     receipt = WeeklyReportProofReceipt.model_validate(
@@ -117,6 +119,9 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert payload["validation_queries"]["schema_version"] == "radar_validation_evidence.v1"
     assert payload["matched_external_evidence"] == []
     assert payload["selected"]["matched_external_evidence"] == []
+    assert payload["decision_change_action"]["matched_external_evidence_count"] == 0
+    assert payload["decision_change_action"]["next_query"]
+    assert output["decision_change_action"]["next_query"]
     assert payload["validation_adapter_status"]["search_demand"]["status"] == "adapter_disabled"
     assert (
         payload["decision_context"]["external_research_context"]["source_gate_satisfied"] is False
