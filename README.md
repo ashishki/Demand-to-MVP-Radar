@@ -201,13 +201,14 @@ The MVP recommendation is gated by source mix, KIR provenance, and operator fit:
 
 `mvp-of-week` now renders a planning-only `Validation Query Pack` and a matched
 `Matched External Evidence` section for the selected candidate. Query planning
-and matching are deterministic. The Search/SERP, Reddit/forum, and
-competitor/workaround crawler validation boundaries support live, `cache_only`,
-and `dry_run` modes; missing live credentials surface as `credential_limited`,
-rate limits surface as `rate_limited`, and neither state fails the weekly run.
-Candidate source gates count only matched decision-grade external evidence;
-unmatched, adjacent-pain, or irrelevant/hype external results remain visible as
-`decision_context.external_research_context` or negative matched evidence.
+and matching are deterministic. The Search/SERP, Reddit/forum,
+competitor/workaround crawler, and X/Twitter corroboration boundaries support
+live, `cache_only`, and `dry_run` modes; missing live credentials surface as
+`credential_limited`, rate limits surface as `rate_limited`, and neither state
+fails the weekly run. Candidate source gates count only matched decision-grade
+external evidence; unmatched, adjacent-pain, irrelevant/hype, or
+lower-confidence X/Twitter results remain visible as decision context or
+matched non-gating evidence.
 
 Runtime LLM synthesis is opt-in through env:
 

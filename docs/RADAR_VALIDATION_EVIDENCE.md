@@ -1,6 +1,6 @@
 # Radar Validation Evidence Contract
 
-Status: active contract for RVE-0/RVE-5
+Status: active contract for RVE-0/RVE-6
 Date: 2026-07-09
 
 ## Purpose
@@ -88,6 +88,8 @@ Required matcher fields for each record:
   privacy-preserving `author_hash`
 - optional crawler provenance such as `page_kind`, `positioning`,
   `pricing_hint`, and `target_icp`
+- optional X/Twitter provenance such as `discussion_kind`,
+  `lower_confidence`, and `corroboration_required`
 - `matched_candidate_title`
 - `match_basis`
 - `decision_grade`
@@ -142,6 +144,12 @@ Competitor/workaround crawler validation reports:
 - `error` when configured URLs, domains, or fixture rows violate the bounded
   crawler contract.
 
+X/Twitter corroboration reports:
+
+- `credential_limited` when live X/xAI credentials are missing;
+- `rate_limited` when the live source health payload reports provider limits;
+- `cache_only` when it uses a fixture/cache or dry-run mode without live calls.
+
 ## Gate Rules
 
 - Context-only market records never satisfy gates.
@@ -160,6 +168,10 @@ Competitor/workaround crawler validation reports:
   is recorded as a hint, not treated as standalone WTP proof.
 - Irrelevant or hype-only crawler pages are visible as `negative_signal` and do
   not support gates.
+- X/Twitter results are lower-confidence corroboration only. They can be
+  matched and rendered, but they do not satisfy gates by themselves. Trend
+  chatter without pain, workaround, or WTP content is shown as
+  `negative_signal`.
 - Do not weaken existing source/KIR/operator-fit gates to make candidates look
   stronger.
 - If no matched external evidence exists, the report must show missing
@@ -196,8 +208,12 @@ fetches explicitly configured URLs under allowed-domain and page-count limits.
 Competitor/integration evidence is decision-grade only when tied to the same
 candidate and target ICP; irrelevant pages are shown as negative evidence.
 
-Search/SERP, Reddit/forum, and competitor/workaround crawler validation are
-the first active adapter boundaries. Later RVE tasks will add adapters in this
-order:
+RVE-6 wires X/Twitter corroboration as source type `x`. It is disabled by
+default in the weekly source config, supports cache-only and dry-run operation,
+surfaces missing credentials and rate limits in `validation_adapter_status`,
+hashes author IDs, marks every matched X item as `lower_confidence` and
+`corroboration_required`, and prevents X results from satisfying gates. Broad
+trend chatter is classified as `negative_signal`.
 
-1. X/Twitter corroboration.
+RVE-7 should improve the Weekly Brief and Radar validation surface for these
+adapter states.
