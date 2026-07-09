@@ -153,3 +153,51 @@ def test_validation_adapter_status_maps_crawler_modes_and_skipped_sources() -> N
 
     assert cache_only["competitor_workaround_crawler"]["status"] == "cache_only"
     assert skipped["competitor_workaround_crawler"]["status"] == "adapter_disabled"
+
+
+def test_validation_adapter_status_maps_x_modes_credentials_and_rate_limits() -> None:
+    credential_limited = validation_adapter_status(
+        {
+            "configured_sources": {
+                "x_discussions_live": 0,
+                "source_modes": {"x_discussions_live": "live"},
+                "source_types": {"x_discussions_live": "x"},
+            },
+            "source_errors": {
+                "x_discussions_live": (
+                    "x_discussions_live: missing required credential environment variable; "
+                    "status=missing; env_vars=XAI_API_KEY"
+                )
+            },
+        }
+    )
+    cache_only = validation_adapter_status(
+        {
+            "configured_sources": {
+                "x_discussions_cache": 2,
+                "source_modes": {"x_discussions_cache": "cache_only"},
+                "source_types": {"x_discussions_cache": "x"},
+            }
+        }
+    )
+    rate_limited = validation_adapter_status(
+        {
+            "configured_sources": {
+                "x_discussions_live": 0,
+                "source_modes": {"x_discussions_live": "live"},
+                "source_types": {"x_discussions_live": "x"},
+                "source_health": {
+                    "x_discussions_live": {
+                        "rate_limit_state": {
+                            "limited": True,
+                            "retry_after_seconds": 120,
+                        }
+                    }
+                },
+            }
+        }
+    )
+
+    assert credential_limited["x_discussions"]["status"] == "credential_limited"
+    assert cache_only["x_discussions"]["status"] == "cache_only"
+    assert rate_limited["x_discussions"]["status"] == "rate_limited"

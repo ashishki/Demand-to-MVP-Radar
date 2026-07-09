@@ -101,6 +101,7 @@ EXTERNAL_DEMAND_SOURCE_TYPES = {
     "reviews",
     "forum",
     "news",
+    "x",
 }
 OPERATOR_PROFILE_ENV = "DMR_OPERATOR_PROFILE_PATH"
 PROFILE_FIT_KEYWORDS = (
@@ -2110,6 +2111,9 @@ def _matched_external_evidence_lines(selected: CandidateAggregate | None) -> lis
         page_kind = match.get("page_kind")
         if isinstance(page_kind, str) and page_kind.strip():
             source_label = f"{source_label}/{page_kind.strip()}"
+        discussion_kind = match.get("discussion_kind")
+        if isinstance(discussion_kind, str) and discussion_kind.strip():
+            source_label = f"{source_label}/{discussion_kind.strip()}"
         lines.append(
             "- "
             f"{match.get('evidence_kind')}: {source_label} | "

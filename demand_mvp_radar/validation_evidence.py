@@ -34,6 +34,7 @@ DEFAULT_EXTERNAL_SOURCE_TYPES = {
     "reviews",
     "forum",
     "news",
+    "x",
 }
 
 
@@ -83,6 +84,9 @@ def match_external_evidence(
                 "positioning": _metadata_text(metadata, "positioning"),
                 "pricing_hint": _metadata_text(metadata, "pricing_hint"),
                 "target_icp": _metadata_text(metadata, "target_icp"),
+                "discussion_kind": _metadata_text(metadata, "discussion_kind"),
+                "lower_confidence": record.source_type == "x",
+                "corroboration_required": record.source_type == "x",
                 "matched_candidate_title": candidate_title,
                 "match_basis": match_basis,
                 "decision_grade": decision_grade,
@@ -120,6 +124,8 @@ def decision_grade_match_count(matches: Iterable[dict[str, object]]) -> int:
 
 def _decision_grade(record: EvidenceRecord, *, evidence_kind: str) -> bool:
     if not record.source_url or evidence_kind == "negative_signal":
+        return False
+    if record.source_type == "x":
         return False
     page_kind = (_metadata_text(record.provider_metadata, "page_kind") or "").lower()
     if record.source_type in {"crawl4ai", "crawler", "landing_page"} and page_kind in {

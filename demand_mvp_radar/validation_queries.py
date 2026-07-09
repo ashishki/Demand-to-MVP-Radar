@@ -155,6 +155,17 @@ def validation_adapter_status(
         ok_reason="Competitor/workaround crawler ran.",
         disabled_status=statuses["competitor_workaround_crawler"],
     )
+    statuses["x_discussions"] = _source_family_status(
+        source_counts,
+        source_type_names={"x"},
+        source_name_tokens={"x_discussion", "twitter"},
+        display_name="X/Twitter",
+        credential_reason="X/Twitter validation source is configured but credentials are missing.",
+        cache_reason="X/Twitter validation ran without live external calls.",
+        error_reason="X/Twitter validation source returned an error.",
+        ok_reason="X/Twitter validation source ran.",
+        disabled_status=statuses["x_discussions"],
+    )
     return statuses
 
 

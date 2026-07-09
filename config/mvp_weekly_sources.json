@@ -227,6 +227,27 @@
       "max_pages_per_run": 5,
       "max_pages_per_domain": 2,
       "timeout_seconds": 20
+    },
+    {
+      "source_name": "x_discussions_disabled",
+      "source_type": "x",
+      "validation_adapter": "x_discussions",
+      "cache_only": false,
+      "dry_run": false,
+      "trust_level": "low",
+      "freshness_window_days": 7,
+      "enabled": false,
+      "cursor_support": true,
+      "raw_snapshot_policy": "metadata_only",
+      "approval_required": true,
+      "credential_env_vars": ["XAI_API_KEY"],
+      "rate_limit_policy": {
+        "requests_per_minute": 1,
+        "burst_limit": 1
+      },
+      "queries": [],
+      "max_results_per_run": 10,
+      "timeout_seconds": 20
     }
   ]
 }

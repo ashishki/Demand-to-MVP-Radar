@@ -51,6 +51,7 @@ from demand_mvp_radar.sources.serp import SERPSearchConnector
 from demand_mvp_radar.sources.stack_exchange import StackExchangeLiveConnector
 from demand_mvp_radar.sources.telegram_live import TelegramLiveConnector
 from demand_mvp_radar.sources.telegram_research_agent import TelegramResearchAgentBridge
+from demand_mvp_radar.sources.x_discussions import XDiscussionConnector
 from demand_mvp_radar.sources.youtube import YouTubeConnector
 from demand_mvp_radar.storage.db import connect_database
 from demand_mvp_radar.storage.migrations import create_schema
@@ -659,6 +660,22 @@ def _collect_configured_live_source(
             max_pages_per_run=int(source_config.get("max_pages_per_run", 5)),
             max_pages_per_domain=int(source_config.get("max_pages_per_domain", 2)),
             timeout_seconds=int(source_config.get("timeout_seconds", 20)),
+        ).collect(
+            live_config,
+            run_id=run_id,
+            cursor_state={
+                str(key): str(value)
+                for key, value in dict(source_config.get("cursor_state", {})).items()
+            },
+        )
+    if live_config.source_type == "x":
+        fixture_path = _optional_resolve_fixture_path(config_dir, source_config)
+        if bool(source_config.get("cache_only", False)) and fixture_path is None:
+            raise ValueError("cache_only X discussion source requires fixture_path")
+        return XDiscussionConnector(
+            fixture_path,
+            queries=tuple(str(query) for query in source_config.get("queries", ())),
+            max_results_per_run=int(source_config.get("max_results_per_run", 10)),
         ).collect(
             live_config,
             run_id=run_id,

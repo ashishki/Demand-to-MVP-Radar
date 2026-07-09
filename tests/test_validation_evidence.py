@@ -203,6 +203,35 @@ def test_crawler_adjacent_pain_remains_context_only() -> None:
     assert context["records"][0]["source_gate_satisfied"] is False
 
 
+def test_x_discussion_matches_but_never_supports_gate() -> None:
+    captured_at = datetime(2026, 7, 9, 10, tzinfo=UTC)
+    x_record = _record(
+        source_type="x",
+        source_id="x:discussion:1001",
+        title="X discussion about CSV cleanup",
+        text="CSV cleanup automation for client exports keeps coming up as a manual pain.",
+        source_url="https://x.com/example/status/1001",
+        captured_at=captured_at,
+        provider_metadata={
+            "evidence_kind": "repeated_complaint",
+            "discussion_kind": "pain",
+            "target_candidate": "CSV cleanup automation for client exports",
+        },
+    )
+
+    matches = match_external_evidence(
+        candidate_title="CSV cleanup automation for client exports",
+        records=(x_record,),
+    )
+
+    assert len(matches) == 1
+    assert matches[0]["lower_confidence"] is True
+    assert matches[0]["corroboration_required"] is True
+    assert matches[0]["discussion_kind"] == "pain"
+    assert matches[0]["decision_grade"] is False
+    assert matches[0]["supports_gate"] is False
+
+
 def _record(
     *,
     source_type: str,

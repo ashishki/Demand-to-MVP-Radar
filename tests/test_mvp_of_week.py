@@ -891,6 +891,141 @@ def test_mvp_of_week_uses_cache_only_crawler_validation(
     assert result.recommendation == "revisit_with_evidence_gap"
 
 
+def test_mvp_of_week_uses_cache_only_x_corrob_without_gate_support(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("XAI_API_KEY", raising=False)
+    mvp_shape = "CSV cleanup automation for client exports"
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "telegram:@capitan:1501",
+                    "captured_at": _now_iso(),
+                    "title": f"{mvp_shape} demand",
+                    "text": (
+                        "Operators ask for CSV cleanup automation for client exports "
+                        "and want lower-confidence X corroboration separated from gates."
+                    ),
+                    "snippet": "Operators ask for CSV cleanup automation.",
+                    "source_url": "https://t.me/its_capitan/1501",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["workflow_automation"],
+                    "mvp_shape": mvp_shape,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    x_path = tmp_path / "x-cache.json"
+    x_path.write_text(
+        json.dumps(
+            {
+                "rate_limit": {
+                    "limited": False,
+                    "remaining": 12,
+                },
+                "discussions": [
+                    {
+                        "query": "csv cleanup automation",
+                        "discussion_id": "1001",
+                        "url": "https://x.com/example/status/1001",
+                        "author_id": "x-user-private-001",
+                        "title": "X discussion about CSV cleanup",
+                        "text": (
+                            "CSV cleanup automation for client exports keeps coming up; "
+                            "people still fix broken headers and delimiters manually."
+                        ),
+                        "discussion_kind": "pain",
+                        "target_candidate": mvp_shape,
+                        "like_count": 21,
+                        "reply_count": 4,
+                        "created_at": "2026-05-20T10:00:00+00:00",
+                        "captured_at": "2026-05-21T15:00:00+00:00",
+                    },
+                    {
+                        "query": "csv cleanup automation",
+                        "discussion_id": "1002",
+                        "url": "https://x.com/example/status/1002",
+                        "author_id": "x-user-private-002",
+                        "title": "Generic AI automation trend",
+                        "text": (
+                            "Everyone is posting broad AI automation takes without "
+                            "a concrete CSV cleanup pain, workaround, or buying signal."
+                        ),
+                        "discussion_kind": "trend_chatter",
+                        "target_candidate": mvp_shape,
+                        "like_count": 3,
+                        "reply_count": 0,
+                        "created_at": "2026-05-20T11:00:00+00:00",
+                        "captured_at": "2026-05-21T15:05:00+00:00",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    source_config = tmp_path / "x-cache-config.json"
+    source_config.write_text(
+        json.dumps(
+            {
+                "run_id": "mvp-weekly-x-cache",
+                "sources": [
+                    {
+                        "source_name": "x_discussions_cache",
+                        "source_type": "x",
+                        "trust_level": "low",
+                        "freshness_window_days": 7,
+                        "enabled": True,
+                        "cursor_support": True,
+                        "raw_snapshot_policy": "metadata_only",
+                        "approval_required": True,
+                        "credential_env_vars": ["XAI_API_KEY"],
+                        "rate_limit_policy": {
+                            "requests_per_minute": 1,
+                            "burst_limit": 1,
+                        },
+                        "fixture_path": str(x_path.name),
+                        "queries": ["csv cleanup automation"],
+                        "max_results_per_run": 3,
+                        "cache_only": True,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-x-cache",
+        source_config=source_config,
+        llm_provider=None,
+    )
+    report_text = result.report_path.read_text(encoding="utf-8")
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    matches = payload["matched_external_evidence"]
+
+    assert payload["validation_adapter_status"]["x_discussions"]["status"] == "cache_only"
+    assert {item["evidence_kind"] for item in matches} == {
+        "negative_signal",
+        "repeated_complaint",
+    }
+    assert all(item["lower_confidence"] is True for item in matches)
+    assert all(item["corroboration_required"] is True for item in matches)
+    assert all(item["supports_gate"] is False for item in matches)
+    assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 0
+    assert payload["selected"]["source_mix"]["selected_external_source_types"] == []
+    assert "x/pain" in report_text
+    assert "negative_signal: x/trend_chatter" in report_text
+    assert "supports_gate=no" in report_text
+    assert result.recommendation == "revisit_with_evidence_gap"
+
+
 def test_mvp_of_week_kir_gate_blocks_telegram_seed_without_kir_metadata(
     tmp_path,
 ) -> None:
