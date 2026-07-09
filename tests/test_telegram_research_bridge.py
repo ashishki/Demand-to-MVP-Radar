@@ -133,6 +133,49 @@ def test_bridge_preserves_knowledge_thread_provenance_metadata(tmp_path) -> None
     ]
 
 
+def test_bridge_preserves_context_only_market_lens_metadata(tmp_path) -> None:
+    repository, _connection = _repository(tmp_path)
+    export_path = tmp_path / "market-context-export.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "market-context-lens:2026-W28",
+                    "captured_at": "2026-07-09T07:39:06+00:00",
+                    "title": "Context Only: Market Lens Baseline + Weekly Delta",
+                    "text": "Persistent market lens. Context only; never use as build-ready proof.",
+                    "source_kind": "market_analyst_context",
+                    "radar_role": "context_only",
+                    "context_only": True,
+                    "build_ready_evidence": False,
+                    "market_context_lens_kind": "current",
+                    "market_context_baseline_path": "/tmp/baseline.json",
+                    "market_context_delta_path": "/tmp/delta.json",
+                    "market_context_current_path": "/tmp/current.json",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = TelegramResearchAgentBridge().import_file(
+        export_path,
+        run_id="run-tra-market-context",
+        repository=repository,
+        quarantine_path=tmp_path / "quarantine.jsonl",
+    )
+
+    metadata = result.evidence[0].provider_metadata
+    assert metadata["source_kind"] == "market_analyst_context"
+    assert metadata["radar_role"] == "context_only"
+    assert metadata["context_only"] == "True"
+    assert metadata["build_ready_evidence"] == "False"
+    assert metadata["market_context_lens_kind"] == "current"
+    assert metadata["market_context_baseline_path"] == "/tmp/baseline.json"
+    assert metadata["market_context_delta_path"] == "/tmp/delta.json"
+    assert metadata["market_context_current_path"] == "/tmp/current.json"
+
+
 def test_bridge_import_is_idempotent(tmp_path) -> None:
     repository, connection = _repository(tmp_path)
     bridge = TelegramResearchAgentBridge()

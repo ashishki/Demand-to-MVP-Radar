@@ -245,10 +245,18 @@ def run_mvp_of_week(
         )
         retrieval_chunk_count = int(corpus_metadata["chunk_count"])
 
-    candidates = _rank_candidates(evidence_records)
+    context_only_records = _context_only_records(evidence_records)
+    candidate_evidence_records = _candidate_evidence_records(evidence_records)
+    candidates = _rank_candidates(candidate_evidence_records)
     selected = candidates[0] if candidates else None
     llm_provider = llm_provider if llm_provider is not None else provider_from_env()
-    source_counts = _source_counts(evidence_records, collect_result=collect_result)
+    source_counts = _source_counts(candidate_evidence_records, collect_result=collect_result)
+    if context_only_records:
+        source_counts = {
+            **source_counts,
+            "context_only_record_count": len(context_only_records),
+            "market_context": _market_context_summary(context_only_records),
+        }
     live_intelligence = _load_live_intelligence_summary(live_intelligence_path)
     if live_intelligence is not None:
         source_counts = {**source_counts, "live_intelligence": live_intelligence}
@@ -263,8 +271,8 @@ def run_mvp_of_week(
         run_id=effective_run_id,
         selected=selected,
         candidates=candidates[:5],
-        evidence_records=evidence_records,
-        evidence_count=len(evidence_records),
+        evidence_records=candidate_evidence_records,
+        evidence_count=len(candidate_evidence_records),
         quarantined_count=len(import_result.quarantined),
         top_evidence=top_evidence,
         source_counts=source_counts,
@@ -291,7 +299,7 @@ def run_mvp_of_week(
             run_id=effective_run_id,
             selected=report_selected,
             candidates=report_candidates,
-            evidence_count=len(evidence_records),
+            evidence_count=len(candidate_evidence_records),
             quarantined_count=len(import_result.quarantined),
             top_evidence=top_evidence,
             source_counts=source_counts,
@@ -435,6 +443,55 @@ def _rank_candidates(
                 candidate.recommendation = "needs_more_specific_scope"
 
     return sorted(grouped.values(), key=lambda item: item.score, reverse=True)
+
+
+def _candidate_evidence_records(records: tuple[EvidenceRecord, ...]) -> tuple[EvidenceRecord, ...]:
+    return tuple(record for record in records if not _is_context_only_record(record))
+
+
+def _context_only_records(records: tuple[EvidenceRecord, ...]) -> tuple[EvidenceRecord, ...]:
+    return tuple(record for record in records if _is_context_only_record(record))
+
+
+def _is_context_only_record(record: EvidenceRecord) -> bool:
+    metadata = record.provider_metadata
+    return (
+        _metadata_bool(metadata, "context_only")
+        or _metadata_text(metadata, "radar_role") == "context_only"
+        or _metadata_text(metadata, "source_kind") == "market_analyst_context"
+    )
+
+
+def _market_context_summary(records: tuple[EvidenceRecord, ...]) -> dict[str, object]:
+    context_records = []
+    for record in records[:3]:
+        metadata = record.provider_metadata
+        context_records.append(
+            {
+                "title": record.title,
+                "source_id": record.source_id,
+                "source_url": record.source_url,
+                "source_kind": _metadata_text(metadata, "source_kind"),
+                "radar_role": _metadata_text(metadata, "radar_role") or "context_only",
+                "context_only": True,
+                "build_ready_evidence": _metadata_bool(metadata, "build_ready_evidence"),
+                "market_context_lens_kind": _metadata_text(metadata, "market_context_lens_kind"),
+                "source_urls": _metadata_list(metadata, "source_urls")[:8],
+                "text": _truncate(record.normalized_text, 3500),
+            }
+        )
+    return {
+        "status": "context_only",
+        "record_count": len(records),
+        "context_only": True,
+        "build_ready_evidence": False,
+        "source_gate_satisfied": False,
+        "summary": (
+            "Market/business context is ranking guidance only; it does not satisfy "
+            "external evidence, KIR, or willingness-to-pay gates."
+        ),
+        "records": context_records,
+    }
 
 
 def _receipt_briefs_for_candidates(
@@ -842,6 +899,9 @@ def _build_synthesis_prompt(
         f"Quarantined seed rows: {quarantined_count}",
         f"Source counts: {json.dumps(source_counts, ensure_ascii=False, sort_keys=True)}",
         "",
+        "Context-only market lens:",
+        *_market_context_prompt_lines(source_counts),
+        "",
         "Operator fit profile:",
         _load_operator_profile(),
         "",
@@ -865,12 +925,13 @@ def _build_synthesis_prompt(
         "Markdown requirements:",
         (
             "- Include sections: Why This Candidate, Source Mix, Decision Gate, "
-            "KIR Evidence, Live Source Intelligence, Source Trust And Repeated Signals, "
-            "Build-Worthy Recommendations, Interesting Signals, Operator Fit, "
-            "One-Function MVP, Evidence, Missing Evidence, Risks, Next Experiment, "
-            "Kill Criteria, Anti-Complexity Guardrail."
+            "Market Context Lens, KIR Evidence, Live Source Intelligence, Source Trust "
+            "And Repeated Signals, Build-Worthy Recommendations, Interesting Signals, "
+            "Operator Fit, One-Function MVP, Evidence, Missing Evidence, Risks, "
+            "Next Experiment, Kill Criteria, Anti-Complexity Guardrail."
         ),
         "- Evidence section must cite only provided evidence IDs like [E1].",
+        "- Market Context Lens is context only and must not be cited as validation evidence.",
         (
             "- Source Mix must explicitly say whether the selected idea is supported "
             "by Telegram only or by external sources such as SERP, Reddit, GitHub, "
@@ -1014,6 +1075,11 @@ def _canonicalize_synthesis_markdown(
         markdown,
         "Source Mix",
         [_source_mix_summary(source_counts, selected=selected)],
+    )
+    markdown = _replace_or_append_markdown_section(
+        markdown,
+        "Market Context Lens",
+        _market_context_lines(source_counts),
     )
     markdown = _replace_or_append_markdown_section(
         markdown,
@@ -1700,6 +1766,10 @@ def _render_report(
                     "",
                     _source_mix_summary(source_counts),
                     "",
+                    "## Market Context Lens",
+                    "",
+                    *_market_context_lines(source_counts),
+                    "",
                     "## KIR Evidence",
                     "",
                     "- KIR gate: not_required",
@@ -1733,6 +1803,10 @@ def _render_report(
         "## Source Mix",
         "",
         _source_mix_summary(source_counts, selected=selected),
+        "",
+        "## Market Context Lens",
+        "",
+        *_market_context_lines(source_counts),
         "",
         "## KIR Evidence",
         "",
@@ -1832,6 +1906,51 @@ def _source_mix_summary(
     selected: CandidateAggregate | None = None,
 ) -> str:
     return "\n".join(_source_mix_card_lines(source_counts, selected=selected))
+
+
+def _market_context_prompt_lines(source_counts: dict[str, object]) -> list[str]:
+    context = _object_dict(source_counts.get("market_context"))
+    if not context:
+        return ["- No context-only market lens supplied."]
+    lines = [
+        f"- Status: {context.get('status') or 'context_only'}",
+        f"- Record count: {context.get('record_count') or 0}",
+        "- Evidence use: ranking and critique context only; do not cite as proof.",
+        "- Source gate: not satisfied by market context.",
+    ]
+    for record in _object_list(context.get("records"))[:2]:
+        if not isinstance(record, dict):
+            continue
+        title = str(record.get("title") or "Market context")
+        text = _truncate(str(record.get("text") or ""), 1800)
+        lines.append(f"- {title}: {text}")
+    return lines
+
+
+def _market_context_lines(source_counts: dict[str, object]) -> list[str]:
+    context = _object_dict(source_counts.get("market_context"))
+    if not context:
+        return ["- Market context: not supplied."]
+    lines = [
+        f"- Context-only records: {context.get('record_count') or 0}",
+        "- Evidence role: ranking guidance and critique only.",
+        "- Source gate: not satisfied by market context.",
+        "- Build-ready evidence: false.",
+        f"- Summary: {context.get('summary') or 'context only'}",
+    ]
+    for record in _object_list(context.get("records"))[:2]:
+        if not isinstance(record, dict):
+            continue
+        title = str(record.get("title") or "Market context")
+        lens_kind = str(record.get("market_context_lens_kind") or "unknown")
+        text = _truncate(str(record.get("text") or ""), 700)
+        lines.extend(
+            [
+                f"- Context row: {title} ({lens_kind})",
+                f"  - Excerpt: {text}",
+            ]
+        )
+    return lines
 
 
 def _kir_evidence_lines(selected: CandidateAggregate | None) -> list[str]:
@@ -2325,6 +2444,15 @@ def _metadata_list(metadata: dict[str, str], field_name: str) -> list[str]:
     return []
 
 
+def _metadata_bool(metadata: dict[str, str], field_name: str) -> bool:
+    value = metadata.get(field_name)
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
+
+
 def _normalize_key(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9а-яё]+", "-", value.lower()).strip("-")
     return normalized or "untitled"
@@ -2383,6 +2511,10 @@ def _write_json(
         if live_intelligence_path is not None
         else None,
         "live_intelligence": source_counts.get("live_intelligence"),
+        "decision_context": {
+            "market_context": source_counts.get("market_context"),
+            "context_only_record_count": source_counts.get("context_only_record_count", 0),
+        },
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 

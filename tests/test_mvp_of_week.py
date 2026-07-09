@@ -107,6 +107,66 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert payload["selected"]["source_mix"]["reddit_api_status"] == "not_used"
 
 
+def test_mvp_of_week_keeps_market_context_out_of_candidate_ranking(tmp_path) -> None:
+    export_path = tmp_path / "telegram_seeds.json"
+    export_path.write_text(
+        json.dumps(
+            [
+                {
+                    "upstream_id": "market-context-lens:2026-W28",
+                    "captured_at": "2026-07-09T07:39:06+00:00",
+                    "title": "Context Only: Market Lens Baseline + Weekly Delta",
+                    "text": (
+                        "Persistent market lens: rank up narrow utilities with WTP, "
+                        "rank down paid-ads-dependent platforms. Context only."
+                    ),
+                    "snippet": "Persistent market lens for MVP ranking.",
+                    "source_kind": "market_analyst_context",
+                    "radar_role": "context_only",
+                    "context_only": True,
+                    "build_ready_evidence": False,
+                    "market_context_lens_kind": "current",
+                },
+                {
+                    "upstream_id": "telegram:@capitan:1001",
+                    "captured_at": "2026-05-20T10:00:00+00:00",
+                    "title": "Telegram content is hard to search",
+                    "text": "Channel owners keep asking how to turn Telegram posts into searchable SEO pages.",
+                    "snippet": "Channel owners ask for searchable SEO pages from Telegram posts.",
+                    "source_url": "https://t.me/its_capitan/1001",
+                    "channel_username": "@its_capitan",
+                    "bucket": "strong",
+                    "demand_surfaces": ["creator_content_gap", "search_intent"],
+                    "mvp_shape": "Telegram Channel SEO Site Generator",
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_mvp_of_week(
+        telegram_export=export_path,
+        settings=Settings(data_dir=tmp_path / "data", report_dir=tmp_path / "reports"),
+        run_id="mvp-weekly-context-only",
+        llm_provider=None,
+    )
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    report_text = result.report_path.read_text(encoding="utf-8")
+
+    assert result.selected_title == "Telegram Channel SEO Site Generator"
+    assert all(
+        candidate["title"] != "Context Only: Market Lens Baseline + Weekly Delta"
+        for candidate in payload["candidates"]
+    )
+    assert payload["decision_context"]["context_only_record_count"] == 1
+    assert payload["decision_context"]["market_context"]["source_gate_satisfied"] is False
+    assert payload["selected"]["evidence_count"] == 1
+    assert payload["result"]["source_counts"]["telegram_research_agent"] == 1
+    assert payload["result"]["source_counts"]["context_only_record_count"] == 1
+    assert "## Market Context Lens" in report_text
+    assert "Source gate: not satisfied by market context." in report_text
+
+
 def test_mvp_of_week_downgrades_focused_experiment_without_external_evidence(tmp_path) -> None:
     export_path = tmp_path / "telegram_seeds.json"
     export_path.write_text(
