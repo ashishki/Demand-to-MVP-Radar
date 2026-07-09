@@ -1,6 +1,6 @@
 # Radar Validation Evidence Contract
 
-Status: active contract for RVE-0/RVE-4
+Status: active contract for RVE-0/RVE-5
 Date: 2026-07-09
 
 ## Purpose
@@ -86,6 +86,8 @@ Required matcher fields for each record:
 - `query`
 - optional forum provenance such as `subreddit`, `comment_id`, and
   privacy-preserving `author_hash`
+- optional crawler provenance such as `page_kind`, `positioning`,
+  `pricing_hint`, and `target_icp`
 - `matched_candidate_title`
 - `match_basis`
 - `decision_grade`
@@ -133,6 +135,13 @@ without live external calls. Reddit/forum validation reports:
 - `cache_only` when it uses a fixture/cache or dry-run mode without live API
   calls.
 
+Competitor/workaround crawler validation reports:
+
+- `cache_only` when it uses a fixture/cache or dry-run mode without live page
+  fetches;
+- `error` when configured URLs, domains, or fixture rows violate the bounded
+  crawler contract.
+
 ## Gate Rules
 
 - Context-only market records never satisfy gates.
@@ -145,6 +154,12 @@ without live external calls. Reddit/forum validation reports:
   existing gates.
 - Reddit/forum complaint evidence must describe the same selected candidate
   pain. Adjacent but different workflow pain remains context-only.
+- Competitor/workaround crawler evidence must be bounded by explicit
+  domain/page limits. Competitor/integration pages support gates only when they
+  are matched to the same candidate and carry target ICP metadata. Pricing copy
+  is recorded as a hint, not treated as standalone WTP proof.
+- Irrelevant or hype-only crawler pages are visible as `negative_signal` and do
+  not support gates.
 - Do not weaken existing source/KIR/operator-fit gates to make candidates look
   stronger.
 - If no matched external evidence exists, the report must show missing
@@ -173,8 +188,16 @@ credential requirements, missing live credentials surface as
 complaints and manual workaround mentions are classified separately, and
 adjacent-pain Reddit/forum results remain external research context only.
 
-Search/SERP and Reddit/forum validation are the first active adapter
-boundaries. Later RVE tasks will add adapters in this order:
+RVE-5 wires the competitor/workaround crawler boundary as `crawl4ai`.
+Fixture/cache mode records landing URL, title, positioning, pricing/WTP hints,
+target ICP, page kind (`competitor`, `workaround`, `integration`,
+`irrelevant`), query provenance, and bounded source metadata. Live mode only
+fetches explicitly configured URLs under allowed-domain and page-count limits.
+Competitor/integration evidence is decision-grade only when tied to the same
+candidate and target ICP; irrelevant pages are shown as negative evidence.
 
-1. Competitor/workaround crawler.
-2. X/Twitter corroboration.
+Search/SERP, Reddit/forum, and competitor/workaround crawler validation are
+the first active adapter boundaries. Later RVE tasks will add adapters in this
+order:
+
+1. X/Twitter corroboration.

@@ -30,13 +30,14 @@ The active weekly source config is `config/mvp_weekly_sources.json`.
 | YouTube Data API | `youtube` | tutorial/creator demand and how-to intent | `YOUTUBE_API_KEY` |
 | Product Hunt | `product_hunt` | launch and competitor traction | `PRODUCT_HUNT_TOKEN` |
 | Reddit | `reddit` | community pain, repeated complaints, and manual workaround language | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` |
+| Competitor/workaround crawler | `crawl4ai` | bounded landing pages, pricing hints, competitor/workaround pages | none, disabled until explicit URLs/domains are configured |
 
 Enabled weekly sources should not disappear silently. If a source cannot run
 because a credential is missing, the run records it in `source_errors`. If a
 source is intentionally disabled, it appears in `skipped_sources`.
 
-For RVE validation, SERP and Reddit sources can also run in bounded non-live
-operation:
+For RVE validation, SERP, Reddit, and crawler sources can also run in bounded
+non-live operation:
 
 - `cache_only: true` reads a configured fixture/cache file without requiring
   the live source credential;
@@ -45,7 +46,9 @@ operation:
 - live mode remains credential-gated and missing credentials are reported as
   `credential_limited` in `validation_adapter_status`;
 - Reddit/forum live rate limits are reported as `rate_limited`, not as weekly
-  report failures.
+  report failures;
+- crawler live mode fetches only explicit `urls` under `allowed_domains`,
+  `max_pages_per_run`, and `max_pages_per_domain`.
 
 ## Credential File
 
@@ -126,6 +129,9 @@ The weekly MVP synthesis is gated after the LLM response:
 - Matched Reddit/forum evidence keeps query provenance, subreddit/forum label,
   public URL, source-created date, and privacy-preserving author metadata when
   available.
+- Unmatched, adjacent-pain, or irrelevant crawler pages do not satisfy gates.
+  Matched competitor/integration pages support gates only when they carry target
+  ICP metadata; pricing copy is a hint, not standalone WTP proof.
 - Ideas outside the operator profile, such as Java/JVM-heavy or mobile-native
   builds, are downgraded unless they have a narrow Python/LLM workflow wedge.
 - The report must include Source Mix, Validation Query Pack, Matched External
