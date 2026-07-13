@@ -1,7 +1,7 @@
 # Production Readiness Review
 
-Date: 2026-05-20
-Scope: Four weekly local runs before private beta
+Updated: 2026-07-13
+Scope: Four evidence cycles plus longitudinal operating proof before private beta
 Verdict: NOT READY
 
 ---
@@ -12,7 +12,9 @@ Demand-to-MVP Radar is not ready for private beta or SaaS work until the operato
 
 Current status:
 
-- Four-run evidence checklist: not complete
+- Counting evidence cycles: `2/4`
+- Human-recorded decisions: `0`
+- Four distinct weekly windows: not demonstrated
 - Private beta: blocked
 - SaaS or hosted product work: blocked
 - Allowed next work: local reliability, source quality, backup/recovery, and personal weekly operation
@@ -23,10 +25,14 @@ Each weekly run must be reviewed as an operating record, not just a passing comm
 
 | Run | Run success | Source failures | Retrieval metrics | Decision count | Cost | Backup status | Privacy checks | Verdict |
 |-----|-------------|-----------------|-------------------|----------------|------|---------------|----------------|---------|
-| Run 1 | pending | pending | pending | pending | pending | pending | pending | pending |
-| Run 2 | pending | pending | pending | pending | pending | pending | pending | pending |
-| Run 3 | pending | pending | pending | pending | pending | pending | pending | pending |
-| Run 4 | pending | pending | pending | pending | pending | pending | pending | pending |
+| Run 1 / T62 | report present; not full pipeline | historical report notes | n/a manual report | 0 human | USD 0 | not run | public-source report | no-count |
+| Run 2 / R2 | public backfill present | historical report notes | n/a manual report | 0 human | USD 0 | not run | public URLs only | counts, incomplete operating proof |
+| Run 3 / DSM | public backfill present | historical report notes | n/a manual report | 0 human | USD 0 | not run | public URLs only | counts, incomplete operating proof |
+| Run 4 / W14 | referenced output absent from clean clone | Telegram-only source gap reported | unavailable for clean-clone verification | 0 human | reported USD 0 | not run | cannot verify absent artifact | no-count |
+
+This table is reconciled by
+`reports/evidence/portfolio-audit-2026-07-13/four_slot_decision_log.json`.
+It does not transform same-week backfills into longitudinal weekly evidence.
 
 Required evidence for each row:
 
