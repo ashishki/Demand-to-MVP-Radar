@@ -253,9 +253,7 @@ def main(argv: list[str] | None = None) -> int:
             run_id=args.run_id,
             top_evidence=max(1, args.top_evidence),
             source_config=Path(args.source_config) if args.source_config else None,
-            live_intelligence_path=Path(args.live_intelligence)
-            if args.live_intelligence
-            else None,
+            live_intelligence_path=Path(args.live_intelligence) if args.live_intelligence else None,
         )
         print(result.model_dump_json())
         return 0

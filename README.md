@@ -1,8 +1,48 @@
 # Demand-to-MVP Radar
 
-Demand-to-MVP Radar - локальный инструмент для отбора маленьких AI/MVP-идей по реальным сигналам спроса.
+Demand-to-MVP Radar — локальный single-operator dogfood prototype для
+структурирования публичных/разрешённых сигналов, evidence gaps и осторожных
+рекомендаций `build` / `reject` / `revisit`.
 
-Статус: active live product. Текущий фокус - качество первого VPS weekly report, evidence-backed рекомендации и source trust. Roadmap: `docs/PROJECT_PLAN.md`.
+Статус: local evidence-gated prototype, не live product. Код и fixture-backed
+gates воспроизводимы, но longitudinal validation остаётся незавершённой:
+зафиксированы только `2/4` counting evidence cycles и `0` human-recorded
+decisions. Private beta, hosted/SaaS, автоматический outreach и production
+claims заблокированы.
+
+## Current maturity
+
+- Детерминированный pipeline, source gates, dossier/report contracts и
+  credential-free fixture path покрыты локальными и remote CI проверками.
+- Публичный sanitized research corpus содержит восемь исторических
+  source-linked paraphrases без private exports или operator notes.
+- Четыре именованных evidence slots reconciled, но это не четыре недели:
+  два slots не считаются и ни один не содержит human-owned decision.
+- Публичные страницы, цены и продукты из historical captures не считаются
+  актуальными без нового dated collection.
+
+## Relationship to the portfolio
+
+Radar остаётся самостоятельным secondary research case рядом с
+`telegram-research-agent`. Telegram может передавать provenance-preserving seed
+records; Radar отвечает за corroboration gates и decision dossiers. Ни один из
+них не является runtime-зависимостью Eval Ground Truth Lab, runnable umbrella
+или основного reliability flagship.
+
+## Five-minute reviewer path
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements-dev.txt -e .
+ruff check demand_mvp_radar/ tests/
+ruff format --check demand_mvp_radar/ tests/
+python -m pytest tests/test_portfolio_audit_evidence.py tests/test_mvp_report_quality.py -q
+```
+
+Start with the
+[sanitized corpus card](reports/evidence/portfolio-audit-2026-07-13/CORPUS_CARD.md)
+and [four-slot decision log](reports/evidence/portfolio-audit-2026-07-13/FOUR_SLOT_DECISION_LOG.md).
 
 Reference integration: `docs/entropy_core_gensyn_integration.md`.
 
@@ -78,7 +118,14 @@ LLM используется только ограниченно:
 
 ## Текущий статус
 
-Phase 1-19 завершены и прошли review без stop-ship findings. Planned task list complete; private beta and hosted/SaaS remain blocked until four real or properly backfilled solo evidence runs prove repeated personal value, useful human decisions, source value, backup verification, and support burden. Cross-repo KIR hardening for Telegram Research Agent seeds is implemented: Knowledge Thread provenance is preserved on import, and Telegram-seeded build-like recommendations require KIR source atoms, source URLs, and decision-grade external corroboration.
+Implementation tasks Phase 1-19 закрыты, но это не означает product readiness.
+Текущий reconciled evidence state — `2/4` counting cycles, `0`
+human-recorded decisions и отсутствие четырёх distinct weekly windows. Private
+beta и hosted/SaaS остаются заблокированы до повторяемых real/operator-owned
+runs, полезных решений, source-value и backup/privacy evidence. KIR hardening
+для Telegram seeds реализован: provenance сохраняется, а build-like
+рекомендации требуют source atoms, URLs и decision-grade external
+corroboration.
 
 Текущая focused verification для weekly Radar/KIR surfaces:
 
@@ -120,7 +167,10 @@ Phase 1-19 завершены и прошли review без stop-ship findings. 
 - portfolio-fit taxonomy, public-safe showcase opportunity report, and Lead Response SLA handoff pack
 - solo evidence readiness review that keeps private beta and hosted/SaaS blocked
 - first VPS weekly artifact review, report-quality eval metrics, deterministic source-trust/repeated-signal records, and Telegram channel intelligence bridge policy
-- deterministic Telegram digest-to-Radar seed adapter and first true local `mvp-of-week` report with no-count ledger status
+- deterministic Telegram digest-to-Radar seed adapter; прежний W14
+  `mvp-of-week` run имеет no-count ledger status, а referenced generated
+  artifact отсутствует в clean clone и поэтому не заявляется как published
+  evidence
 - GitHub Actions workflow for install, ruff check, format check, and pytest
 
 Пример локального запуска:
@@ -220,13 +270,14 @@ Runtime LLM synthesis is opt-in through env:
 
 Without an enabled provider the command writes a deterministic fallback report.
 
-## Режим разработки
+## Граница дальнейшей разработки
 
-Разработка идет nonstop по оркестраторному loop: задача, review, фиксы при необходимости, state update, следующая задача.
-
-Граница фазы не является паузой. После завершения задач фазы нужно пройти Strategy review, Deep review, Archive, Doc update и Phase report, затем сразу вернуться в Step 0 и продолжить следующую фазу.
-
-Остановка допустима только при явном blocker, нерешенном P0, rate/provider limit, полном завершении проекта или human approval boundary.
+Следующий значимый этап — не расширение feature graph, а два дополнительных
+policy-compliant evidence cycles, human-owned decision records и проверка
+backup/privacy/source value. Fixture/demo work допустим для reliability и CI,
+но не повышает product maturity. Beta, hosted deployment, outreach и любые
+user/market claims требуют реальных разрешений и evidence, которых в
+репозитории сейчас нет.
 
 ## Основные документы
 

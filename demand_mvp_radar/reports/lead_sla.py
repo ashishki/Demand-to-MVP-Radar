@@ -133,7 +133,8 @@ def _suggested_actions(analysis: LeadSlaAnalysis) -> list[str]:
         actions.append(f"Review owner/team `{owner.key}`: it has {owner.breach_count} SLA misses.")
     if analysis.invalid_rows:
         actions.append(
-            f"Fix or quarantine {len(analysis.invalid_rows)} invalid rows so reporting does not hide data-quality problems."
+            f"Fix or quarantine {len(analysis.invalid_rows)} invalid rows so reporting does not "
+            "hide data-quality problems."
         )
     if not actions:
         actions.append("No immediate SLA bottleneck found in this dataset.")

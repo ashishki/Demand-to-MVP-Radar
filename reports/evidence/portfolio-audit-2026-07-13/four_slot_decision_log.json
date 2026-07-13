@@ -1,0 +1,46 @@
+{
+  "counting_evidence_cycle_count": 2,
+  "four_week_longitudinal_gate": "blocked_no_four_distinct_weekly_runs",
+  "human_recorded_decision_count": 0,
+  "remaining_counting_runs": 2,
+  "schema_version": "radar-four-slot-log-v1",
+  "slots": [
+    {
+      "artifact": "reports/showcase/portfolio_opportunity_showcase.md",
+      "artifact_sha256": "019486435c010f5718f2f48457e2fb7954151f91bcb00ac312bd6152030fdcbf",
+      "counts_toward_gate": false,
+      "date": "2026-05-23",
+      "human_recorded_decisions": 0,
+      "run_id": "T62-showcase",
+      "status": "public_showcase_not_full_pipeline"
+    },
+    {
+      "artifact": "reports/research/solo_evidence_run_2_deep_research.md",
+      "artifact_sha256": "37fb2289c545910b02c97252c7a0a7185fabb72cf606d12ed4000474aba91f6b",
+      "counts_toward_gate": true,
+      "date": "2026-05-23",
+      "human_recorded_decisions": 0,
+      "run_id": "R2-deep-research",
+      "status": "public_research_backfill"
+    },
+    {
+      "artifact": "reports/research/demand_source_map_search_test.md",
+      "artifact_sha256": "2307a0fb300f9627cab47c9147dc0194a236559dcd592e77127335b22f7e7562",
+      "counts_toward_gate": true,
+      "date": "2026-05-25",
+      "human_recorded_decisions": 0,
+      "run_id": "DSM-search-test",
+      "status": "public_research_backfill"
+    },
+    {
+      "artifact": "reports/mvp_of_week/mvp-weekly-2026-W14-radar.md",
+      "artifact_sha256": null,
+      "counts_toward_gate": false,
+      "date": "2026-05-29",
+      "human_recorded_decisions": 0,
+      "run_id": "mvp-weekly-2026-W14-radar",
+      "status": "referenced_artifact_not_tracked_in_clean_clone"
+    }
+  ],
+  "updated_at": "2026-07-13"
+}

@@ -14,7 +14,11 @@ dist/
 
 # Local runtime artifacts
 data/
-reports/
+reports/*
+!reports/evidence/
+reports/evidence/*
+!reports/evidence/portfolio-audit-2026-07-13/
+!reports/evidence/portfolio-audit-2026-07-13/*
 *.sqlite3
 *.db
 

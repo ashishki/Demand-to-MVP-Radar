@@ -26,10 +26,14 @@ def test_ci_workflow_has_required_steps() -> None:
 
 def test_dev_requirements_include_test_and_lint_tools() -> None:
     requirements = read_text("requirements-dev.txt").splitlines()
+    package_names = {
+        re.split(r"[<>=!~]", requirement, maxsplit=1)[0]
+        for requirement in requirements
+        if requirement and not requirement.startswith("-")
+    }
 
     assert "-r requirements.txt" in requirements
-    assert "pytest" in requirements
-    assert "ruff" in requirements
+    assert {"pytest", "ruff"} <= package_names
 
 
 def test_ruff_config_targets_project_paths() -> None:

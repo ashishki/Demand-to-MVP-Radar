@@ -1,7 +1,7 @@
 # Solo Evidence Readiness Review
 
-Date: 2026-05-23
-Scope: Phase 17 solo evidence operating loop
+Updated: 2026-07-13
+Scope: reconciled Phase 17-19 solo evidence operating loop
 Verdict: CONTINUE PERSONAL EVIDENCE CYCLE
 Private beta: BLOCKED
 Hosted/SaaS: BLOCKED
@@ -12,22 +12,23 @@ Demand-to-MVP Radar should remain an internal local-first operator tool and
 continue another personal evidence cycle. It should not move to private beta
 yet, and hosted/SaaS work remains blocked.
 
-Reason: the project now has a public-safe showcase report and one handoff pack,
-but it does not yet have four real weekly/backfilled operating runs, three
-human-recorded useful decisions, source value proof from real runs, backup
-verification, or evidence that support burden is manageable.
+Reason: the repository has four named slots, but only two count under its own
+backfill rules and none records a human-owned decision. It does not have four
+distinct weekly operating windows, source value proof from repeated real runs,
+backup verification, or evidence that support burden is manageable.
 
 ## Four Run Records
 
 | Run | Evidence | Status | Decision value | Counts toward gate? |
 |---|---|---|---|---|
-| Run 1 | `docs/SOLO_EVIDENCE_LEDGER.md#run-1---t62-showcase-backfill` | Public showcase backfill created on 2026-05-23. It reviewed five opportunities from public sources and selected Lead Response SLA Gap Radar as a 10-day experiment candidate. | 0 human-recorded decisions; 5 provisional report-level decisions. | no - not a full weekly pipeline run |
-| Run 2 | `docs/SOLO_EVIDENCE_LEDGER.md#four-run-ledger` | pending | none | no |
-| Run 3 | `docs/SOLO_EVIDENCE_LEDGER.md#four-run-ledger` | pending | none | no |
-| Run 4 | `docs/SOLO_EVIDENCE_LEDGER.md#four-run-ledger` | pending | none | no |
+| Run 1 | `docs/SOLO_EVIDENCE_LEDGER.md#run-1---t62-showcase-backfill` | Public showcase backfill; not a full weekly pipeline run. | 0 human-recorded; 5 provisional report-level recommendations. | no |
+| Run 2 | `docs/SOLO_EVIDENCE_LEDGER.md#run-2---deep-research-backfill` | Public research backfill with source register and reviewed opportunities. | 0 human-recorded; 4 research-level recommendations. | yes |
+| Run 3 | `docs/SOLO_EVIDENCE_LEDGER.md#run-3---demand-source-map-search-test` | Public source-map research backfill with reviewed opportunities. | 0 human-recorded; 4 research-level recommendations. | yes |
+| Run 4 | `docs/SOLO_EVIDENCE_LEDGER.md#run-4---telegram-seeded-radar-weekly-report` | Telegram-only historical run; referenced generated artifact is absent from a clean clone. | 0 human-recorded; report-level recommendations only. | no |
 
-Readiness implication: the four-run gate is not complete. The ledger structure
-exists, but the operating evidence does not.
+Readiness implication: the gate is exactly `2/4`, not four weeks. The canonical
+reconciliation is
+`reports/evidence/portfolio-audit-2026-07-13/four_slot_decision_log.json`.
 
 ## Useful Decisions
 
@@ -44,7 +45,7 @@ cited evidence.
 
 ## Source Value
 
-Observed source value from T62:
+Observed source value from the historical public reports:
 
 | Source family | Value observed | Limit |
 |---|---|---|
@@ -53,7 +54,7 @@ Observed source value from T62:
 | Public Reddit operator discussions | Surfaced human approval, API drift, and trader workflow pain. | Anecdotal and low trust until corroborated. |
 | Official API docs | Confirmed API breaking-change reality. | Not demand proof by itself. |
 
-No source value report from a real weekly run exists yet. The next cycle should
+No source value report from a repeated real weekly run exists yet. The next cycle should
 collect at least two real source families that improve actual operator
 decisions, not only report completeness.
 
@@ -99,7 +100,7 @@ out of scope for the next cycle.
 
 Recommended next cycle:
 
-1. Run or backfill three more real public/operator-owned evidence cycles.
+1. Run or policy-compliantly backfill two more public/operator-owned evidence cycles.
 2. Convert Lead Response SLA Gap Radar into a local 10-day experiment only after
    operator-owned timestamp data is available.
 3. Record at least three human decisions with cited evidence.
