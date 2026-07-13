@@ -69,7 +69,8 @@ def render_source_value_markdown(report: SourceValueReport) -> str:
     lines = [
         "# Source Value Report",
         "",
-        "| Source | Type | Evidence | Cited | Influence | Quarantine | Freshness | Cost | Recommendation |",
+        "| Source | Type | Evidence | Cited | Influence | Quarantine | Freshness | Cost | "
+        "Recommendation |",
         "|--------|------|----------|-------|-----------|------------|-----------|------|----------------|",
     ]
     for row in report.rows:

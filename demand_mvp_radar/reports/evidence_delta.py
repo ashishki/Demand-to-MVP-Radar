@@ -94,9 +94,7 @@ def generate_evidence_delta_report(
         else:
             count_accumulator[source_type]["new_count"] += 1
             change_type = (
-                "changed"
-                if previous_hash_by_source_id.get(row["source_id"]) is not None
-                else "new"
+                "changed" if previous_hash_by_source_id.get(row["source_id"]) is not None else "new"
             )
             changed_rows.append((row, change_type))
         if _to_utc(datetime.fromisoformat(str(row["captured_at"]))) < stale_cutoff:
