@@ -361,16 +361,17 @@ def run_mvp_of_week(
         retrieval_chunk_count=retrieval_chunk_count,
         selected_title=(report_selected.title if report_selected is not None else None),
         dossier_status=(
-            _dossier_status(report_selected) if report_selected is not None else "reject"
+            _dossier_status(report_selected) if report_selected is not None else None
         ),
         recommendation=(
-            recommendation
-            or (report_selected.recommendation if report_selected is not None else None)
+            recommendation or report_selected.recommendation
+            if report_selected is not None
+            else None
         ),
         score=(
-            score
-            if score is not None
-            else (report_selected.score if report_selected is not None else None)
+            score if score is not None else report_selected.score
+            if report_selected is not None
+            else None
         ),
         selected_source_mix=selected_source_mix,
         validation_adapter_status=adapter_status,

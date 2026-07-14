@@ -12,6 +12,41 @@ from demand_mvp_radar.mvp_weekly import CandidateAggregate, _selected_source_mix
 from demand_mvp_radar.proof import WeeklyReportProofReceipt
 
 
+def test_mvp_of_week_no_evidence_json_has_no_candidate_projection(tmp_path, capsys) -> None:
+    export_path = tmp_path / "empty_seeds.json"
+    export_path.write_text("[]", encoding="utf-8")
+
+    exit_code = main(
+        [
+            "mvp-of-week",
+            "--telegram-export",
+            str(export_path),
+            "--run-id",
+            "mvp-weekly-empty",
+            "--data-dir",
+            str(tmp_path / "data"),
+            "--report-dir",
+            str(tmp_path / "reports"),
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+    payload = json.loads(
+        (tmp_path / "reports" / "mvp_of_week" / "mvp-weekly-empty.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert exit_code == 0
+    assert output["status"] == "no_evidence"
+    assert payload["schema_version"] == "demand_mvp_radar.mvp_of_week.v1"
+    assert payload["selected"] is None
+    assert payload["result"]["selected_title"] is None
+    assert payload["result"]["dossier_status"] is None
+    assert payload["result"]["recommendation"] is None
+    assert payload["result"]["score"] is None
+    assert payload["result"]["selected_source_mix"] is None
+
+
 def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -> None:
     export_path = tmp_path / "telegram_seeds.json"
     export_path.write_text(
