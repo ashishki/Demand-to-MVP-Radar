@@ -1797,39 +1797,54 @@ def _evidence_lines(candidate: CandidateAggregate, *, top_evidence: int) -> list
 
 
 def _next_experiment_lines(candidate: CandidateAggregate) -> list[str]:
+    return [
+        f"{index}. {step}"
+        for index, step in enumerate(_next_experiment(candidate), start=1)
+    ]
+
+
+def _next_experiment(candidate: CandidateAggregate) -> list[str]:
     if candidate.recommendation == "existing_project_context":
         return [
-            "1. Attach this evidence to the existing project as context.",
-            "2. Identify one current backlog item that becomes clearer because of the signal.",
-            "3. Decide whether to update, defer, or reject that backlog item.",
+            "Attach this evidence to the existing project as context.",
+            "Identify one current backlog item that becomes clearer because of the signal.",
+            "Decide whether to update, defer, or reject that backlog item.",
         ]
     if _dossier_status(candidate) == "reject":
         return [
-            "1. Do not start an experiment this week.",
-            "2. Watch for an independent public source that changes the evidence state.",
+            "Do not start an experiment this week.",
+            "Watch for an independent public source that changes the evidence state.",
         ]
     return [
-        "1. Pick 3-5 public examples that match the evidence pattern.",
-        "2. Produce one static artifact or concierge workflow, not a platform.",
-        "3. Show before/after value in a copyable report.",
-        "4. Ask 5 relevant operators or creators whether they would use or pay for it.",
-        "5. End with build/revisit/reject and write the decision back to memory.",
+        "Pick 3-5 public examples that match the evidence pattern.",
+        "Produce one static artifact or concierge workflow, not a platform.",
+        "Show before/after value in a copyable report.",
+        "Ask 5 relevant operators or creators whether they would use or pay for it.",
+        "End with build/revisit/reject and write the decision back to memory.",
     ]
 
 
 def _kill_criteria_lines(candidate: CandidateAggregate) -> list[str]:
-    lines = [
-        "- No second independent non-Telegram source supports the same pain.",
-        "- Users describe curiosity but no repeated workaround, budget, or urgency.",
-        "- The only plausible implementation expands into a broad platform.",
+    return [f"- {criterion}" for criterion in _kill_criteria(candidate)]
+
+
+def _kill_criteria(candidate: CandidateAggregate) -> list[str]:
+    criteria = [
+        "No second independent non-Telegram source supports the same pain.",
+        "Users describe curiosity but no repeated workaround, budget, or urgency.",
+        "The only plausible implementation expands into a broad platform.",
     ]
     if candidate.recommendation == "existing_project_context":
-        lines.append("- The signal cannot be tied to a concrete existing-project backlog change.")
-    if candidate.risk_flags:
-        lines.append(
-            "- Risk flags remain unresolved: " + ", ".join(sorted(candidate.risk_flags)) + "."
+        criteria.append(
+            "The signal cannot be tied to a concrete existing-project backlog change."
         )
-    return lines
+    if candidate.risk_flags:
+        criteria.append(
+            "Risk flags remain unresolved: "
+            + ", ".join(sorted(candidate.risk_flags))
+            + "."
+        )
+    return criteria
 
 
 def _anti_complexity_guardrail(candidate: CandidateAggregate) -> str:
@@ -2935,16 +2950,23 @@ def _candidate_json(
     source_counts: dict[str, object],
 ) -> dict[str, object]:
     return {
+        "candidate_id": f"candidate:{candidate.key}",
         "title": candidate.title,
         "score": candidate.score,
         "dossier_status": _dossier_status(candidate),
         "confidence": _dossier_confidence(candidate),
         "recommendation": candidate.recommendation,
+        "decision_reason": _decision_gate_reason(
+            candidate,
+            external_count=source_counts.get("external_evidence_count", "missing"),
+        ),
         "source_mix": _selected_source_mix(candidate, source_counts),
         "validation_queries": _validation_query_pack(candidate),
         "matched_external_evidence": _matched_external_evidence(candidate),
         "missing_evidence_by_category": _missing_evidence_by_category_for_selected(candidate),
         "decision_change_action": _decision_change_action(candidate),
+        "next_experiment": _next_experiment(candidate),
+        "kill_criteria": _kill_criteria(candidate),
         "evidence_count": len(candidate.evidence),
         "surfaces": sorted(candidate.surfaces),
         "channels": sorted(candidate.channels),

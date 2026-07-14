@@ -107,6 +107,19 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["result"]["dossier_status"] == "investigate"
     assert payload["selected"]["dossier_status"] == "investigate"
+    assert (
+        payload["selected"]["candidate_id"]
+        == "candidate:telegram-channel-seo-site-generator"
+    )
+    assert payload["selected"]["decision_reason"] == "source_mix_gate"
+    assert payload["selected"]["next_experiment"]
+    assert payload["selected"]["kill_criteria"] == [
+        "No second independent non-Telegram source supports the same pain.",
+        "Users describe curiosity but no repeated workaround, budget, or urgency.",
+        "The only plausible implementation expands into a broad platform.",
+    ]
+    assert payload["candidates"][0]["candidate_id"] == payload["selected"]["candidate_id"]
+    assert payload["candidates"][0]["kill_criteria"] == payload["selected"]["kill_criteria"]
     assert payload["result"]["selected_source_mix"]["readiness"] == "telegram_only"
     assert payload["selected"]["source_mix"]["selected_external_evidence_count"] == 0
     assert payload["selected"]["source_mix"]["reddit_api_status"] == "not_used"
