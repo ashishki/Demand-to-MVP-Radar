@@ -105,6 +105,7 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert run["status"] == "mvp_of_week"
     assert json.loads(run["source_counts"])["telegram_research_agent"] == 2
     payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "demand_mvp_radar.mvp_of_week.v1"
     assert payload["result"]["dossier_status"] == "investigate"
     assert payload["selected"]["dossier_status"] == "investigate"
     assert (

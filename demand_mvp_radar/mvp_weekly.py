@@ -2918,6 +2918,7 @@ def _write_json(
         external_source_types=EXTERNAL_DEMAND_SOURCE_TYPES,
     )
     payload = {
+        "schema_version": "demand_mvp_radar.mvp_of_week.v1",
         "result": result.model_dump(mode="json"),
         "selected": _candidate_json(selected, source_counts=source_counts)
         if selected is not None
