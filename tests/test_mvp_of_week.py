@@ -31,9 +31,7 @@ def test_mvp_of_week_no_evidence_json_has_no_candidate_projection(tmp_path, caps
     )
     output = json.loads(capsys.readouterr().out)
     payload = json.loads(
-        (tmp_path / "reports" / "mvp_of_week" / "mvp-weekly-empty.json").read_text(
-            encoding="utf-8"
-        )
+        (tmp_path / "reports" / "mvp_of_week" / "mvp-weekly-empty.json").read_text(encoding="utf-8")
     )
 
     assert exit_code == 0
@@ -143,10 +141,7 @@ def test_mvp_of_week_imports_seed_export_and_writes_artifact(tmp_path, capsys) -
     assert payload["schema_version"] == "demand_mvp_radar.mvp_of_week.v1"
     assert payload["result"]["dossier_status"] == "investigate"
     assert payload["selected"]["dossier_status"] == "investigate"
-    assert (
-        payload["selected"]["candidate_id"]
-        == "candidate:telegram-channel-seo-site-generator"
-    )
+    assert payload["selected"]["candidate_id"] == "candidate:telegram-channel-seo-site-generator"
     assert payload["selected"]["decision_reason"] == "source_mix_gate"
     assert payload["selected"]["next_experiment"]
     assert payload["selected"]["kill_criteria"] == [

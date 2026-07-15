@@ -360,16 +360,16 @@ def run_mvp_of_week(
         quarantined_count=len(import_result.quarantined),
         retrieval_chunk_count=retrieval_chunk_count,
         selected_title=(report_selected.title if report_selected is not None else None),
-        dossier_status=(
-            _dossier_status(report_selected) if report_selected is not None else None
-        ),
+        dossier_status=(_dossier_status(report_selected) if report_selected is not None else None),
         recommendation=(
             recommendation or report_selected.recommendation
             if report_selected is not None
             else None
         ),
         score=(
-            score if score is not None else report_selected.score
+            score
+            if score is not None
+            else report_selected.score
             if report_selected is not None
             else None
         ),
@@ -1798,10 +1798,7 @@ def _evidence_lines(candidate: CandidateAggregate, *, top_evidence: int) -> list
 
 
 def _next_experiment_lines(candidate: CandidateAggregate) -> list[str]:
-    return [
-        f"{index}. {step}"
-        for index, step in enumerate(_next_experiment(candidate), start=1)
-    ]
+    return [f"{index}. {step}" for index, step in enumerate(_next_experiment(candidate), start=1)]
 
 
 def _next_experiment(candidate: CandidateAggregate) -> list[str]:
@@ -1836,14 +1833,10 @@ def _kill_criteria(candidate: CandidateAggregate) -> list[str]:
         "The only plausible implementation expands into a broad platform.",
     ]
     if candidate.recommendation == "existing_project_context":
-        criteria.append(
-            "The signal cannot be tied to a concrete existing-project backlog change."
-        )
+        criteria.append("The signal cannot be tied to a concrete existing-project backlog change.")
     if candidate.risk_flags:
         criteria.append(
-            "Risk flags remain unresolved: "
-            + ", ".join(sorted(candidate.risk_flags))
-            + "."
+            "Risk flags remain unresolved: " + ", ".join(sorted(candidate.risk_flags)) + "."
         )
     return criteria
 
